@@ -13,7 +13,7 @@
  * what a reader is not cleared to see. The editor previews by asking for it.
  */
 
-import { mkdir, writeFile } from "node:fs/promises";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { renderMarkup } from "@aether/markup";
 import type { FastifyInstance } from "fastify";
@@ -54,6 +54,20 @@ export async function registerRecords(
   async function attachMaterialiser(recordId: string, slug: string): Promise<void> {
     const room = await rooms.get(recordRoom(recordId));
     if (room.onPersist) return; // already attached
+
+    /*
+     * Пустая комната рядом с непустым файлом означает потерянный снимок Yjs:
+     * снимки живут в томе и восстановлению не подлежат, а материализованный
+     * markdown объявлен долговечной формой записи. Поднимаем текст из файла —
+     * иначе первое же сохранение затрёт файл пустотой, то есть потеря снимка
+     * превратится в потерю записи.
+     */
+    if (room.doc.getText("content").length === 0) {
+      const node = tree.get(recordId);
+      const file = path.join(markdownDir, `${node?.slug ?? slug}.md`);
+      const markdown = await readFile(file, "utf8").catch(() => "");
+      if (markdown.trim()) room.doc.getText("content").insert(0, markdown);
+    }
     room.onPersist = async () => {
       const node = tree.get(recordId);
       await materialise(node?.slug ?? slug, textOf(room.doc));

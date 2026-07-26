@@ -12,8 +12,8 @@ import { mkdir, readFile } from "node:fs/promises";
 import path from "node:path";
 import { chromium } from "playwright";
 
-const URL_BASE = process.env.ADMIN_URL ?? "http://localhost:3010/admin/";
-const API_BASE = process.env.API_URL ?? "http://localhost:3010";
+const URL_BASE = process.env.ADMIN_URL ?? "http://127.0.0.1:3010/admin/";
+const API_BASE = process.env.API_URL ?? "http://127.0.0.1:3010";
 const REPO = new URL("..", import.meta.url).pathname;
 const SHOTS = path.join(REPO, ".dev-screenshots");
 await mkdir(SHOTS, { recursive: true });

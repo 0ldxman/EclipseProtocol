@@ -9,7 +9,7 @@
 import { mkdir } from "node:fs/promises";
 import { chromium } from "playwright";
 
-const URL_BASE = process.env.MAP_URL ?? "http://localhost:3010/map/";
+const URL_BASE = process.env.MAP_URL ?? "http://127.0.0.1:3010/map/";
 const SHOTS = new URL("../.dev-screenshots/", import.meta.url).pathname;
 await mkdir(SHOTS, { recursive: true });
 

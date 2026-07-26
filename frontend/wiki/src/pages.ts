@@ -12,7 +12,7 @@
  */
 
 import { href, navigate } from "./app-root.js";
-import { nav, overview, record, type NavNode, type RecordPage } from "./api.js";
+import { folder as folderPage, nav, overview, record, type Belongs, type NavNode, type RecordPage } from "./api.js";
 import { classifiedBody } from "./classified.js";
 import { el } from "./dom.js";
 import { setFootCount } from "./header.js";
@@ -81,6 +81,25 @@ function kv(rows: (readonly [Node | string, Node | string])[]): HTMLElement {
     list.append(el("dt", {}, [key]), el("dd", {}, [value]));
   }
   return list;
+}
+
+/**
+ * Полоса принадлежности: герб и название ближайшей обложки вверх по дереву,
+ * окрашенные её схемой.
+ *
+ * Цвет берётся не из JS, а из класса схемы: `cover--black-red` задаёт
+ * `--cv-accent`, полоса им пользуется. Одна таблица соответствий вместо двух.
+ */
+function belongBand(belongs: Belongs): HTMLElement {
+  const band = link(`/folder/${belongs.id}`, "", `belong ${belongs.theme ? `cover--${belongs.theme}` : ""}`.trim());
+  band.append(
+    el("i", {}, [
+      belongs.logo ? el("img", { src: belongs.logo, alt: "" }) : el("span", {}, [belongs.mark || "◆"]),
+    ]),
+    el("span", {}, [el("b", {}, [belongs.name])]),
+    el("span", { class: "sp chrome" }, ["титульный лист ↗"]),
+  );
+  return band;
 }
 
 /* ── запись ────────────────────────────────────────────────────────────── */
@@ -197,7 +216,7 @@ function recordAside(page: RecordPage): HTMLElement | null {
         el(
           "div",
           { style: "display:flex;gap:6px;flex-wrap:wrap" },
-          page.node.tags.map((tag) => el("span", { class: "chip" }, [tag])),
+          page.node.tags.map((tag) => link(`/tag/${encodeURIComponent(tag)}`, tag, "chip")),
         ),
       ]),
     );
@@ -226,7 +245,10 @@ export async function renderRecord(view: HTMLElement, slug: string): Promise<voi
 
   const article = paper(page);
   const aside = recordAside(page);
-  const row = el("div", { class: "body__in" }, [el("nav", { class: "toc-slot" }), article, aside]);
+  const middle = page.belongs
+    ? el("div", { class: "paper-stack" }, [belongBand(page.belongs), article])
+    : article;
+  const row = el("div", { class: "body__in" }, [el("nav", { class: "toc-slot" }), middle, aside]);
 
   view.replaceChildren(grid(aside !== null), contextStrip(page), el("div", { class: "body" }, [row]));
 
@@ -333,6 +355,12 @@ export async function renderFolder(view: HTMLElement, id: string): Promise<void>
     return;
   }
 
+  // Титульный лист есть не у каждой категории: тогда показывается обычное
+  // оглавление, а не пустая рамка.
+  const cover = await folderPage(id)
+    .then((data) => data.cover)
+    .catch(() => "");
+
   const trail: { id: string; name: string }[] = [];
   let cursor: NavNode | undefined = folder;
   while (cursor?.parentId) {
@@ -357,9 +385,12 @@ export async function renderFolder(view: HTMLElement, id: string): Promise<void>
       : el("span", { class: "chrome sp" }, ["открыто"]),
   ]);
 
-  const page = el("div", { class: "page" }, [
-    el("div", { class: "hero" }, [el("h1", {}, [folder.name])]),
-  ]);
+  const page = el("div", { class: "page" }, []);
+  if (cover) {
+    page.append(el("div", { class: "cover-slot", html: cover }));
+  } else {
+    page.append(el("div", { class: "hero" }, [el("h1", {}, [folder.name])]));
+  }
 
   const cards = folderCards(nodes, folder.id);
   if (cards) page.append(sectionHead("Подразделы"), cards);
@@ -376,8 +407,66 @@ export async function renderFolder(view: HTMLElement, id: string): Promise<void>
   }
 
   view.replaceChildren(grid(false), strip, page);
-  setFootCount("");
+  setFootCount(cover ? "титульный лист" : "");
   document.title = `${folder.name} — AETHER.WIKI`;
+}
+
+/* ── метка ─────────────────────────────────────────────────────────────── */
+
+/**
+ * Записи одной метки.
+ *
+ * Метка живёт поперёк дерева, поэтому здесь нет ни обложки, ни оглавления —
+ * только список того, что метку несёт, с указанием, откуда каждая запись.
+ */
+export async function renderTag(view: HTMLElement, tag: string): Promise<void> {
+  const { nodes } = await nav();
+  const found = nodes
+    .filter((node) => node.kind === "record" && node.slug && node.tags.includes(tag))
+    .sort((a, b) => a.name.localeCompare(b.name, "ru"));
+
+  const strip = el("div", { class: "strip" }, [
+    el("span", { class: "chrome" }, [link("/", "архив"), el("s", {}, ["/"]), "метки", el("s", {}, ["/"]), el("span", { class: "chrome--on" }, [tag])]),
+    el("span", { class: "chrome sp" }, [plural(found.length, RECORDS)]),
+  ]);
+
+  const page = el("div", { class: "page" }, [
+    el("div", { class: "hero" }, [el("h1", {}, [`#${tag}`])]),
+  ]);
+
+  if (found.length === 0) {
+    page.append(
+      el("div", { class: "empty" }, [
+        el("b", {}, ["метка не используется"]),
+        el("span", {}, ["Ни одна запись её не несёт."]),
+      ]),
+    );
+  } else {
+    const body = el(
+      "tbody",
+      {},
+      found.map((node, i) => {
+        const parent = nodes.find((n) => n.id === node.parentId);
+        return el("tr", {}, [
+          el("td", { class: "no" }, [String(i + 1).padStart(2, "0")]),
+          el("td", { class: "nm" }, [
+            link(`/wiki/${node.slug}`, node.name),
+            node.access > 0
+              ? el("span", { class: "pill pill--red", style: "margin-left:8px" }, [
+                  `допуск ${node.access}`,
+                ])
+              : null,
+          ]),
+          el("td", { class: "at" }, [parent?.name ?? "вне категорий"]),
+        ]);
+      }),
+    );
+    page.append(sectionHead("Записи", plural(found.length, RECORDS)), el("table", { class: "entries" }, [body]));
+  }
+
+  view.replaceChildren(grid(false), strip, page);
+  setFootCount(plural(found.length, RECORDS));
+  document.title = `#${tag} — AETHER.WIKI`;
 }
 
 /* ── главная ───────────────────────────────────────────────────────────── */
@@ -432,7 +521,11 @@ export async function renderHome(view: HTMLElement): Promise<void> {
         { style: "display:flex;gap:7px;flex-wrap:wrap" },
         [...tags.entries()]
           .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], "ru"))
-          .map(([tag, count]) => el("span", { class: "chip" }, [tag, el("b", {}, [String(count)])])),
+          .map(([tag, count]) => {
+            const chip = link(`/tag/${encodeURIComponent(tag)}`, tag, "chip");
+            chip.append(el("b", {}, [String(count)]));
+            return chip;
+          }),
       ),
     );
   }
@@ -453,7 +546,15 @@ export async function renderHome(view: HTMLElement): Promise<void> {
     }),
   );
 
+  const toTimeline = link("/timeline", "");
+  toTimeline.append(
+    el("em", {}, ["↗"]),
+    el("b", {}, ["Хронология"]),
+    el("s", {}, ["Летопись протокола от первого события до сегодняшнего дня."]),
+  );
+
   const gates = el("div", { class: "gate" }, [
+    toTimeline,
     el("a", { href: href("/") + "map/" }, [
       el("em", {}, ["↗"]),
       el("b", {}, ["Карта"]),

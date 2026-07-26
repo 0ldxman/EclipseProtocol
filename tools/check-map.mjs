@@ -11,7 +11,7 @@
 import { mkdir } from "node:fs/promises";
 import { chromium } from "playwright";
 
-const URL_BASE = process.env.MAP_URL ?? "http://localhost:3010/map/";
+const URL_BASE = process.env.MAP_URL ?? "http://127.0.0.1:3010/map/";
 const SHOTS = new URL("../.dev-screenshots/", import.meta.url).pathname;
 
 const log = (...args) => console.log(...args);
@@ -113,6 +113,10 @@ await a.waitForFunction(
   { timeout: 20_000 },
 );
 await a.waitForTimeout(1500);
+// Снимок делается с вкладки, которая до этого была фоновой: у фоновой вкладки
+// WebGL не выдаёт кадров, и захват ждёт их до самого таймаута.
+await a.bringToFront();
+await a.waitForTimeout(400);
 await a.screenshot({ path: `${SHOTS}map-04-back-in-first-tab.png` });
 log("A: saw B's paint arrive");
 

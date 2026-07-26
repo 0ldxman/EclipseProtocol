@@ -17,9 +17,9 @@ import { mkdir } from "node:fs/promises";
 import path from "node:path";
 import { chromium } from "playwright";
 
-const SITE = process.env.SITE_URL ?? "http://localhost:3010/";
-const ADMIN = process.env.ADMIN_URL ?? "http://localhost:3010/admin/";
-const API = process.env.API_URL ?? "http://localhost:3010";
+const SITE = process.env.SITE_URL ?? "http://127.0.0.1:3010/";
+const ADMIN = process.env.ADMIN_URL ?? "http://127.0.0.1:3010/admin/";
+const API = process.env.API_URL ?? "http://127.0.0.1:3010";
 const REPO = new URL("..", import.meta.url).pathname;
 const SHOTS = path.join(REPO, ".dev-screenshots");
 await mkdir(SHOTS, { recursive: true });
@@ -61,6 +61,8 @@ const vault = await mkFolder("Особая папка", ops.id);
 const kremen = await mkRecord("Кремень", people.id);
 const apollo = await mkRecord("Протокол Аполлон", ops.id);
 const noon = await mkRecord("Тихий Полдень", vault.id);
+// Обложка категории — обычная запись с этим именем внутри папки.
+await mkRecord("_cover", ops.id);
 await api(`/api/tree/nodes/${apollo.id}`, { method: "PATCH", body: JSON.stringify({ slug: "apollo" }) });
 
 const browser = await chromium.launch({
@@ -79,7 +81,7 @@ const track = (page, label) => {
 // --- write the records through the admin ---------------------------------
 const editor = track(await context.newPage(), "admin");
 await editor.goto(ADMIN, { waitUntil: "networkidle" });
-await editor.waitForFunction(() => document.querySelectorAll(".tree-row").length >= 5, null, {
+await editor.waitForFunction(() => document.querySelectorAll(".tree-row").length >= 7, null, {
   timeout: 30_000,
 });
 
@@ -104,6 +106,8 @@ await write(
     "::dotbar{name=Допуск max=5 current=3}",
     ":::",
     "",
+    "::event{at=2031-04-12 epoch=\"Разлом\"}",
+    "",
     "Оперативник, участник [[Протокол Аполлон|apollo]].",
     "",
     "## Биография",
@@ -127,12 +131,53 @@ await write(
 
 await write(
   "Протокол Аполлон",
-  ["# Протокол Аполлон", "", "Совместная операция. Участвовал [[Кремень|kremen]]."].join("\n"),
+  [
+    "# Протокол Аполлон",
+    "",
+    "::event{at=2029-08-02 epoch=\"Восхождение\"}",
+    "",
+    "Совместная операция. Участвовал [[Кремень|kremen]].",
+  ].join("\n"),
+);
+
+// Титульный лист категории. Внешний контейнер обязан иметь больше двоеточий,
+// чем вложенный, иначе забор закрывает не то, что нужно.
+await write(
+  "_cover",
+  [
+    '::::::cover{theme=black-red pattern=rays org="Архивная служба" volume="том II"}',
+    "# Операции",
+    "",
+    ':::::epigraph{cite="предисловие, 2033"}',
+    "Ни одна операция протокола не завершена.",
+    ":::::",
+    "",
+    ":::::columns",
+    "Полевые программы и отдельные выходы.",
+    "",
+    "::::right",
+    ":::fields",
+    "записей :: 2",
+    "охват :: 2029—2031",
+    ":::",
+    "",
+    "::stamp[для служебного пользования]",
+    "::::",
+    ":::::",
+    "::::::",
+  ].join("\n"),
 );
 
 await write(
   "Тихий Полдень",
-  ["# Тихий Полдень", "", "Кодовое слово операции — саркофаг."].join("\n"),
+  [
+    "# Тихий Полдень",
+    "",
+    // Событие закрытой записи: в ленте оно есть, содержания в нём нет.
+    "::event{at=2031-06-03 epoch=\"Разлом\"}",
+    "",
+    "Кодовое слово операции — саркофаг.",
+  ].join("\n"),
 );
 
 // Clearance goes on the folder and is inherited downwards.
@@ -161,20 +206,28 @@ ok(
 // --- the reader's screens -------------------------------------------------
 const site = track(await context.newPage(), "site");
 await site.goto(SITE, { waitUntil: "networkidle" });
-await site.waitForSelector(".entry-list", { timeout: 20_000 });
-ok("front page lists categories", (await site.locator(".home-tree .entry").count()) >= 2);
-ok("front page shows the archive summary", (await site.locator(".home-stats .row").count()) === 4);
+await site.waitForSelector(".folder", { timeout: 20_000 });
+ok("front page lays categories out as folder tabs", (await site.locator(".folder").count()) >= 2);
+ok("front page shows the change feed", (await site.locator(".feed a").count()) >= 1);
+ok("front page offers the other entrances", (await site.locator(".gate a").count()) >= 2);
 await site.screenshot({ path: path.join(SHOTS, "public-01-home.png") });
 
-// Search palette, by keyboard, exactly as a reader would.
+// Командная строка — с клавиатуры, ровно как ею пользуется читатель.
 await site.keyboard.press("Control+k");
-await site.waitForSelector(".palette-overlay:not([hidden])", { timeout: 10_000 });
+await site.waitForSelector(".pal[open]", { timeout: 10_000 });
 await site.keyboard.type("Кремень");
-await site.waitForSelector(".palette-row", { timeout: 10_000 });
+// Поиск по телу идёт на сервер и приходит позже локальных совпадений —
+// ждём именно результат, а не первую отрисовку списка.
+await site.waitForFunction(
+  () => document.querySelector(".pal__prev h4")?.textContent === "Кремень",
+  null,
+  { timeout: 10_000 },
+);
+ok("the palette previews the highlighted hit", true);
 await site.screenshot({ path: path.join(SHOTS, "public-02-search.png") });
 await site.keyboard.press("Enter");
 
-await site.waitForSelector(".record-layout", { timeout: 20_000 });
+await site.waitForSelector(".paper", { timeout: 20_000 });
 await site.waitForTimeout(400);
 
 const layout = await site.evaluate(() => {
@@ -186,55 +239,85 @@ const layout = await site.evaluate(() => {
   };
   return {
     toc: rect(".toc"),
-    article: rect(".record"),
-    aside: rect(".record-aside"),
-    dots: document.querySelectorAll(".toc-dot").length,
-    asideInfobox: document.querySelectorAll(".record-aside .w-infobox").length,
-    bodyInfobox: document.querySelectorAll(".record-body .w-infobox").length,
-    headingIds: [...document.querySelectorAll(".record-body h2")].map((h) => h.id),
-    backlinks: [...document.querySelectorAll(".backlink-list a")].map((a) => a.textContent),
+    paper: rect(".paper"),
+    aside: rect(".aside"),
+    dots: document.querySelectorAll(".toc li").length,
+    asideInfobox: document.querySelectorAll(".aside .w-infobox").length,
+    bodyInfobox: document.querySelectorAll(".paper .w-infobox").length,
+    headingIds: [...document.querySelectorAll(".paper .prose h2")].map((h) => h.id),
+    backlinks: [...document.querySelectorAll(".aside .kv a")].map((a) => a.textContent),
+    paperBg: getComputedStyle(document.querySelector(".paper")).backgroundColor,
   };
 });
 
-ok("anchor rail is left of the article", layout.toc.right <= layout.article.left, `${layout.toc.right} <= ${layout.article.left}`);
-ok("infobox column is right of the article", layout.aside.left >= layout.article.right, `${layout.aside.left} >= ${layout.article.right}`);
+ok("anchor rail is left of the document", layout.toc.right <= layout.paper.left, `${layout.toc.right} <= ${layout.paper.left}`);
+ok("the column of panels is right of the document", layout.aside.left >= layout.paper.right, `${layout.aside.left} >= ${layout.paper.right}`);
 ok("infobox is in the column, not in the text", layout.asideInfobox === 1 && layout.bodyInfobox === 0);
-ok("rail has one anchor per top-level heading", layout.dots >= 3, `${layout.dots} anchors`);
+ok("the document is paper, not instrument", layout.paperBg === "rgb(233, 231, 225)", layout.paperBg);
+ok("rail has one anchor per heading", layout.dots >= 3, `${layout.dots} anchors`);
 ok("headings carry anchors", layout.headingIds.every((id) => id.length > 0));
-ok("backlink to the other record is shown", layout.backlinks.length === 1, layout.backlinks.join(", "));
+ok("backlink to the other record is shown", layout.backlinks.length >= 1, layout.backlinks.join(", "));
 await site.screenshot({ path: path.join(SHOTS, "public-03-record.png") });
 
-// Scroll-spy: the active anchor must follow the reading position.
-const firstActive = await site.evaluate(
-  () => document.querySelectorAll(".toc-dot polygon[opacity='1']").length,
-);
+// Слежение за прокруткой: подпись рельса должна идти за читателем.
+// Окно намеренно низкое — на высоком окне короткая запись помещается целиком,
+// прокрутки нет, и проверка не проверяла бы ничего.
+const tall = site.viewportSize();
+await site.setViewportSize({ width: tall.width, height: 380 });
+await site.waitForTimeout(200);
+const firstLabel = await site.textContent(".toc em");
 await site.evaluate(() => document.getElementById("статус")?.scrollIntoView());
-await site.waitForTimeout(600);
-const movedActive = await site.evaluate(() => {
-  const dots = [...document.querySelectorAll(".toc-dot")];
-  return dots.findIndex((dot) => dot.querySelector("polygon[opacity='1']"));
-});
-ok("scroll-spy marks an anchor", firstActive >= 1 && movedActive >= 0, `index ${movedActive}`);
+await site.waitForTimeout(700);
+const movedLabel = await site.textContent(".toc em");
+await site.setViewportSize(tall);
+ok("scroll-spy follows the reading position", movedLabel !== firstLabel, `${firstLabel} -> ${movedLabel}`);
 
-// A wiki link inside the rendered record navigates without a reload.
-await site.locator(".record-body a.wikilink").first().click();
+// Ссылка внутри записи ведёт по вики без перезагрузки.
+await site.locator(".paper .prose a.wikilink").first().click();
 await site.waitForFunction(() => location.hash.includes("/wiki/apollo"), null, { timeout: 10_000 });
-await site.waitForSelector(".record-title", { timeout: 10_000 });
-ok("wiki link navigates in-app", (await site.textContent(".record-title")) === "Протокол Аполлон");
+await site.waitForSelector(".rec", { timeout: 10_000 });
+ok("wiki link navigates in-app", (await site.textContent(".rec")) === "Протокол Аполлон");
 
-// --- the classified screen -------------------------------------------------
+// --- принадлежность и титульный лист ---------------------------------------
+ok("the record shows the cover it belongs to", (await site.locator(".belong b").count()) === 1);
+await site.locator(".belong").click();
+await site.waitForSelector(".cover", { timeout: 10_000 });
+ok("the category opens with its title leaf", (await site.locator(".cover h1").textContent()) === "Операции");
+ok("the leaf carries its imprint and stamp", (await site.locator(".cover__stamp").count()) === 1);
+await site.screenshot({ path: path.join(SHOTS, "public-05-cover.png") });
+
+// --- хронология ------------------------------------------------------------
+await site.evaluate(() => (location.hash = "/timeline"));
+await site.waitForSelector(".tl .ev", { timeout: 10_000 });
+const chronology = await site.evaluate(() => ({
+  events: document.querySelectorAll(".tl .ev").length,
+  epochs: document.querySelectorAll(".tl .epoch").length,
+  fire: !!document.querySelector("#tl-fire")?.getContext,
+  sealed: document.querySelectorAll(".ev--sealed").length,
+}));
+ok("the chronology is built from the records themselves", chronology.events >= 3, `${chronology.events} events`);
+ok("events are grouped into epochs", chronology.epochs >= 1);
+ok("the fire is a canvas at the end of the page", chronology.fire === true);
+ok("a sealed event is marked but still listed", chronology.sealed >= 1);
+// Лента — второй путь, которым тело закрытой записи могло бы утечь наружу.
+const timelineLeak = await site.evaluate(() => document.body.innerHTML.includes("саркофаг"));
+ok("the chronology carries no trace of a sealed body", timelineLeak === false);
+await site.screenshot({ path: path.join(SHOTS, "public-06-timeline.png") });
+
+// --- запись выше допуска ---------------------------------------------------
 await site.evaluate((slug) => (location.hash = `/wiki/${slug}`), noon.slug);
-await site.waitForSelector(".classified", { timeout: 10_000 });
+await site.waitForSelector(".w-note.is-danger", { timeout: 10_000 });
 const leak = await site.evaluate(() => document.body.innerHTML.includes("саркофаг"));
 ok("classified page contains no trace of the text", leak === false);
-ok("classified page still names the record", (await site.textContent(".record-title")) === "Тихий Полдень");
+ok("classified page still names the record", (await site.textContent(".rec")) === "Тихий Полдень");
+ok("classified page says how much is withheld", (await site.locator(".aside .kv").count()) >= 1);
 await site.screenshot({ path: path.join(SHOTS, "public-04-classified.png") });
 
-// --- a pasted path-form deep link still lands ------------------------------
+// --- вставленная ссылка в path-форме всё ещё приземляется --------------------
 const deep = track(await context.newPage(), "deep");
 await deep.goto(`${SITE}wiki/kremen`, { waitUntil: "networkidle" });
-await deep.waitForSelector(".record-title", { timeout: 20_000 });
-ok("path-form deep link resolves", (await deep.textContent(".record-title")) === "Кремень");
+await deep.waitForSelector(".rec", { timeout: 20_000 });
+ok("path-form deep link resolves", (await deep.textContent(".rec")) === "Кремень");
 
 console.log("\nconsole errors:", errors.length ? errors : "none");
 await browser.close();

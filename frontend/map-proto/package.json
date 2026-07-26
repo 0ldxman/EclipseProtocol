@@ -9,15 +9,14 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@aether/theme": "*",
     "lib0": "^0.2.99",
     "maplibre-gl": "^5.0.0",
     "y-protocols": "^1.0.6",
-    "yjs": "^13.6.20",
-    "@aether/theme": "*"
+    "yjs": "^13.6.20"
   },
   "devDependencies": {
     "@types/geojson": "^7946.0.15",
-    "playwright": "^1.62.0",
     "typescript": "^5.7.2",
     "vite": "^6.0.7"
   }

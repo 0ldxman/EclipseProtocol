@@ -24,7 +24,7 @@ import type { Root } from "mdast";
 import { toString } from "mdast-util-to-string";
 import type { Handlers, State } from "mdast-util-to-hast";
 import { visit } from "unist-util-visit";
-import type { DirectiveKind, DirectiveSpec } from "./directives.js";
+import type { DirectiveEnv, DirectiveKind, DirectiveSpec } from "./directives.js";
 
 export interface WidgetReport {
   unknown: string[];
@@ -93,7 +93,10 @@ export function remarkUnknownDirectives(options: UnknownOptions) {
 }
 
 /** remark-rehype handlers for the three directive node types. */
-export function directiveHandlers(directives: Record<string, DirectiveSpec>): Handlers {
+export function directiveHandlers(
+  directives: Record<string, DirectiveSpec>,
+  env: DirectiveEnv = {},
+): Handlers {
   const build = (kind: DirectiveKind) => (state: State, node: unknown) => {
     const directive = node as DirectiveNode;
     const spec = directives[directive.name];
@@ -108,6 +111,7 @@ export function directiveHandlers(directives: Record<string, DirectiveSpec>): Ha
       attributes: attributesOf(directive),
       children: state.all(node as never) as ElementContent[],
       text: toString(node as never),
+      env,
     });
   };
 

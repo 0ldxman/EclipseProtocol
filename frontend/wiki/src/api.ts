@@ -31,6 +31,39 @@ export interface RecordLink {
   title: string;
 }
 
+/** Ближайшая обложка вверх по дереву — та, которой принадлежит запись. */
+export interface Belongs {
+  id: string;
+  name: string;
+  theme: string;
+  logo: string;
+  mark: string;
+}
+
+export interface FolderPage {
+  node: NavNode;
+  breadcrumb: { id: string; name: string }[];
+  access: number;
+  restricted: boolean;
+  /** Отрисованный титульный лист категории, если у неё есть свой _cover. */
+  cover: string;
+}
+
+export interface TimelineEvent {
+  slug: string;
+  title: string;
+  at: string;
+  epoch: string;
+  access: number;
+  restricted: boolean;
+  summary: string;
+}
+
+export interface Timeline {
+  epochs: { name: string; from: string; to: string; count: number }[];
+  events: TimelineEvent[];
+}
+
 export interface RecordPage {
   node: NavNode;
   breadcrumb: { id: string; name: string }[];
@@ -38,6 +71,7 @@ export interface RecordPage {
   restricted: boolean;
   backlinks: RecordLink[];
   siblings: { prev: RecordLink | null; next: RecordLink | null };
+  belongs: Belongs | null;
   html: string;
   infoboxes: string[];
   headings: Heading[];
@@ -97,3 +131,8 @@ export const search = (query: string): Promise<{ results: SearchHit[] }> =>
   get<{ results: SearchHit[] }>(`/search?q=${encodeURIComponent(query)}`);
 
 export const overview = (): Promise<Overview> => get<Overview>("/overview");
+
+export const folder = (id: string): Promise<FolderPage> =>
+  get<FolderPage>(`/folders/${encodeURIComponent(id)}`);
+
+export const timeline = (): Promise<Timeline> => get<Timeline>("/timeline");

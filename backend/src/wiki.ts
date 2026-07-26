@@ -16,7 +16,7 @@
 
 import { readFile, readdir, stat } from "node:fs/promises";
 import path from "node:path";
-import { renderMarkup, wikiLinkTargets } from "@aether/markup";
+import { coverAttributes, eventOf, renderMarkup, wikiLinkTargets, type RecordEvent } from "@aether/markup";
 import type { FastifyInstance, FastifyRequest } from "fastify";
 import type * as Y from "yjs";
 import type { RoomRegistry } from "./collab.js";
@@ -49,7 +49,18 @@ interface IndexEntry {
   links: string[];
   access: number;
   updatedAt: string;
+  parentId: string | null;
+  /** Заполнено, если запись объявила себя событием летописи. */
+  event: RecordEvent | null;
 }
+
+/**
+ * Обложка категории — обычная запись с этим именем внутри папки.
+ *
+ * Не отдельная сущность в дереве: её правят тем же редактором, что и всё
+ * остальное, и она не требует ни своей формы в админке, ни своего хранилища.
+ */
+const COVER_NAME = "_cover";
 
 /** How long an index build is trusted before the files are re-read. */
 const INDEX_TTL_MS = 3000;
@@ -95,6 +106,8 @@ class RecordIndex {
           links: wikiLinkTargets(text),
           access: this.tree.effectiveAccess(node.id),
           updatedAt: node.updatedAt,
+          parentId: node.parentId,
+          event: eventOf(text),
         } satisfies IndexEntry;
       }),
     );
@@ -144,6 +157,63 @@ export async function registerWiki(app: FastifyInstance, options: WikiOptions): 
     updatedAt: node.updatedAt,
   });
 
+  /** Обложка — служебная запись; в списках и поиске её быть не должно. */
+  const isCover = (node: TreeNode): boolean => node.kind === "record" && node.name === COVER_NAME;
+
+  /**
+   * Ближайшая обложка вверх по дереву.
+   *
+   * Своя обложка вложенной папки перекрывает родительскую целиком. Если своей
+   * нет, запись поднимается на уровень выше — и так до корня, где обложки
+   * может не оказаться вовсе.
+   */
+  function coverFor(startId: string | null): { folder: TreeNode; cover: TreeNode } | null {
+    const all = tree.list();
+    let id = startId;
+    while (id) {
+      const folder = all.find((node) => node.id === id);
+      if (!folder) return null;
+      const cover = all.find((node) => node.parentId === id && isCover(node));
+      if (cover) return { folder, cover };
+      id = folder.parentId;
+    }
+    return null;
+  }
+
+  /** Название и схема ближайшей обложки — для полосы принадлежности. */
+  async function belongsOf(startId: string | null) {
+    const found = coverFor(startId);
+    if (!found) return null;
+    const source = await coverSource(found.cover);
+    const attrs = coverAttributes(source) ?? {};
+    return {
+      id: found.folder.id,
+      name: found.folder.name,
+      theme: attrs.theme ?? "",
+      logo: attrs.logo ?? "",
+      mark: attrs.mark ?? "◆",
+    };
+  }
+
+  const coverSource = async (node: TreeNode): Promise<string> => {
+    const entry = (await index.fresh()).find((e) => e.id === node.id);
+    if (entry?.text) return entry.text;
+    const room = await rooms.get(recordRoom(node.id));
+    return textOf(room.doc);
+  };
+
+  /** Сведения о записи для `::record{slug=…}`: подставляет сервер, не автор. */
+  const resolveRecord = (slug: string) => {
+    const node = tree.bySlug(slug);
+    if (!node) return null;
+    const parent = node.parentId ? tree.list().find((n) => n.id === node.parentId) : undefined;
+    return {
+      title: node.name,
+      category: parent?.name,
+      access: tree.effectiveAccess(node.id),
+    };
+  };
+
   /**
    * The navigation tree.
    *
@@ -153,8 +223,86 @@ export async function registerWiki(app: FastifyInstance, options: WikiOptions): 
    * made the same call.
    */
   app.get("/api/wiki/nav", async () => ({
-    nodes: tree.list().map(publicNode),
+    nodes: tree.list().filter((node) => !isCover(node)).map(publicNode),
   }));
+
+  /**
+   * Категория: её обложка и путь к ней.
+   *
+   * Список записей клиент собирает из дерева, которое у него уже есть;
+   * отдельно отдаётся только то, чего в дереве нет.
+   */
+  app.get("/api/wiki/folders/:id", async (req, reply) => {
+    const { id } = req.params as { id: string };
+    const node = tree.list().find((n) => n.id === id && n.kind === "folder");
+    if (!node) return reply.code(404).send({ error: "not found" });
+
+    const access = tree.effectiveAccess(node.id);
+    const clearance = clearanceOf(req);
+    const breadcrumb = tree.pathOf(node.id).map((n) => ({ id: n.id, name: n.name }));
+
+    // Обложка своя, а не унаследованная: у категории без своей обложки
+    // титульного листа нет — есть обычное оглавление.
+    const own = tree.list().find((n) => n.parentId === node.id && isCover(n));
+    let cover = "";
+    if (own && access <= clearance) {
+      const rendered = renderMarkup(await coverSource(own), {
+        linkExists: (target) => tree.hasSlug(target),
+        resolveRecord,
+      });
+      cover = rendered.html;
+    }
+
+    return {
+      node: publicNode(node),
+      breadcrumb,
+      access,
+      restricted: access > clearance,
+      cover,
+    };
+  });
+
+  /**
+   * Летопись.
+   *
+   * Собирается из самих записей: запись объявляет себя событием директивой
+   * `::event{at=… epoch=…}`. Отдельного хранилища у ленты нет, поэтому она
+   * не может разойтись с записями, из которых состоит.
+   */
+  app.get("/api/wiki/timeline", async (req) => {
+    const clearance = clearanceOf(req);
+    const entries = (await index.fresh()).filter((entry) => entry.event);
+
+    const events = entries
+      .map((entry) => {
+        const restricted = entry.access > clearance;
+        return {
+          slug: entry.slug,
+          title: entry.title,
+          at: entry.event!.at,
+          epoch: entry.event!.epoch || "без эпохи",
+          access: entry.access,
+          restricted,
+          // Тело закрытой записи не покидает сервер и здесь тоже.
+          summary: restricted ? "" : snippet(entry.text, "", 150),
+        };
+      })
+      .sort((a, b) => a.at.localeCompare(b.at));
+
+    // Эпохи в порядке первого события: летопись читается сверху вниз.
+    const epochs: { name: string; from: string; to: string; count: number }[] = [];
+    for (const event of events) {
+      const last = epochs.at(-1);
+      if (last && last.name === event.epoch) {
+        last.to = event.at;
+        last.count += 1;
+      } else {
+        epochs.push({ name: event.epoch, from: event.at, to: event.at, count: 1 });
+      }
+    }
+
+    return { epochs, events };
+  });
 
   app.get("/api/wiki/records/:slug", async (req, reply) => {
     const { slug } = req.params as { slug: string };
@@ -174,7 +322,7 @@ export async function registerWiki(app: FastifyInstance, options: WikiOptions): 
     // going back to the index - which is how wikis are actually read.
     const family = tree
       .list()
-      .filter((n) => n.parentId === node.parentId && n.kind === "record" && n.slug)
+      .filter((n) => n.parentId === node.parentId && n.kind === "record" && n.slug && !isCover(n))
       .sort((a, b) => a.order - b.order || a.name.localeCompare(b.name, "ru"));
     const here = family.findIndex((n) => n.id === node.id);
     const sideways = (n: TreeNode | undefined) =>
@@ -186,6 +334,7 @@ export async function registerWiki(app: FastifyInstance, options: WikiOptions): 
       access,
       backlinks,
       siblings: { prev: sideways(family[here - 1]), next: sideways(family[here + 1]) },
+      belongs: await belongsOf(node.parentId),
       restricted: access > clearance,
     };
 
@@ -216,6 +365,7 @@ export async function registerWiki(app: FastifyInstance, options: WikiOptions): 
     const rendered = renderMarkup(textOf(room.doc), {
       linkExists: (target) => tree.hasSlug(target),
       extractInfoboxes: true,
+      resolveRecord,
     });
     return {
       ...base,
@@ -237,6 +387,7 @@ export async function registerWiki(app: FastifyInstance, options: WikiOptions): 
     const max = Math.min(Number(limit) || 20, 50);
 
     const results = (await index.fresh())
+      .filter((entry) => entry.title !== COVER_NAME)
       .map((entry) => {
         const inTitle = entry.title.toLowerCase().includes(lower);
         const inSlug = entry.slug.includes(lower);
@@ -264,8 +415,9 @@ export async function registerWiki(app: FastifyInstance, options: WikiOptions): 
   /** Everything the front page needs: counts and the most recent edits. */
   app.get("/api/wiki/overview", async (req) => {
     const clearance = clearanceOf(req);
-    const entries = await index.fresh();
-    const nodes = tree.list();
+    // Обложки не записи: они не попадают ни в счётчики, ни в ленту изменений.
+    const entries = (await index.fresh()).filter((entry) => entry.title !== COVER_NAME);
+    const nodes = tree.list().filter((node) => !isCover(node));
 
     let bytes = 0;
     try {

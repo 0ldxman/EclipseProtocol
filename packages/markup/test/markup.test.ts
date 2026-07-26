@@ -162,3 +162,119 @@ test("classified renders as a marked span, ready for server-side redaction", () 
   const { html } = renderMarkup(":classified[отчёт 12-B]{level=3}");
   assert.match(html, /class="w-classified" data-level="3"/);
 });
+
+/* ── виджеты, добавленные вместе с новым оформлением ─────────────────── */
+
+test("a note carries a default title for its style", () => {
+  const { html } = renderMarkup(":::note{style=warn}\nТри отчёта не сходятся.\n:::");
+  assert.match(html, /class="w-note is-warn"/);
+  assert.match(html, /<b>внимание<\/b>/);
+  assert.match(html, /Три отчёта не сходятся\./);
+});
+
+test("a note keeps an explicit title over the default one", () => {
+  const { html } = renderMarkup(':::note{style=danger title="Оспорено стороной"}\nТекст.\n:::');
+  assert.match(html, /<b>Оспорено стороной<\/b>/);
+});
+
+test("fields become a definition list split on the double colon", () => {
+  const { html } = renderMarkup(":::fields\nПозывной :: «Кремень»\nШифр :: AC/*0041\n:::");
+  assert.match(html, /class="w-fields"/);
+  assert.match(html, /<dt>Позывной<\/dt><dd>«Кремень»<\/dd>/);
+  assert.match(html, /<dt>Шифр<\/dt><dd>AC\/\*0041<\/dd>/);
+});
+
+test("a line without the separator is skipped rather than becoming an empty row", () => {
+  const { html } = renderMarkup(":::fields\nбез разделителя\nШифр :: AC/*0041\n:::");
+  assert.doesNotMatch(html, /без разделителя/);
+  assert.match(html, /<dt>Шифр<\/dt>/);
+});
+
+test("a record card asks the renderer for the title, not the author", () => {
+  const { html } = renderMarkup("::record{slug=apollo}", {
+    resolveRecord: (slug) =>
+      slug === "apollo" ? { title: "Протокол Аполлон", category: "операции" } : null,
+  });
+  assert.match(html, /class="w-record" href="\/wiki\/apollo"/);
+  assert.match(html, /<b>Протокол Аполлон<\/b>/);
+  assert.match(html, /операции/);
+});
+
+test("an unresolved record card is marked instead of pretending to be a link", () => {
+  const { html } = renderMarkup("::record{slug=nowhere}", { resolveRecord: () => null });
+  assert.match(html, /w-record is-broken/);
+  assert.doesNotMatch(html, /<a class="w-record"/);
+});
+
+test("a sealed record card says what it needs rather than showing nothing", () => {
+  const { html } = renderMarkup("::record{slug=tihiy-polden}", {
+    resolveRecord: () => ({ title: "Тихий Полдень", category: "операции", access: 3 }),
+  });
+  assert.match(html, /требуется допуск 3/);
+  assert.match(html, /◇/);
+});
+
+test("video renders a real player, not a picture of one", () => {
+  const { html } = renderMarkup("::video{src=/uploads/a.mp4 poster=/uploads/a.jpg caption=Кадр}");
+  assert.match(html, /<video[^>]+src="\/uploads\/a\.mp4"/);
+  assert.match(html, /poster="\/uploads\/a\.jpg"/);
+  assert.match(html, /<figcaption>Кадр<\/figcaption>/);
+});
+
+test("a table directive styles the table gfm already parsed", () => {
+  const { html } = renderMarkup(
+    ':::table{caption="Состав группы"}\n| a | b |\n| - | - |\n| 1 | 2 |\n:::',
+  );
+  assert.match(html, /class="w-table-wrap"/);
+  assert.match(html, /<table class="w-table">/);
+  assert.match(html, /Состав группы/);
+});
+
+test("a file widget is a download link with its size", () => {
+  const { html } = renderMarkup('::file{src=/uploads/r.pdf name="Отчёт 12-Б" size="240 КБ"}');
+  assert.match(html, /class="w-file" href="\/uploads\/r\.pdf" download/);
+  assert.match(html, /Отчёт 12-Б/);
+  assert.match(html, /240 КБ/);
+});
+
+/* ── титульный лист ──────────────────────────────────────────────────── */
+
+test("a cover lays the document out as a title leaf", () => {
+  const { html } = renderMarkup(
+    ':::cover{theme=black-red pattern=rays org="Архивная служба" volume="том IV"}\n' +
+      "# Орден Затмения\n\n" +
+      ':::epigraph{cite="совет, 2020"}\nМы остались стоять там, где стояли.\n:::\n' +
+      ":::\n",
+  );
+  assert.match(html, /class="cover cover--black-red cover--pat-rays"/);
+  assert.match(html, /class="cover__frame"/);
+  assert.match(html, /class="cover__mark"/);
+  assert.match(html, /том IV/);
+  assert.match(html, /<h1 id="орден-затмения">Орден Затмения<\/h1><div class="cover__rule">/);
+  assert.match(html, /class="cover__epi"/);
+  assert.match(html, /<cite>совет, 2020<\/cite>/);
+});
+
+test("an unknown cover theme falls back to the paper leaf rather than emitting itself", () => {
+  const { html } = renderMarkup(":::cover{theme=neon}\n# Раздел\n:::");
+  assert.match(html, /class="cover cover--pat-fiber"/);
+  assert.doesNotMatch(html, /neon/);
+});
+
+test("a logo replaces the default mark", () => {
+  const { html } = renderMarkup(':::cover{logo=/uploads/emblem.svg org="Орден"}\n# Орден\n:::');
+  assert.match(html, /class="cover__mark cover__mark--img"/);
+  assert.match(html, /<img src="\/uploads\/emblem\.svg" alt="Орден">/);
+});
+
+test("columns move below the rule while the title stays centred", () => {
+  const { html } = renderMarkup(
+    ":::cover\n# Операции\n\n:::columns\nСвободный текст.\n\n:::right\n" +
+      ":::fields\nзаписей :: 9\n:::\n::stamp[для служебного пользования]\n:::\n:::\n:::\n",
+  );
+  const inner = html.indexOf('class="cover__in"');
+  const foot = html.indexOf('class="cover__foot"');
+  assert.ok(inner > -1 && foot > inner, "нижние колонки идут после центральной части");
+  assert.match(html, /class="cover__imprint"/);
+  assert.match(html, /class="cover__stamp">для служебного пользования/);
+});

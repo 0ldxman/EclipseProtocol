@@ -12,7 +12,8 @@ import "./style.css";
 import { adoptPathRoute, appRoot, currentRoute, navigate } from "./app-root.js";
 import { el } from "./dom.js";
 import { bindSearchShortcut, siteFoot, siteRail } from "./header.js";
-import { renderFolder, renderHome, renderRecord } from "./pages.js";
+import { renderFolder, renderHome, renderRecord, renderTag } from "./pages.js";
+import { renderTimeline } from "./timeline.js";
 
 // Рельс сверху и строка статуса снизу стоят всегда; экраны меняются между ними.
 const view = el("main", { class: "view", id: "view" });
@@ -58,6 +59,9 @@ async function route(): Promise<void> {
     if (record) return await renderRecord(view, decodeURIComponent(record[1]!));
     const folder = /^\/folder\/(.+)$/.exec(path);
     if (folder) return await renderFolder(view, folder[1]!);
+    const tag = /^\/tag\/(.+)$/.exec(path);
+    if (tag) return await renderTag(view, decodeURIComponent(tag[1]!));
+    if (path === "/timeline") return await renderTimeline(view);
     return await renderHome(view);
   } catch (error) {
     failure(error);

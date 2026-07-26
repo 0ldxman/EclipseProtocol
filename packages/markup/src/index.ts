@@ -20,7 +20,7 @@ import remarkParse from "remark-parse";
 import remarkRehype from "remark-rehype";
 import { unified } from "unified";
 import type { Element, Root as HastRoot } from "hast";
-import { DIRECTIVES, KNOWN_DIRECTIVES } from "./directives.js";
+import { DIRECTIVES, KNOWN_DIRECTIVES, type RecordFacts } from "./directives.js";
 import { directiveHandlers, remarkUnknownDirectives, type WidgetReport } from "./widgets.js";
 import { remarkWikiLinks, type LinkReport } from "./wikilinks.js";
 import { collectHeadings, excerptOf, firstImage, type Heading } from "./derive.js";
@@ -61,6 +61,13 @@ export interface RenderOptions {
    * facts true: one document, two columns.
    */
   extractInfoboxes?: boolean;
+  /**
+   * Сведения о записи по слагу, для `::record{slug=…}`.
+   *
+   * Название и категорию подставляет тот, кто рендерит, а не автор текста:
+   * иначе переименование записи оставляет в чужих документах старое имя.
+   */
+  resolveRecord?: (slug: string) => RecordFacts | null;
 }
 
 /**
@@ -85,6 +92,14 @@ const schema = {
     "time",
     "span",
     "div",
+    "article",
+    "cite",
+    "dl",
+    "dt",
+    "dd",
+    // Настоящий проигрыватель, а не картинка с треугольником: подделка кадра
+    // выглядит так же, но не играет.
+    "video",
   ],
   attributes: {
     ...defaultSchema.attributes,
@@ -113,10 +128,12 @@ const schema = {
       ...(defaultSchema.attributes?.a ?? []).filter((entry) => !Array.isArray(entry)),
       "className",
       "dataBroken",
+      "download",
     ],
     time: [...(defaultSchema.attributes?.time ?? []), "dateTime"],
-    img: [...(defaultSchema.attributes?.img ?? []), "loading"],
+    img: [...(defaultSchema.attributes?.img ?? []), "loading", "alt", "src"],
     span: ["tabIndex"],
+    video: ["src", "poster", "controls", "preload", "className"],
   },
 };
 
@@ -163,7 +180,10 @@ export function renderMarkup(source: string, options: RenderOptions = {}): Rende
     .use(remarkUnknownDirectives, { directives: DIRECTIVES, report: widgets })
     .use(remarkRehype, {
       allowDangerousHtml: false,
-      handlers: directiveHandlers(DIRECTIVES),
+      handlers: directiveHandlers(DIRECTIVES, {
+        resolveRecord: options.resolveRecord,
+        linkBase: options.linkBase ?? "/wiki/",
+      }),
     })
     .use(() => (node: HastRoot) => {
       // Must run *inside* the pipeline, not after it: collectHeadings writes
@@ -194,5 +214,6 @@ export function renderMarkup(source: string, options: RenderOptions = {}): Rende
 }
 
 export { wikiLinkTargets } from "./wikilinks.js";
+export { eventOf, coverAttributes, type RecordEvent } from "./events.js";
 export type { Heading } from "./derive.js";
 export { DIRECTIVES, KNOWN_DIRECTIVES } from "./directives.js";

@@ -79,6 +79,11 @@ function commands(): Item[] {
   };
   return [
     {
+      kind: "команда", icon: "›", name: "открыть хронологию", note: "переход",
+      path: "/timeline", text: "Летопись протокола: эпохи и события.",
+      access: 0, restricted: false, go: () => navigate("/timeline"),
+    },
+    {
       kind: "команда", icon: "›", name: "открыть карту", note: "переход",
       path: "/map/", text: "Границы на любую дату из хронологии.",
       access: 0, restricted: false, go: open("map/"),
@@ -123,12 +128,7 @@ function tagItems(query: string): Item[] {
     text: "Метка живёт поперёк категорий: одна запись может нести сколько угодно меток.",
     access: 0,
     restricted: false,
-    // Отдельного экрана меток пока нет — метка ведёт в поиск по себе же.
-    go: () => {
-      field.value = tag;
-      scope = 0;
-      void refresh();
-    },
+    go: () => navigate(`/tag/${encodeURIComponent(tag)}`),
   }));
 }
 

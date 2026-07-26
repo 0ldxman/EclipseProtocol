@@ -6,7 +6,7 @@ const browser = await chromium.launch({
 });
 const ctx = await browser.newContext({ viewport: { width: 1400, height: 900 } });
 const page = await ctx.newPage();
-await page.goto(process.env.SHOT_URL ?? "http://localhost:3010/map/", { waitUntil: "networkidle" });
+await page.goto(process.env.SHOT_URL ?? "http://127.0.0.1:3010/map/", { waitUntil: "networkidle" });
 await page.waitForFunction(() => /провинций/.test(document.getElementById("status")?.textContent ?? ""), null, { timeout: 60000 });
 await page.evaluate(() => window.__reset?.());
 await page.waitForTimeout(600);

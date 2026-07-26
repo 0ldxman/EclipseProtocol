@@ -21,6 +21,25 @@ import type { Element, ElementContent, Properties } from "hast";
 
 export type DirectiveKind = "textDirective" | "leafDirective" | "containerDirective";
 
+/** What a record looks like from outside, for widgets that link to one. */
+export interface RecordFacts {
+  title: string;
+  /** Folder the record sits in, shown under the title. */
+  category?: string;
+  access?: number;
+}
+
+/**
+ * Everything a widget may need beyond its own text.
+ *
+ * Kept as one object rather than growing the argument list: a widget that
+ * resolves a record and a widget that does not should read the same way.
+ */
+export interface DirectiveEnv {
+  resolveRecord?: (slug: string) => RecordFacts | null;
+  linkBase?: string;
+}
+
 export interface DirectiveContext {
   name: string;
   kind: DirectiveKind;
@@ -29,6 +48,7 @@ export interface DirectiveContext {
   children: ElementContent[];
   /** Raw text of the directive label, useful for widgets that ignore markup. */
   text: string;
+  env: DirectiveEnv;
 }
 
 export interface DirectiveSpec {
@@ -55,6 +75,31 @@ const numeric = (value: string, fallback: number): number => {
 
 /** Style keyword -> class suffix. Anything unrecognised falls back to neutral. */
 const STYLES = new Set(["neutral", "info", "ok", "warn", "danger", "ghost"]);
+
+/** Заголовок врезки по умолчанию — чтобы `:::note{style=warn}` уже был осмыслен. */
+const DEFAULT_NOTE_TITLES: Record<string, string> = {
+  neutral: "примечание",
+  info: "справка",
+  ok: "подтверждено",
+  warn: "внимание",
+  danger: "оспорено",
+  ghost: "примечание",
+};
+
+/** Готовые схемы титульного листа: фон + второй цвет. */
+const COVER_THEMES = new Set([
+  "black-red",
+  "black-white",
+  "black-blue",
+  "red-black",
+  "red-white",
+  "blue-white",
+  "blue-black",
+  "orange-white",
+  "orange-black",
+]);
+
+const COVER_PATTERNS = new Set(["fiber", "grid", "hatch", "rays", "none"]);
 const styleClass = (value: string): string =>
   STYLES.has(value) ? `is-${value}` : "is-neutral";
 
@@ -215,6 +260,256 @@ export const DIRECTIVES: Record<string, DirectiveSpec> = {
   gallery: {
     kinds: ["containerDirective"],
     render: (c) => el("div", { className: ["w-gallery"] }, c.children),
+  },
+
+  /* ─── врезки, таблицы, вложения ───────────────────────────────────────
+     Всё, что ниже, появилось после того, как оформление разошлось с тем,
+     что разметка умела выразить: редакторы писали врезки абзацами с жирным
+     словом в начале, а ссылку на другую запись — обычной строкой. */
+
+  /** `:::note{style=warn title="Расхождение"}` — редакторское примечание. */
+  note: {
+    kinds: ["containerDirective"],
+    render: (c) => {
+      const children: ElementContent[] = [];
+      const title = attr(c, "title") || DEFAULT_NOTE_TITLES[attr(c, "style", "neutral")] || "примечание";
+      children.push(el("b", {}, [text(title)]));
+      children.push(...c.children);
+      return el("div", { className: ["w-note", styleClass(attr(c, "style", "neutral"))] }, children);
+    },
+  },
+
+  /**
+   * `::video{src=… poster=… caption=…}`
+   *
+   * Настоящий <video>, а не картинка с треугольником: подделка кадра выглядит
+   * так же, но не играет, и читатель узнаёт об этом только щёлкнув.
+   */
+  video: {
+    kinds: ["leafDirective"],
+    render: (c) => {
+      const caption = attr(c, "caption");
+      const children: ElementContent[] = [
+        el("video", {
+          className: ["w-video__frame"],
+          src: attr(c, "src"),
+          poster: attr(c, "poster") || undefined,
+          controls: true,
+          preload: "metadata",
+        }),
+      ];
+      if (caption) children.push(el("figcaption", {}, [text(caption)]));
+      return el("figure", { className: ["w-video"] }, children);
+    },
+  },
+
+  /**
+   * `:::table{caption="Состав группы"}` вокруг обычной таблицы markdown.
+   *
+   * Директива не разбирает таблицу — её уже разобрал GFM. Она добавляет
+   * подпись и класс, потому что на бумаге таблице нужен свой вид.
+   */
+  table: {
+    kinds: ["containerDirective"],
+    render: (c) => {
+      for (const child of c.children) {
+        if (child.type === "element" && child.tagName === "table") {
+          child.properties = { ...child.properties, className: ["w-table"] };
+        }
+      }
+      const children = [...c.children];
+      const caption = attr(c, "caption");
+      if (caption) children.push(el("figcaption", { className: ["w-table-cap"] }, [text(caption)]));
+      return el("figure", { className: ["w-table-wrap"] }, children);
+    },
+  },
+
+  /**
+   * `::record{slug=protokol-apollon}` — ссылка на запись как на объект.
+   *
+   * Название и категорию подставляет сервер, поэтому переименование записи
+   * не оставляет в чужом тексте старое имя.
+   */
+  record: {
+    kinds: ["leafDirective", "textDirective"],
+    render: (c) => {
+      const slug = attr(c, "slug") || c.text.trim();
+      const facts = c.env.resolveRecord?.(slug) ?? null;
+      const base = c.env.linkBase ?? "/wiki/";
+      if (!facts) {
+        return el("span", { className: ["w-record", "is-broken"], dataBroken: "true" }, [
+          text(slug),
+        ]);
+      }
+      const sealed = (facts.access ?? 0) > 0;
+      return el("a", { className: ["w-record"], href: `${base}${slug}` }, [
+        el("i", {}, [text(sealed ? "◇" : "◆")]),
+        el("span", {}, [
+          el("b", {}, [text(facts.title)]),
+          el("s", {}, [
+            text(
+              [facts.category, sealed ? `требуется допуск ${facts.access}` : null]
+                .filter(Boolean)
+                .join(" · "),
+            ),
+          ]),
+        ]),
+        el("em", {}, [text(slug)]),
+      ]);
+    },
+  },
+
+  /** `::file{src=… name="Отчёт 12-Б" size="240 КБ"}` — вложение. */
+  file: {
+    kinds: ["leafDirective"],
+    render: (c) =>
+      el("a", { className: ["w-file"], href: attr(c, "src"), download: true }, [
+        el("span", {}, [text("▣")]),
+        el("span", {}, [text(attr(c, "name") || attr(c, "src"))]),
+        el("em", {}, [text(attr(c, "size"))]),
+      ]),
+  },
+
+  /**
+   * `:::fields` — пары «ключ :: значение», по одной на строку.
+   *
+   * Разбирается по сырому тексту, а не по разметке: строки внутри одного
+   * абзаца markdown склеивает мягкими переносами, и дерево здесь ничего
+   * не добавляет, кроме работы.
+   */
+  fields: {
+    kinds: ["containerDirective"],
+    render: (c) => {
+      const rows: ElementContent[] = [];
+      for (const line of c.text.split(/\r?\n/)) {
+        const at = line.indexOf("::");
+        if (at < 0) continue;
+        const key = line.slice(0, at).trim();
+        const value = line.slice(at + 2).trim();
+        if (!key) continue;
+        rows.push(el("dt", {}, [text(key)]), el("dd", {}, [text(value)]));
+      }
+      return el("dl", { className: ["w-fields"] }, rows);
+    },
+  },
+
+  /**
+   * `::event{at=2022-07-11 epoch="Разлом"}` — запись в летописи.
+   *
+   * Ставит на странице датированную строку и одновременно объявляет, что эта
+   * запись — событие хронологии. Отдельного хранилища у ленты нет намеренно:
+   * событие живёт в той же записи, что и рассказ о нём, и не может
+   * разойтись с ней.
+   */
+  event: {
+    kinds: ["leafDirective", "textDirective"],
+    render: (c) => {
+      const at = attr(c, "at");
+      const epoch = attr(c, "epoch");
+      return el("div", { className: ["w-event"], dataAt: at, dataEpoch: epoch }, [
+        el("time", { className: ["w-event__at"], dateTime: at }, [text(at)]),
+        el("span", { className: ["w-event__epoch"] }, [text(epoch)]),
+      ]);
+    },
+  },
+
+  /** `:::center` и `:::right` — выравнивание блока. */
+  center: {
+    kinds: ["containerDirective"],
+    render: (c) => el("div", { className: ["w-center"] }, c.children),
+  },
+
+  /* ─── титульный лист категории ────────────────────────────────────────
+     Обложка — обычная запись с именем `_cover` внутри папки. Оболочка ниже
+     раскладывает то, что автор написал сверху вниз, на титульный лист:
+     всё, кроме нижних колонок, попадает в центральную часть.
+
+     Важно про вложенность: у markdown-директив внешний контейнер должен
+     иметь БОЛЬШЕ двоеточий, чем внутренний. Одинаковая ширина забора
+     закрывает внешний контейнер вместо того, чтобы вложить внутренний, и
+     титул рассыпается на куски. Поэтому лист пишется так:
+
+       ::::::cover{…}
+       # Название
+       :::::epigraph{…} … :::::
+       :::::columns
+         ::::right
+           :::fields … :::
+           ::stamp[…]
+         ::::
+       :::::
+       :::::: */
+
+  cover: {
+    kinds: ["containerDirective"],
+    render: (c) => {
+      const theme = attr(c, "theme");
+      const pattern = attr(c, "pattern", "fiber");
+      const classes = ["cover"];
+      if (COVER_THEMES.has(theme)) classes.push(`cover--${theme}`);
+      if (COVER_PATTERNS.has(pattern)) classes.push(`cover--pat-${pattern}`);
+
+      const logo = attr(c, "logo");
+      const mark = logo
+        ? el("div", { className: ["cover__mark", "cover__mark--img"] }, [
+            el("img", { src: logo, alt: attr(c, "org") || "" }),
+          ])
+        : el("div", { className: ["cover__mark"] }, [text(attr(c, "mark", "◆"))]);
+
+      const head: ElementContent[] = [mark];
+      const org = attr(c, "org");
+      if (org) head.push(el("div", { className: ["cover__org"] }, [text(org)]));
+      const volume = attr(c, "volume");
+      if (volume) head.push(el("div", { className: ["cover__vol"] }, [text(volume)]));
+
+      // Заголовок и эпиграф стоят по центру, нижние колонки — под линией.
+      const middle: ElementContent[] = [];
+      const foot: ElementContent[] = [];
+      for (const child of c.children) {
+        const cls =
+          child.type === "element" && Array.isArray(child.properties?.className)
+            ? (child.properties.className as string[])
+            : [];
+        if (cls.includes("cover__foot")) foot.push(child);
+        else middle.push(child);
+      }
+      // Черта под названием рисуется здесь, а не автором: она часть листа.
+      const titleAt = middle.findIndex(
+        (child) => child.type === "element" && child.tagName === "h1",
+      );
+      if (titleAt >= 0) middle.splice(titleAt + 1, 0, el("div", { className: ["cover__rule"] }));
+
+      return el("article", { className: classes }, [
+        el("div", { className: ["cover__frame"] }),
+        el("div", { className: ["cover__in"] }, [...head, ...middle]),
+        ...foot,
+      ]);
+    },
+  },
+
+  epigraph: {
+    kinds: ["containerDirective"],
+    render: (c) => {
+      const children = [...c.children];
+      const cite = attr(c, "cite");
+      if (cite) children.push(el("cite", {}, [text(cite)]));
+      return el("blockquote", { className: ["cover__epi"] }, children);
+    },
+  },
+
+  columns: {
+    kinds: ["containerDirective"],
+    render: (c) => el("div", { className: ["cover__foot"] }, c.children),
+  },
+
+  right: {
+    kinds: ["containerDirective"],
+    render: (c) => el("div", { className: ["cover__imprint"] }, c.children),
+  },
+
+  stamp: {
+    kinds: ["textDirective", "leafDirective"],
+    render: (c) => el("div", { className: ["cover__stamp"] }, [text(c.text || attr(c, "label"))]),
   },
 };
 

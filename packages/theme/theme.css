@@ -456,13 +456,9 @@ div.w-classified{display:block;padding:2px 0}
 
 /* ::video{src poster caption} */
 .w-video{position:relative;margin:24px auto 0;width:fit-content;max-width:100%;text-align:center}
-.w-video__frame{position:relative;aspect-ratio:16/9;width:min(560px,100%);background:var(--ink-2);display:grid;place-items:center}
-.w-video__frame::after{content:"";position:absolute;inset:0;box-shadow:inset 0 0 0 1px rgba(22,23,26,.5)}
-.w-video__play{width:44px;height:44px;border:1px solid var(--amber);color:var(--amber);display:grid;place-items:center;font:14px/1 var(--mono)}
-.w-video__meta{
-  position:absolute;left:0;right:0;bottom:0;display:flex;gap:12px;padding:5px 9px;
-  background:linear-gradient(transparent,rgba(10,11,12,.85));
-  font:9px/1.4 var(--mono);letter-spacing:.09em;text-transform:uppercase;color:var(--dim);
+.w-video__frame{
+  display:block;width:min(640px,100%);aspect-ratio:16/9;background:var(--ink-2);
+  box-shadow:inset 0 0 0 1px rgba(22,23,26,.5);
 }
 .w-video figcaption{margin-top:7px;padding-top:6px;border-top:1px solid rgba(22,23,26,.16);font:10px/1.6 var(--mono);color:var(--paper-dim);text-align:center}
 
@@ -496,6 +492,32 @@ div.w-classified{display:block;padding:2px 0}
 .w-record b{display:block;font:600 15px/1.3 var(--serif)}
 .w-record s{display:block;text-decoration:none;font:10px/1.6 var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--paper-dim)}
 .w-record em{margin-left:auto;font-style:normal;font:10px/1 var(--mono);color:var(--paper-dim)}
+
+/* :::table{caption} — таблицу разобрал GFM, директива добавляет вид и подпись */
+.w-table-wrap{margin:24px 0 0}
+.w-table-cap{
+  margin-top:8px;padding-top:6px;border-top:1px solid rgba(22,23,26,.16);
+  font:10px/1.6 var(--mono);letter-spacing:.05em;color:var(--paper-dim);text-align:center;
+}
+
+/* :::center — выравнивание блока по центру колонки */
+.w-center{margin:20px 0 0;text-align:center}
+.w-center>*{margin-left:auto;margin-right:auto}
+
+/* ::event{at epoch} — запись объявляет себя событием летописи */
+.w-event{
+  display:flex;align-items:baseline;gap:12px;margin:0 0 18px;padding-bottom:9px;
+  border-bottom:1px solid rgba(22,23,26,.2);
+}
+.w-event__at{font:12px/1 var(--mono);letter-spacing:.08em;color:var(--paper-ink)}
+.w-event__epoch{font:10px/1 var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--paper-dim)}
+.w-event__epoch:not(:empty)::before{content:"эпоха · "}
+
+/* карточка записи, которую не удалось разрешить: молча пропасть она не может */
+.w-record.is-broken{
+  display:inline-block;margin:20px 0 0;padding:9px 13px;text-decoration:line-through;
+  color:var(--paper-dim);box-shadow:inset 0 0 0 1px rgba(160,40,32,.4);
+}
 
 /* ::file{name size} */
 .w-file{display:flex;align-items:center;gap:11px;margin:14px 0 0;padding:8px 12px;box-shadow:inset 0 0 0 1px rgba(22,23,26,.16);font:11px/1.5 var(--mono);text-decoration:none;color:var(--paper-ink)}
@@ -735,6 +757,9 @@ div.w-classified{display:block;padding:2px 0}
 .cover__foot p{margin:0;font:400 14.5px/1.65 var(--serif);color:color-mix(in srgb,var(--cv-ink) 82%,var(--cv-bg));max-width:46ch}
 .cover__imprint{text-align:right}
 .cover__imprint dl{display:grid;grid-template-columns:auto auto;gap:3px 16px;margin:0;justify-content:end}
+.cover__imprint .w-fields dt,.cover__imprint .w-fields dd{border:0;padding:2px 0}
+.cover__imprint .w-fields dd{font:11px/1.7 var(--mono);color:var(--cv-ink)}
+.cover__imprint .w-fields dt{color:var(--cv-dim)}
 .cover__imprint dt{font:10px/1.7 var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--cv-dim)}
 .cover__imprint dd{margin:0;font:11px/1.7 var(--mono);color:var(--cv-ink);text-align:right}
 .cover__stamp{
@@ -745,7 +770,7 @@ div.w-classified{display:block;padding:2px 0}
 
 /* принадлежность записи: полоса над документом, взятая у ближайшей обложки */
 .belong{
-  display:flex;align-items:center;gap:12px;padding:9px 13px;margin-bottom:14px;
+  display:flex;align-items:center;gap:12px;padding:9px 13px;margin-bottom:14px;text-decoration:none;
   background:var(--ink-2);box-shadow:inset 3px 0 0 var(--cv-accent,var(--rule-2));
 }
 .belong i{
@@ -756,6 +781,7 @@ div.w-classified{display:block;padding:2px 0}
 .belong b{font:500 11px/1.3 var(--display);letter-spacing:.11em;text-transform:uppercase;color:var(--fg);font-weight:500}
 .belong s{text-decoration:none;font:10px/1.3 var(--mono);letter-spacing:.07em;text-transform:uppercase;color:var(--dim)}
 .belong .sp{margin-left:auto}
+.belong:hover{background:var(--ink-3)}
 
 @media (max-width:820px){
   .cover{padding:44px 26px 30px}
