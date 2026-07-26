@@ -26,16 +26,24 @@ export interface Heading {
   text: string;
 }
 
+export interface RecordLink {
+  slug: string;
+  title: string;
+}
+
 export interface RecordPage {
   node: NavNode;
   breadcrumb: { id: string; name: string }[];
   access: number;
   restricted: boolean;
-  backlinks: { slug: string; title: string }[];
+  backlinks: RecordLink[];
+  siblings: { prev: RecordLink | null; next: RecordLink | null };
   html: string;
   infoboxes: string[];
   headings: Heading[];
   excerpt: string;
+  /** Only on a record above the reader's clearance: how much is withheld. */
+  hidden?: { chars: number; sections: number; attachments: number };
 }
 
 export interface SearchHit {

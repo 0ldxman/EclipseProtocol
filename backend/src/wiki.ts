@@ -170,17 +170,46 @@ export async function registerWiki(app: FastifyInstance, options: WikiOptions): 
       .filter((entry) => entry.slug !== slug && entry.links.includes(slug))
       .map((entry) => ({ slug: entry.slug, title: entry.title }));
 
+    // Neighbours inside the same folder, so a reader can move sideways without
+    // going back to the index - which is how wikis are actually read.
+    const family = tree
+      .list()
+      .filter((n) => n.parentId === node.parentId && n.kind === "record" && n.slug)
+      .sort((a, b) => a.order - b.order || a.name.localeCompare(b.name, "ru"));
+    const here = family.findIndex((n) => n.id === node.id);
+    const sideways = (n: TreeNode | undefined) =>
+      n ? { slug: n.slug!, title: n.name } : null;
+
     const base = {
       node: publicNode(node),
       breadcrumb,
       access,
       backlinks,
+      siblings: { prev: sideways(family[here - 1]), next: sideways(family[here + 1]) },
       restricted: access > clearance,
     };
 
     // Above the reader's clearance: the body never leaves the server.
+    //
+    // What does go out is its *size*. Telling the reader that 1 842 characters
+    // in three sections are withheld says nothing about what they say, and it
+    // is the difference between a page that is closed and a page that looks
+    // broken. The count comes from the materialised file, not the live room.
     if (access > clearance) {
-      return { ...base, html: "", infoboxes: [], headings: [], excerpt: "" };
+      const entry = entries.find((e) => e.slug === slug);
+      const body = entry?.text ?? "";
+      return {
+        ...base,
+        html: "",
+        infoboxes: [],
+        headings: [],
+        excerpt: "",
+        hidden: {
+          chars: body.replace(/\s+/g, " ").trim().length,
+          sections: (body.match(/^##\s+/gm) ?? []).length,
+          attachments: (body.match(/^::(image|video|file)\{/gm) ?? []).length,
+        },
+      };
     }
 
     const room = await rooms.get(recordRoom(node.id));

@@ -1,86 +1,92 @@
 /**
- * Site header: command line on the left, logo in the middle, reader on the
- * right - the arrangement from the old design, rebuilt without React.
+ * Верхний рельс и нижняя строка статуса — рамка, в которой стоит любой экран.
  *
- * The search control is a button rather than an input on purpose: it opens the
- * palette, and the palette is where typing happens. Two focusable text fields
- * for one search is how you get a header field that silently does nothing.
+ * Поиск в рельсе сделан кнопкой, а не полем ввода: набирают в командной строке,
+ * и два фокусируемых поля на один поиск — верный способ получить в шапке
+ * поле, которое молча ничего не делает.
  */
 
 import { href, navigate } from "./app-root.js";
-import { el, svg } from "./dom.js";
+import { el } from "./dom.js";
 import { openSearch } from "./search-palette.js";
 
-/** The live-signal diamond: outline plus a pulsing centre. */
-function logoDiamond(): SVGElement {
-  return svg(
-    `<polygon points="6,0.75 11.25,6 6,11.25 0.75,6" fill="none" stroke="var(--primary)" stroke-width="1" />
-     <polygon points="6,3.75 8.25,6 6,8.25 3.75,6" fill="var(--primary)" class="live-dot" />`,
-    { viewBox: "0 0 12 12", width: "22", height: "22", "aria-hidden": "true" },
+/** Уровень читателя. Сессии пока нет — сервис входа живёт отдельно. */
+const CLEARANCE = 0;
+
+function clearanceMeter(level: number, of = 5): HTMLElement {
+  return el(
+    "span",
+    { class: "clr", title: `допуск · уровень ${level}` },
+    Array.from({ length: of }, (_, i) => el("i", { class: i < Math.max(level, 1) ? "on" : "" })),
   );
 }
 
-function userCard(): HTMLElement {
-  // No session yet: the auth service is a separate application and is not
-  // wired in. Rather than fake a signed-in operator, the header states what is
-  // true - an anonymous reader, cleared for nothing.
-  const trigger = el("button", { class: "user-card", type: "button", "aria-haspopup": "true" }, [
-    el("span", { class: "avatar avatar--sm" }, ["ГО"]),
-    el("span", { class: "user-id" }, [
-      el("b", {}, ["@гость"]),
-      el("span", { class: "user-clearance" }, ["допуск · уровень 0"]),
-    ]),
-  ]);
-
-  const menu = el("div", { class: "menu user-menu", hidden: true }, [
-    el("button", { class: "menu-item", type: "button", disabled: true }, ["Вход не подключён"]),
-    el("div", { class: "menu-sep" }),
-    el("a", { class: "menu-item", href: "admin/" }, ["Админка"]),
-    el("a", { class: "menu-item", href: "map/" }, ["Карта"]),
-  ]);
-
-  const wrap = el("div", { class: "user-wrap" }, [trigger, menu]);
-  trigger.addEventListener("click", (event) => {
-    event.stopPropagation();
-    menu.hidden = !menu.hidden;
-    trigger.setAttribute("aria-expanded", String(!menu.hidden));
-  });
-  document.addEventListener("click", () => {
-    menu.hidden = true;
-    trigger.setAttribute("aria-expanded", "false");
-  });
-  return wrap;
-}
-
-export function siteHeader(): HTMLElement {
-  const searchButton = el("button", { class: "cmd", type: "button" }, [
-    el("span", { class: "cmd-prompt" }, [">"]),
-    el("span", { class: "cmd-label" }, ["wiki search --query"]),
-    el("kbd", { class: "kbd" }, ["Ctrl K"]),
-  ]);
-  searchButton.addEventListener("click", () => openSearch());
-
-  const brand = el("a", { class: "brand", href: href("/") }, [
-    logoDiamond(),
-    el("span", { class: "brand-name" }, [
-      "AETHER",
-      el("span", { class: "accent" }, ["."]),
-      "WIKI",
-    ]),
-  ]);
-  brand.addEventListener("click", (event) => {
+function link(route: string, attrs: Record<string, string>, children: (Node | string)[]): HTMLElement {
+  const anchor = el("a", { ...attrs, href: href(route) }, children);
+  anchor.addEventListener("click", (event) => {
     event.preventDefault();
-    navigate("/");
+    navigate(route);
   });
+  return anchor;
+}
 
-  return el("header", { class: "site-head" }, [
-    el("div", { class: "head-left" }, [searchButton]),
+export function siteRail(): HTMLElement {
+  const search = el("button", { class: "cmd", type: "button" }, [
+    "поиск или команда",
+    el("kbd", {}, ["CTRL K"]),
+  ]);
+  search.addEventListener("click", () => openSearch());
+
+  // Знак марки намеренно не янтарный: янтарный обозначает состояние,
+  // а марка — не состояние.
+  const brand = link("/", { class: "mark" }, [
+    el("i", {}, ["◆"]),
+    el("b", {}, ["AETHER.WIKI"]),
+  ]);
+
+  return el("header", { class: "rail" }, [
     brand,
-    el("div", { class: "head-right" }, [userCard()]),
+    search,
+    el("div", { class: "who" }, [
+      el("div", {}, [
+        el("div", { class: "chrome chrome--on" }, ["@гость"]),
+        el("div", { class: "chrome" }, [
+          "допуск ",
+          el("span", { class: "chrome--amber" }, [String(CLEARANCE)]),
+        ]),
+      ]),
+      clearanceMeter(CLEARANCE),
+    ]),
   ]);
 }
 
-/** Ctrl/⌘+K anywhere opens the palette, as in the old build. */
+/**
+ * Нижняя строка. Показывает только то, что действительно известно: время,
+ * счётчик записей подставляется страницей, когда она его знает.
+ */
+export function siteFoot(): HTMLElement {
+  const clock = el("span", { class: "chrome" }, ["--:--:-- UTC"]);
+  const tick = () => {
+    clock.textContent = `${new Date().toISOString().slice(11, 19)} UTC`;
+  };
+  tick();
+  setInterval(tick, 1000);
+
+  return el("footer", { class: "foot" }, [
+    el("span", { class: "chrome" }, [el("span", { class: "dot dot--live" }), "канал устойчив"]),
+    clock,
+    el("span", { class: "chrome", id: "foot-count" }, []),
+    el("span", { class: "chrome sp" }, ["ЭП — 2026"]),
+  ]);
+}
+
+/** Счётчик в подвале ставит та страница, которая его знает. */
+export function setFootCount(text: string): void {
+  const slot = document.getElementById("foot-count");
+  if (slot) slot.textContent = text;
+}
+
+/** Ctrl/⌘+K где угодно открывает командную строку. */
 export function bindSearchShortcut(): void {
   window.addEventListener("keydown", (event) => {
     if (event.key.toLowerCase() === "k" && (event.metaKey || event.ctrlKey)) {

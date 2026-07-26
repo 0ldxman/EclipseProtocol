@@ -11,11 +11,12 @@ import "./style.css";
 
 import { adoptPathRoute, appRoot, currentRoute, navigate } from "./app-root.js";
 import { el } from "./dom.js";
-import { bindSearchShortcut, siteHeader } from "./header.js";
+import { bindSearchShortcut, siteFoot, siteRail } from "./header.js";
 import { renderFolder, renderHome, renderRecord } from "./pages.js";
 
-const view = el("main", { class: "site-main", id: "view" });
-document.body.append(siteHeader(), view);
+// Рельс сверху и строка статуса снизу стоят всегда; экраны меняются между ними.
+const view = el("main", { class: "view", id: "view" });
+document.body.append(el("div", { id: "app" }, [siteRail(), view, siteFoot()]));
 bindSearchShortcut();
 
 /**
@@ -37,10 +38,13 @@ document.addEventListener("click", (event) => {
 function failure(error: unknown): void {
   view.replaceChildren(
     el("div", { class: "page" }, [
-      el("div", { class: "card card--accent" }, [
-        el("div", { class: "eyebrow" }, ["Сбой"]),
-        el("p", {}, [error instanceof Error ? error.message : String(error)]),
-        el("p", { class: "muted" }, ["Сервер вики не ответил. Обновите страницу."]),
+      el("div", { class: "empty" }, [
+        el("b", {}, ["сбой связи"]),
+        el("span", {}, [
+          error instanceof Error ? error.message : String(error),
+          el("br"),
+          "Сервер вики не ответил. Обновите страницу.",
+        ]),
       ]),
     ]),
   );

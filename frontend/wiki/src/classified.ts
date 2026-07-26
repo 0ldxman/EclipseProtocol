@@ -1,55 +1,104 @@
 /**
- * What a reader sees instead of a record they are not cleared for.
+ * Запись выше допуска читателя.
  *
- * The noise is decoration over an absence, not a cipher: the server never sends
- * the text, so there is nothing here to un-blur. Showing the record's existence
- * and withholding its content is deliberate - in a setting built on secrets, a
- * page that simply is not there says less than one that refuses.
+ * Тело такой записи сервер не отдаёт вовсе — сюда приходит только её размер.
+ * Поэтому здесь не «скрытый текст», а честная имитация вымаранного документа:
+ * настоящая бумага, на ней плашки правдоподобной длины и приписка, сколько
+ * знаков в скольких разделах закрыто.
+ *
+ * Раньше на этом месте стояла шумовая стена. Она выглядела эффектнее, но не
+ * говорила читателю ничего: ни что запись существует, ни какого она объёма,
+ * ни какой уровень нужен, чтобы её прочесть.
  */
 
 import { el } from "./dom.js";
 
-const GLYPHS = [..."ABCDEF0123456789█▓▒░#%&/\\<>{}[]·:=+АБВГДЕЖЗИКЛМНОПРСТ"];
-
-/** Lehmer generator: the same seed gives the same wall of noise. */
-function rng(seed: number): () => number {
-  let x = seed % 2147483647;
-  if (x <= 0) x += 2147483646;
-  return () => (x = (x * 16807) % 2147483647) / 2147483647;
+export interface Hidden {
+  chars: number;
+  sections: number;
+  attachments: number;
 }
 
-function noiseLines(seed: number, count: number): string[] {
-  const next = rng(seed);
-  const lines: string[] = [];
-  for (let i = 0; i < count; i++) {
-    const length = 26 + Math.floor(next() * 54);
-    let line = "";
-    for (let j = 0; j < length; j++) line += GLYPHS[Math.floor(next() * GLYPHS.length)];
-    lines.push(line);
+/**
+ * Детерминированный генератор.
+ *
+ * Плашки должны ложиться одинаково при каждом открытии одной и той же записи:
+ * прыгающая по перезагрузке разметка читается как поломка, а не как документ.
+ */
+function lehmer(seed: number): () => number {
+  let state = seed % 2147483647;
+  if (state <= 0) state += 2147483646;
+  return () => (state = (state * 16807) % 2147483647) / 2147483647;
+}
+
+function seedOf(text: string): number {
+  let hash = 2166136261;
+  for (let i = 0; i < text.length; i++) {
+    hash = Math.imul(hash ^ text.charCodeAt(i), 16777619);
   }
-  return lines;
+  return Math.abs(hash);
 }
 
-export function classifiedBlock(level: number, lines = 16): HTMLElement {
-  const body = el("div", { class: "noise", title: "доступ запрещён" });
-  let seed = 7;
-  const fill = () => body.replaceChildren(...noiseLines(seed, lines).map((l) => el("div", {}, [l])));
-  fill();
-  // Re-scrambling on click is the one interaction: it makes plain that the
-  // characters carry nothing.
-  body.addEventListener("click", () => {
-    seed += 1;
-    fill();
-  });
+/** Одна вымаранная строка: чередование плашек и коротких просветов. */
+function redactedLine(random: () => number, width: number): HTMLElement {
+  const line = el("p", {});
+  let left = width;
+  while (left > 8) {
+    const run = Math.min(left, 12 + Math.floor(random() * 34));
+    line.append(el("span", { class: "w-classified" }, [" ".repeat(run)]));
+    left -= run;
+    if (left > 8) {
+      const gap = 1 + Math.floor(random() * 3);
+      line.append(" ".repeat(gap));
+      left -= gap;
+    }
+  }
+  return line;
+}
 
-  return el("div", { class: "classified" }, [
-    el("div", { class: "classified-bar" }, [
-      el("span", {}, ["classified — содержимое засекречено"]),
-      el("span", { class: "classified-level" }, [`// требуется допуск: уровень ${level}`]),
+/**
+ * Лист закрытой записи.
+ *
+ * Слаг идёт в семя, чтобы разные записи выглядели по-разному, а одна и та же
+ * запись — всегда одинаково.
+ */
+export function classifiedBody(slug: string, hidden: Hidden | undefined, required: number): HTMLElement {
+  const random = lehmer(seedOf(slug));
+  const sections = Math.min(Math.max(hidden?.sections ?? 0, 2), 6);
+  const chars = hidden?.chars ?? 0;
+
+  // Строк ровно столько, чтобы показать объём: около семидесяти знаков в строке
+  // при этой ширине колонки.
+  const total = Math.max(6, Math.min(26, Math.round(chars / 70)));
+  const perSection = Math.max(2, Math.floor(total / sections));
+
+  const body = el("div", { class: "prose" });
+  for (let s = 0; s < sections; s++) {
+    body.append(
+      el("h2", {}, [
+        el("span", { class: "w-classified" }, [" ".repeat(9 + Math.floor(random() * 8))]),
+      ]),
+    );
+    for (let i = 0; i < perSection; i++) {
+      body.append(redactedLine(random, 58 + Math.floor(random() * 16)));
+    }
+  }
+
+  const counts = [
+    hidden && hidden.chars > 0 ? `${hidden.chars.toLocaleString("ru-RU")} знаков` : null,
+    hidden && hidden.sections > 0 ? `${hidden.sections} разделов` : null,
+    hidden && hidden.attachments > 0 ? `${hidden.attachments} вложений` : null,
+  ].filter(Boolean) as string[];
+
+  body.append(
+    el("div", { class: "w-note is-danger" }, [
+      el("b", {}, ["закрыто"]),
+      el("p", {}, [
+        `Текст доступен с допуска ${required}, ваш уровень — 0. Видны заголовок, структура и связи.`,
+        counts.length > 0 ? ` Скрыто: ${counts.join(", ")}.` : "",
+      ]),
     ]),
-    body,
-    el("p", { class: "classified-foot" }, [
-      "// decryption failed — invalid clearance · допуск не подтверждён",
-    ]),
-  ]);
+  );
+
+  return body;
 }
