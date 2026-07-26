@@ -1,0 +1,24 @@
+{
+  "name": "@aether/map-proto",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "lib0": "^0.2.99",
+    "maplibre-gl": "^5.0.0",
+    "y-protocols": "^1.0.6",
+    "yjs": "^13.6.20",
+    "@aether/theme": "*"
+  },
+  "devDependencies": {
+    "@types/geojson": "^7946.0.15",
+    "playwright": "^1.62.0",
+    "typescript": "^5.7.2",
+    "vite": "^6.0.7"
+  }
+}

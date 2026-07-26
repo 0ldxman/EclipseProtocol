@@ -1,0 +1,78 @@
+{% extends "feed_base.html" %}
+{% block title %}{{ app_title }} — лента новостей{% endblock %}
+
+{% block content %}
+{% if categories %}
+<nav class="cats">
+  <a class="cat {% if not active_tag %}is-active{% endif %}" href="/">Все</a>
+  {% for tag in categories %}
+    <a class="cat {% if active_tag and active_tag.id == tag.id %}is-active{% endif %}"
+       style="--chip: {{ tag.color | to_hex }}"
+       href="/?tag={{ tag.id }}">{{ tag.name }}</a>
+  {% endfor %}
+</nav>
+{% endif %}
+
+{% if active_tag %}
+  <div class="cats__hint">Категория: <strong>{{ active_tag.name }}</strong> · <a href="/">сбросить</a></div>
+{% endif %}
+
+{% if not lead %}
+  <div class="feed-empty">
+    <div class="feed-empty__title">Пока новостей нет</div>
+    <p>Здесь появятся опубликованные новости{% if active_tag %} в категории «{{ active_tag.name }}»{% endif %}.</p>
+  </div>
+{% else %}
+
+  {# Главная новость #}
+  <article class="lead">
+    {% set lead_img = lead.image_url or lead.thumbnail_url %}
+    {% if lead_img %}
+      <a class="lead__media" href="/article/{{ lead.id }}">
+        <img src="{{ lead_img }}" alt="" loading="lazy">
+      </a>
+    {% endif %}
+    <div class="lead__text">
+      {% if lead.tags %}
+        <div class="kicker">
+          {% for tag in lead.tags[:3] %}
+            <span class="kicker__tag" style="--chip: {{ tag.color | to_hex }}">{{ tag.name }}</span>
+          {% endfor %}
+        </div>
+      {% endif %}
+      <h1 class="lead__title"><a href="/article/{{ lead.id }}">{{ lead.title }}</a></h1>
+      <p class="lead__excerpt">{{ lead.content[:280] }}{% if lead.content|length > 280 %}…{% endif %}</p>
+      <div class="byline">{{ (lead.sent_at or lead.created_at) | timeago }}</div>
+    </div>
+  </article>
+
+  {# Остальные новости #}
+  {% if rest %}
+    <div class="grid">
+      {% for item in rest %}
+        {% set img = item.image_url or item.thumbnail_url %}
+        <article class="story">
+          {% if img %}
+            <a class="story__media" href="/article/{{ item.id }}">
+              <img src="{{ img }}" alt="" loading="lazy">
+            </a>
+          {% endif %}
+          <div class="story__text">
+            {% if item.tags %}
+              <div class="kicker kicker--sm">
+                {% for tag in item.tags[:2] %}
+                  <span class="kicker__tag" style="--chip: {{ tag.color | to_hex }}">{{ tag.name }}</span>
+                {% endfor %}
+              </div>
+            {% endif %}
+            <h2 class="story__title"><a href="/article/{{ item.id }}">{{ item.title }}</a></h2>
+            <p class="story__excerpt">{{ item.content[:130] }}{% if item.content|length > 130 %}…{% endif %}</p>
+            <div class="byline byline--sm">{{ (item.sent_at or item.created_at) | timeago }}</div>
+          </div>
+        </article>
+      {% endfor %}
+    </div>
+  {% endif %}
+
+{% endif %}
+{% endblock %}

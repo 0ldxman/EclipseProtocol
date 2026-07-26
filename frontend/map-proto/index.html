@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>AETHER.MAP — прототип</title>
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' fill='%230d0e0f'/%3E%3Cpath d='M8 1.5 14.5 8 8 14.5 1.5 8z' fill='none' stroke='%23e8a13c' stroke-width='1.4'/%3E%3C/svg%3E"
+    />
+    <style>
+      /* Layout only; palette, face and shapes come from the shared theme. */
+
+      body { overflow: hidden; }
+      #map { position: absolute; inset: 0; }
+
+      #panel {
+        position: absolute;
+        top: var(--step-3);
+        left: var(--step-3);
+        width: 272px;
+        max-height: calc(100% - var(--step-3) * 2);
+        display: flex;
+        flex-direction: column;
+        background: color-mix(in srgb, var(--card) 94%, transparent);
+        border: 1px solid var(--border);
+        backdrop-filter: blur(8px);
+        overflow: hidden;
+      }
+      #panel > header {
+        padding: var(--step-3);
+        border-bottom: 1px solid var(--border);
+        display: flex;
+        align-items: center;
+        gap: var(--step-2);
+      }
+      .logo b { font-size: 12px; font-weight: 700; letter-spacing: 0.2em; }
+      .logo b span { color: var(--muted-foreground); font-weight: 400; }
+      #status { font-size: 11px; color: var(--muted-foreground); margin-top: 2px; }
+      #status[data-state="offline"] { color: var(--destructive); }
+      #status[data-state="connecting"] { color: var(--primary); }
+
+      #tools {
+        display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--step-1);
+        padding: var(--step-2); border-bottom: 1px solid var(--border);
+      }
+      /* Three tools across a 272px panel: the bracket glyphs do not fit. */
+      #tools .btn { height: 26px; padding: 0 2px; font-size: 11px; }
+      #tools .btn::before, #tools .btn::after { content: none; }
+
+      #countries { overflow-y: auto; padding: var(--step-1); display: grid; gap: 1px; }
+      .country {
+        display: flex; align-items: center; gap: var(--step-2);
+        width: 100%; padding: 5px var(--step-2);
+        background: transparent; border: 0; border-left: 2px solid transparent;
+        color: var(--foreground); font: inherit; text-align: left; cursor: pointer;
+      }
+      .country:hover { background: var(--secondary); }
+      .country.active {
+        background: color-mix(in srgb, var(--primary) 10%, transparent);
+        border-left-color: var(--primary);
+      }
+      .swatch { width: 11px; height: 11px; flex: none; border: 1px solid rgba(0, 0, 0, .5); }
+      .name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      .count { color: var(--muted-foreground); font-size: 11px; }
+
+      #underlay-panel {
+        border-top: 1px solid var(--border);
+        padding: var(--step-2);
+        display: grid; gap: var(--step-2);
+      }
+      .file-button {
+        display: block; text-align: center; padding: 5px var(--step-2);
+        background: transparent; border: 1px dashed var(--input);
+        color: var(--muted-foreground); cursor: pointer; font-size: 11px;
+      }
+      .file-button:hover { color: var(--primary); border-color: var(--primary); }
+      .underlay {
+        padding: var(--step-2); border: 1px solid var(--border);
+        background: var(--background); display: grid; gap: var(--step-1);
+      }
+      .underlay.active { border-color: var(--primary); }
+      .underlay-head { display: flex; align-items: center; gap: var(--step-1); }
+      .underlay-name {
+        flex: 1; min-width: 0; text-align: left; background: none; border: 0; padding: 0;
+        color: var(--foreground); font: inherit; cursor: pointer; font-size: 11px;
+        overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+      }
+      .underlay .icon {
+        background: none; border: 0; color: var(--muted-foreground); cursor: pointer;
+        font-size: 10px; padding: 2px 3px; line-height: 1;
+      }
+      .underlay .icon:hover { color: var(--primary); }
+      .underlay input[type="range"] { width: 100%; accent-color: var(--primary); }
+
+      footer { padding: var(--step-2) var(--step-3); border-top: 1px solid var(--border); display: grid; gap: var(--step-1); }
+      #hover, #timing, #geo-stats, #presence { font-size: 11px; color: var(--muted-foreground); min-height: 15px; }
+
+      /* MapLibre positions a marker by writing `transform` onto its element, but
+         supplies no styling of its own when the element is custom - without
+         absolute positioning the handles fall into normal flow below the map. */
+      .corner-handle {
+        position: absolute; top: 0; left: 0; will-change: transform;
+        width: 18px; height: 18px; cursor: grab;
+        background: var(--primary); color: var(--primary-foreground);
+        border: 1px solid rgba(0, 0, 0, .6);
+        font: 700 8px/18px var(--font-mono); text-align: center;
+      }
+
+      #hint {
+        position: absolute; bottom: var(--step-3); left: var(--step-3); width: 272px;
+        padding: var(--step-2) var(--step-3); font-size: 11px; color: var(--muted-foreground);
+        background: color-mix(in srgb, var(--card) 94%, transparent);
+        border: 1px solid var(--border); border-left: 2px solid var(--primary);
+      }
+
+      .maplibregl-ctrl-group {
+        background: var(--card) !important;
+        border: 1px solid var(--border) !important;
+        border-radius: 0 !important;
+      }
+      .maplibregl-ctrl-group button + button { border-top: 1px solid var(--border) !important; }
+      .maplibregl-ctrl-group button span { filter: invert(1) brightness(1.4); }
+    </style>
+  </head>
+  <body>
+    <div id="map"></div>
+
+    <div id="panel">
+      <header>
+        <svg width="15" height="15" viewBox="0 0 16 16" aria-hidden="true">
+          <path d="M8 1.5 14.5 8 8 14.5 1.5 8z" fill="none" stroke="#e8a13c" stroke-width="1.4" />
+        </svg>
+        <div class="logo">
+          <b>AETHER<span>.</span>MAP</b>
+          <div id="status">инициализация…</div>
+        </div>
+      </header>
+      <div id="tools">
+        <button class="btn" data-tool="paint">Красить</button>
+        <button class="btn" data-tool="draw">Обвести</button>
+        <button class="btn" data-tool="erase">Убрать</button>
+      </div>
+      <div id="countries"></div>
+      <div id="underlay-panel">
+        <label class="file-button">
+          подложка из файла…
+          <input type="file" id="underlay-file" accept="image/*" hidden />
+        </label>
+        <div id="underlays"></div>
+      </div>
+      <footer>
+        <button class="btn" id="add-country">+ создать страну</button>
+        <div id="hover"></div>
+        <div id="timing"></div>
+        <div id="geo-stats"></div>
+        <div id="presence"></div>
+      </footer>
+    </div>
+
+    <div id="hint"></div>
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

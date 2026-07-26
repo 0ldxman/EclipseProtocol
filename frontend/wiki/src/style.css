@@ -1,0 +1,491 @@
+/**
+ * Layout for the public wiki. Colours, faces and component shapes all come from
+ * `@aether/theme`; nothing here re-declares them.
+ *
+ * The record screen is three columns - anchor rail, article, infobox - and that
+ * is the only structural decision on this page. Everything else follows from
+ * keeping the middle column readable.
+ */
+
+body {
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+}
+
+/* ---- header ----------------------------------------------------------- */
+
+.site-head {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  gap: var(--step-4);
+  height: 56px;
+  padding: 0 var(--step-5);
+  border-bottom: 1px solid var(--border);
+  background: color-mix(in srgb, var(--background) 85%, transparent);
+  backdrop-filter: blur(8px);
+}
+.head-left {
+  flex: 1;
+  min-width: 0;
+}
+.head-right {
+  flex: 1;
+  display: flex;
+  justify-content: flex-end;
+}
+
+/** The logo sits in the true centre of the header, not the centre of the gap. */
+.brand {
+  position: absolute;
+  left: 50%;
+  translate: -50% 0;
+  display: flex;
+  align-items: center;
+  gap: var(--step-2);
+  text-decoration: none;
+  color: var(--foreground);
+}
+.brand-name {
+  font-size: 17px;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+}
+
+/** Header search: a command line that opens the palette. */
+.cmd {
+  display: flex;
+  align-items: center;
+  gap: var(--step-2);
+  width: 100%;
+  max-width: 320px;
+  height: 32px;
+  padding: 0 10px;
+  background: color-mix(in srgb, var(--input) 20%, transparent);
+  border: 1px solid var(--input);
+  color: var(--muted-foreground);
+  font: inherit;
+  font-size: 12px;
+  text-align: left;
+  cursor: pointer;
+}
+.cmd:hover {
+  border-color: color-mix(in srgb, var(--primary) 50%, transparent);
+  color: var(--foreground);
+}
+.cmd-prompt {
+  color: var(--primary);
+}
+.cmd-label {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ---- reader card ------------------------------------------------------ */
+
+.user-wrap {
+  position: relative;
+}
+.user-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 3px 10px 3px 3px;
+  background: var(--card);
+  border: 1px solid transparent;
+  box-shadow: inset 0 0 0 1px var(--border);
+  color: var(--foreground);
+  cursor: pointer;
+}
+.user-card:hover,
+.user-card[aria-expanded="true"] {
+  box-shadow: inset 0 0 0 1px var(--primary);
+}
+.user-id {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  line-height: 1.25;
+  white-space: nowrap;
+}
+.user-id b {
+  font-size: 12px;
+  font-weight: 500;
+}
+.user-clearance {
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted-foreground);
+}
+.user-menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  z-index: 50;
+}
+.user-menu a.menu-item {
+  text-decoration: none;
+  color: inherit;
+}
+
+/* ---- page shell ------------------------------------------------------- */
+
+.site-main {
+  flex: 1;
+  width: 100%;
+}
+.page {
+  max-width: 1152px;
+  margin: 0 auto;
+  padding: var(--step-5);
+  display: grid;
+  gap: var(--step-4);
+  align-content: start;
+}
+
+.breadcrumb {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: var(--muted-foreground);
+}
+.crumb {
+  color: var(--muted-foreground);
+  text-decoration: none;
+}
+.crumb:hover {
+  color: var(--primary);
+}
+.crumb-sep {
+  opacity: 0.5;
+}
+
+/* ---- record screen ---------------------------------------------------- */
+
+.record-layout {
+  display: flex;
+  gap: var(--step-5);
+  max-width: 1152px;
+  margin: 0 auto;
+  padding: var(--step-5);
+  align-items: flex-start;
+}
+.toc-slot {
+  flex: none;
+  width: 32px;
+}
+.record {
+  flex: 1;
+  min-width: 0;
+}
+.record-aside {
+  flex: none;
+  width: 288px;
+  position: sticky;
+  top: 80px;
+}
+
+.record-head {
+  display: grid;
+  gap: var(--step-2);
+  margin-bottom: var(--step-5);
+}
+.record-title {
+  font-size: 28px;
+  letter-spacing: -0.01em;
+}
+.record-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+.record-when {
+  font-size: 11px;
+}
+.record-body {
+  max-width: none;
+  container-type: inline-size;
+}
+
+.backlinks {
+  margin-top: var(--step-5);
+  padding-top: var(--step-4);
+  border-top: 1px solid var(--border);
+  display: grid;
+  gap: var(--step-2);
+}
+.backlink-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--step-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.nav-link {
+  color: var(--primary);
+  text-decoration: none;
+  border-bottom: 1px solid color-mix(in srgb, var(--primary) 35%, transparent);
+}
+.nav-link:hover {
+  border-bottom-color: var(--primary);
+}
+
+/* ---- anchor rail ------------------------------------------------------ */
+
+.toc {
+  position: sticky;
+  top: 80px;
+  width: 32px;
+}
+.toc-list {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+  margin: 0;
+  padding: 4px 0;
+  list-style: none;
+}
+.toc-line {
+  position: absolute;
+  top: 12px;
+  bottom: 12px;
+  left: 10px;
+  width: 1px;
+  background: var(--primary);
+}
+.toc-dot {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  width: 20px;
+  justify-content: center;
+}
+.toc-label {
+  left: 28px;
+  top: 50%;
+  translate: 0 -50%;
+  opacity: 0;
+  transition: opacity 0.12s;
+}
+.toc-dot:hover .toc-label,
+.toc-dot:focus-visible .toc-label {
+  opacity: 1;
+}
+
+/* Below this width the rail and the infobox column stop being affordable. */
+@media (max-width: 1000px) {
+  .toc-slot {
+    display: none;
+  }
+  .record-layout {
+    flex-direction: column;
+  }
+  .record-aside {
+    position: static;
+    width: 100%;
+    order: -1;
+  }
+}
+
+/* ---- classified ------------------------------------------------------- */
+
+.classified {
+  display: grid;
+  gap: var(--step-3);
+}
+.classified-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--step-2);
+  padding: 6px var(--step-3);
+  border: 1px solid color-mix(in srgb, var(--destructive) 40%, transparent);
+  background: color-mix(in srgb, var(--destructive) 6%, transparent);
+  color: var(--destructive);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.classified-level {
+  opacity: 0.7;
+}
+.noise {
+  display: grid;
+  gap: 6px;
+  color: color-mix(in srgb, var(--muted-foreground) 55%, transparent);
+  font-size: 12px;
+  line-height: 1.6;
+  word-break: break-all;
+  cursor: not-allowed;
+  user-select: none;
+  filter: blur(0.4px);
+}
+.classified-foot {
+  margin: 0;
+  font-size: 11px;
+  color: color-mix(in srgb, var(--muted-foreground) 45%, transparent);
+}
+
+/* ---- listings --------------------------------------------------------- */
+
+.entry-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 1px;
+}
+.entry {
+  display: flex;
+  align-items: center;
+  gap: var(--step-2);
+  padding: 4px 6px;
+  border-left: 2px solid transparent;
+}
+.entry:hover {
+  background: var(--secondary);
+  border-left-color: var(--primary);
+}
+.entry-mark {
+  color: var(--muted-foreground);
+  width: 10px;
+}
+.entry-name {
+  color: var(--foreground);
+  text-decoration: none;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.entry:hover .entry-name {
+  color: var(--primary);
+}
+.entry.is-folder .entry-name {
+  font-weight: 600;
+}
+.entry-count {
+  font-size: 11px;
+}
+
+/* ---- front page ------------------------------------------------------- */
+
+.home-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 320px;
+  gap: var(--step-5);
+  align-items: start;
+}
+.home-side {
+  display: grid;
+  gap: var(--step-4);
+}
+.home-tree {
+  display: grid;
+  gap: var(--step-2);
+  align-content: start;
+  /* A directory listing reads as a column, not as a full-width table: without
+     a cap the child count ends up a screen away from the folder it counts. */
+  max-width: 520px;
+}
+@media (max-width: 860px) {
+  .home-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* ---- search palette --------------------------------------------------- */
+
+.palette-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: flex;
+  justify-content: center;
+  /* flex-start, not the default stretch: otherwise the box grows to its
+     max-height and three results sit in a 70vh panel. */
+  align-items: flex-start;
+  padding-top: 12vh;
+  background: color-mix(in srgb, #000 55%, transparent);
+}
+.palette-overlay[hidden] {
+  display: none;
+}
+.palette {
+  width: min(640px, calc(100% - 32px));
+  max-height: 70vh;
+  display: flex;
+  flex-direction: column;
+  border-top: 2px solid var(--primary);
+}
+.palette-head {
+  display: flex;
+  align-items: center;
+  gap: var(--step-2);
+  padding: var(--step-2) var(--step-3);
+  border-bottom: 1px solid var(--border);
+}
+.palette-input {
+  border: 0;
+  height: 26px;
+  padding: 0;
+  font-size: 13px;
+}
+.palette-input:focus {
+  border: 0;
+}
+.palette-input::-webkit-search-cancel-button {
+  display: none;
+}
+.palette-list {
+  overflow-y: auto;
+  padding: var(--step-1);
+}
+.palette-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 2px var(--step-3);
+  width: 100%;
+  padding: 6px var(--step-2);
+  background: none;
+  border: 0;
+  border-left: 2px solid transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.palette-row.is-active {
+  background: color-mix(in srgb, var(--primary) 10%, transparent);
+  border-left-color: var(--primary);
+}
+.palette-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.palette-slug {
+  font-size: 11px;
+}
+.palette-snippet {
+  grid-column: 1 / -1;
+  font-size: 11px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.palette-empty {
+  padding: var(--step-3);
+  font-size: 12px;
+}

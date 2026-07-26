@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>AETHER.WIKI — админка</title>
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' fill='%230d0e0f'/%3E%3Cpath d='M8 2.5 13.5 8 8 13.5 2.5 8z' fill='none' stroke='%23e8a13c' stroke-width='1.4'/%3E%3C/svg%3E"
+    />
+    <style>
+      /* App layout only - every colour, face and shape comes from the shared
+         theme, so the wiki, the map and the admin cannot drift apart. */
+
+      body {
+        display: grid;
+        grid-template-columns: 300px minmax(0, 1fr) minmax(0, 1fr);
+        grid-template-rows: 48px minmax(0, 1fr);
+        grid-template-areas: "head head head" "tree edit view";
+        overflow: hidden;
+      }
+
+      /* ---- header ---- */
+      #head {
+        grid-area: head;
+        display: flex;
+        align-items: center;
+        gap: var(--step-2);
+        padding: 0 var(--step-4);
+        border-bottom: 1px solid var(--border);
+        background: var(--card);
+      }
+      .logo {
+        display: flex;
+        align-items: center;
+        gap: var(--step-2);
+        margin-right: var(--step-5);
+        white-space: nowrap;
+      }
+      .logo svg { display: block; }
+      .logo b {
+        font-size: 13px;
+        font-weight: 700;
+        letter-spacing: 0.22em;
+      }
+      .logo b span { color: var(--muted-foreground); font-weight: 400; }
+      #status { margin-left: auto; font-size: 11px; color: var(--muted-foreground); }
+      #status.is-error { color: var(--destructive); }
+
+      /* ---- tree ---- */
+      #tree-pane {
+        grid-area: tree;
+        border-right: 1px solid var(--border);
+        overflow: auto;
+        padding: var(--step-2) 0;
+      }
+      .tree-row {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        padding: 3px var(--step-3) 3px 4px;
+        cursor: pointer;
+        user-select: none;
+        border-left: 2px solid transparent;
+      }
+      .tree-row:hover { background: var(--secondary); }
+      .tree-row.is-selected {
+        background: color-mix(in srgb, var(--primary) 10%, transparent);
+        border-left-color: var(--primary);
+      }
+      .tree-row.is-selected .tree-name { color: var(--primary); }
+      .tree-row.is-drop {
+        background: color-mix(in srgb, var(--primary) 16%, transparent);
+        border-left-color: var(--primary);
+      }
+      .twisty {
+        width: 14px; padding: 0; border: 0; background: none; cursor: pointer;
+        color: var(--muted-foreground); font-size: 9px; line-height: 1;
+      }
+      .tree-icon { color: var(--muted-foreground); display: flex; width: 12px; }
+      .tree-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      .tree-slug { color: var(--muted-foreground); font-size: 10px; opacity: .65; }
+      .tree-access { color: var(--primary); font-size: 10px; }
+      .tree-empty { padding: var(--step-4); color: var(--muted-foreground); font-size: 12px; }
+
+      /* ---- editor ---- */
+      #edit-pane {
+        grid-area: edit;
+        display: flex;
+        flex-direction: column;
+        border-right: 1px solid var(--border);
+        min-width: 0;
+      }
+      #record-head {
+        padding: var(--step-2) var(--step-4);
+        border-bottom: 1px solid var(--border);
+      }
+      #record-title { font-weight: 600; }
+      #breadcrumb { color: var(--muted-foreground); font-size: 11px; }
+      #editor { flex: 1; overflow: hidden; min-height: 0; }
+      #edit-foot {
+        padding: 6px var(--step-4);
+        border-top: 1px solid var(--border);
+        display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
+        min-height: 32px;
+      }
+      #warnings { display: flex; gap: 6px; flex-wrap: wrap; }
+      #presence { color: var(--muted-foreground); font-size: 11px; margin-left: auto; }
+      #presence[data-state="offline"] { color: var(--destructive); }
+      .chip {
+        font-size: 10px;
+        padding: 1px 7px;
+        border: 1px solid var(--border);
+        color: var(--muted-foreground);
+      }
+      .chip.is-warn { color: var(--primary); border-color: color-mix(in srgb, var(--primary) 45%, transparent); }
+      .chip.is-info { color: var(--destructive); border-color: color-mix(in srgb, var(--destructive) 45%, transparent); }
+
+      /* ---- preview ---- */
+      #view-pane {
+        grid-area: view; overflow: auto; padding: var(--step-5); min-width: 0;
+        container-type: inline-size;
+      }
+      #preview { max-width: none; }
+
+      /* ---- CodeMirror, dressed to match ---- */
+      .cm-editor { height: 100%; background: var(--background); }
+      .cm-editor.cm-focused { outline: none; }
+      .cm-gutters {
+        background: var(--background);
+        border-right: 1px solid var(--border);
+        color: #43454a;
+      }
+      .cm-activeLineGutter { background: var(--secondary); color: var(--muted-foreground); }
+      .cm-activeLine { background: rgba(255, 255, 255, 0.025); }
+      .cm-content { caret-color: var(--primary); }
+      .cm-cursor { border-left-color: var(--primary); }
+      .cm-selectionBackground,
+      .cm-editor .cm-selectionBackground {
+        background: color-mix(in srgb, var(--primary) 22%, transparent) !important;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="head">
+      <div class="logo">
+        <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true">
+          <path d="M8 1.5 14.5 8 8 14.5 1.5 8z" fill="none" stroke="#e8a13c" stroke-width="1.4" />
+        </svg>
+        <b>AETHER<span>.</span>WIKI</b>
+      </div>
+      <button class="btn" id="new-folder">+ папка</button>
+      <button class="btn" id="new-record">+ запись</button>
+      <button class="btn btn--ghost" id="set-access">допуск…</button>
+      <div id="status">загрузка…</div>
+    </div>
+
+    <div id="tree-pane"><div id="tree"></div></div>
+
+    <div id="edit-pane">
+      <div id="record-head">
+        <div id="record-title">Ничего не выбрано</div>
+        <div id="breadcrumb"></div>
+      </div>
+      <div id="editor"></div>
+      <div id="edit-foot">
+        <div id="warnings"></div>
+        <div id="presence"></div>
+      </div>
+    </div>
+
+    <div id="view-pane"><div id="preview" class="prose"></div></div>
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

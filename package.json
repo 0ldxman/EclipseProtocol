@@ -1,0 +1,21 @@
+{
+  "name": "aether",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Eclipse Protocol wiki, map and timeline",
+  "workspaces": [
+    "backend",
+    "frontend/*",
+    "packages/*"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "npm run build -w @aether/markup && npm run build -w @aether/server && npm run build -w @aether/wiki && npm run build -w @aether/wiki-admin && npm run build -w @aether/map-proto",
+    "start": "node backend/dist/index.js",
+    "test": "npm run test -w @aether/markup",
+    "dev:server": "npm run dev --workspace backend",
+    "dev:map": "npm run dev --workspace @aether/map-proto"
+  }
+}

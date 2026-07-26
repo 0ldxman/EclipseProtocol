@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block title %}Новости — {{ app_title }}{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1 class="page-title">Новости</h1>
+    <p class="page-sub">Сверху — то, что ждёт отправки. Ниже — лента опубликованного.</p>
+  </div>
+  <a class="btn btn--accent" href="/admin/news/new">Написать новость</a>
+</div>
+
+<section class="stack">
+  <div class="section-label">
+    <span class="dot dot--draft"></span>
+    Не отправлено
+    <span class="counter">{{ drafts|length }}</span>
+  </div>
+
+  {% if drafts %}
+    <div class="cards">
+      {% for item in drafts %}
+        {% include "_news_card.html" %}
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="empty">Очередь пуста. Напишите новость — она появится здесь до отправки.</div>
+  {% endif %}
+</section>
+
+<section class="stack">
+  <div class="section-label">
+    <span class="dot dot--sent"></span>
+    Архив
+    <span class="counter">{{ sent|length }}</span>
+  </div>
+
+  {% if sent %}
+    <div class="cards">
+      {% for item in sent %}
+        {% include "_news_card.html" %}
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="empty">Пока ничего не отправлено.</div>
+  {% endif %}
+</section>
+{% endblock %}

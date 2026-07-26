@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}{{ app_title }}{% endblock %}</title>
+  <link rel="stylesheet" href="/static/feed.css">
+</head>
+<body class="feed-body">
+  <header class="masthead">
+    <div class="masthead__inner">
+      <div class="masthead__left">
+        <a class="masthead__brand" href="/">{{ app_title }}</a>
+        <div class="masthead__meta">Лента новостей · {{ today_ru() }}</div>
+      </div>
+      <div class="masthead__right">
+        {% if viewer and viewer.is_admin %}
+          <a class="m-link m-link--admin" href="/admin">Админ-панель</a>
+        {% endif %}
+        {% if viewer and viewer.authenticated %}
+          {% if viewer.username %}<span class="m-user">{{ viewer.username }}</span>{% endif %}
+          <a class="m-link" href="/logout">Выйти</a>
+        {% else %}
+          <a class="m-link" href="/login">Войти</a>
+        {% endif %}
+      </div>
+    </div>
+  </header>
+
+  <main class="feed-main">
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer class="feed-foot">
+    <span>{{ app_title }}</span>
+    <span class="feed-foot__dot">·</span>
+    <span>новости сообщества</span>
+  </footer>
+</body>
+</html>

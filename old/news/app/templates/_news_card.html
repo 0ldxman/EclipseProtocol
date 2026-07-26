@@ -1,0 +1,53 @@
+{# Карточка одной новости. Ожидает переменную `item`. #}
+<article class="card" style="--edge: {{ item.color | to_hex }}">
+  <div class="card__edge"></div>
+  <div class="card__body">
+    <div class="card__head">
+      <h3 class="card__title">{{ item.title }}</h3>
+      {% if item.status == 'sent' %}
+        <span class="badge badge--sent">Отправлено</span>
+      {% else %}
+        <span class="badge badge--draft">Не отправлено</span>
+      {% endif %}
+    </div>
+
+    {% if item.content %}
+      <p class="card__text">{{ item.content[:240] }}{% if item.content|length > 240 %}…{% endif %}</p>
+    {% endif %}
+
+    {% if item.tags %}
+      <div class="chips">
+        {% for tag in item.tags %}
+          <span class="chip" style="--chip: {{ tag.color | to_hex }}">{{ tag.name }}</span>
+        {% endfor %}
+      </div>
+    {% endif %}
+
+    <div class="card__meta">
+      <span class="mono">#{{ item.id }}</span>
+      <span class="mono">создано {{ item.created_at.strftime('%d.%m.%Y %H:%M') }}</span>
+      {% if item.sent_at %}
+        <span class="mono">отправлено {{ item.sent_at.strftime('%d.%m.%Y %H:%M') }}</span>
+      {% endif %}
+    </div>
+
+    <div class="card__actions">
+      <a class="btn btn--small" href="/admin/news/{{ item.id }}/edit">Редактировать</a>
+      <a class="btn btn--small btn--accent" href="/admin/news/{{ item.id }}/send">Отправить…</a>
+      {% if item.status == 'sent' %}
+        <a class="btn btn--small btn--ghost" href="/article/{{ item.id }}" target="_blank" rel="noopener">В ленте ↗</a>
+        <form class="inline" method="post" action="/admin/news/{{ item.id }}/unpublish">
+          <button class="btn btn--small btn--ghost" type="submit">Снять с ленты</button>
+        </form>
+      {% else %}
+        <form class="inline" method="post" action="/admin/news/{{ item.id }}/publish">
+          <button class="btn btn--small" type="submit">Опубликовать в ленте</button>
+        </form>
+      {% endif %}
+      <form class="inline" method="post" action="/admin/news/{{ item.id }}/delete"
+            onsubmit="return confirm('Удалить новость «{{ item.title }}»?');">
+        <button class="btn btn--small btn--ghost" type="submit">Удалить</button>
+      </form>
+    </div>
+  </div>
+</article>

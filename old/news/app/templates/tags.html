@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block title %}Теги — {{ app_title }}{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1 class="page-title">Теги</h1>
+    <p class="page-sub">Общий словарь для новостей и вебхуков. Совпадение тегов = доставка.</p>
+  </div>
+</div>
+
+<section class="stack">
+  <div class="section-label">Список <span class="counter">{{ tags|length }}</span></div>
+  {% if tags %}
+    <div class="tag-grid">
+      {% for tag in tags %}
+        <div class="tag-row">
+          <span class="chip" style="--chip: {{ tag.color | to_hex }}">{{ tag.name }}</span>
+          <span class="mono muted">{{ tag.color | to_hex }}</span>
+          <form class="inline" method="post" action="/admin/tags/{{ tag.id }}/delete"
+                onsubmit="return confirm('Удалить тег «{{ tag.name }}»? Он отвяжется от новостей и вебхуков.');">
+            <button class="btn btn--small btn--ghost" type="submit">Удалить</button>
+          </form>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="empty">Тегов пока нет. Создайте первый — например «Админ» или «Боты».</div>
+  {% endif %}
+</section>
+
+<section class="stack">
+  <div class="section-label">Новый тег</div>
+  <form class="panel tag-form" method="post" action="/admin/tags">
+    <label class="field">
+      <span class="field__label">Название</span>
+      <input class="input" type="text" name="name" required maxlength="64" placeholder="Админ">
+    </label>
+    <label class="field field--color">
+      <span class="field__label">Цвет</span>
+      <input class="input input--color" type="color" name="color" value="#5865F2">
+    </label>
+    <div class="editor__actions">
+      <button class="btn btn--accent" type="submit">Создать тег</button>
+    </div>
+  </form>
+</section>
+{% endblock %}

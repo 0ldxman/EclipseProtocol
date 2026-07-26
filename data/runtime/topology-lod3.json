@@ -1,0 +1,56 @@
+{
+ "lod": "lod3",
+ "quantization": 1e-06,
+ "coordEncoding": "delta-int32-per-arc",
+ "arcs": 33660,
+ "rings": 27226,
+ "provinces": 3409,
+ "arrays": {
+  "arc_xy": {
+   "dtype": "int32",
+   "byteOffset": 0,
+   "length": 664474
+  },
+  "arc_off": {
+   "dtype": "int32",
+   "byteOffset": 2657896,
+   "length": 33661
+  },
+  "arc_left": {
+   "dtype": "int32",
+   "byteOffset": 2792540,
+   "length": 33660
+  },
+  "arc_right": {
+   "dtype": "int32",
+   "byteOffset": 2927180,
+   "length": 33660
+  },
+  "ring_arc": {
+   "dtype": "int32",
+   "byteOffset": 3061820,
+   "length": 42081
+  },
+  "ring_arc_off": {
+   "dtype": "int32",
+   "byteOffset": 3230144,
+   "length": 27227
+  },
+  "ring_prov": {
+   "dtype": "int32",
+   "byteOffset": 3339052,
+   "length": 27226
+  },
+  "ring_part": {
+   "dtype": "int32",
+   "byteOffset": 3447956,
+   "length": 27226
+  },
+  "ring_hole": {
+   "dtype": "uint8",
+   "byteOffset": 3556860,
+   "length": 27226
+  }
+ },
+ "binary": "topology-lod3.bin"
+}

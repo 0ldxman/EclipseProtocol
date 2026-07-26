@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block title %}Изменение вебхука — {{ app_title }}{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1 class="page-title">Изменение вебхука</h1>
+    <p class="page-sub">«{{ webhook.name }}»</p>
+  </div>
+  <a class="btn btn--ghost" href="/admin/webhooks">К списку</a>
+</div>
+
+<form class="panel form-grid" method="post" action="/admin/webhooks/{{ webhook.id }}">
+  <label class="field">
+    <span class="field__label">Имя</span>
+    <input class="input" type="text" name="name" required value="{{ webhook.name }}">
+  </label>
+  <label class="field">
+    <span class="field__label">URL вебхука Discord</span>
+    <input class="input" type="url" name="url" required value="{{ webhook.url }}">
+  </label>
+  <div class="grid-2">
+    <label class="field">
+      <span class="field__label">Имя по умолчанию <span class="hint">необязательно</span></span>
+      <input class="input" type="text" name="default_username" value="{{ webhook.default_username or '' }}">
+    </label>
+    <label class="field">
+      <span class="field__label">Аватар по умолчанию <span class="hint">URL, необязательно</span></span>
+      <input class="input" type="url" name="default_avatar" value="{{ webhook.default_avatar or '' }}">
+    </label>
+  </div>
+
+  <div class="field">
+    <span class="field__label">Теги</span>
+    {% if tags %}
+      <div class="checks">
+        {% for tag in tags %}
+          <label class="check" style="--chip: {{ tag.color | to_hex }}">
+            <input type="checkbox" name="tags" value="{{ tag.id }}"
+                   {% if tag.id in selected_tag_ids %}checked{% endif %}>
+            <span class="check__chip">{{ tag.name }}</span>
+          </label>
+        {% endfor %}
+      </div>
+    {% else %}
+      <p class="empty empty--inline">Сначала <a href="/admin/tags">создайте теги</a>.</p>
+    {% endif %}
+  </div>
+
+  <label class="switch">
+    <input type="checkbox" name="enabled" {% if webhook.enabled %}checked{% endif %}>
+    <span>Включён (участвует в рассылке)</span>
+  </label>
+
+  <div class="editor__actions">
+    <button class="btn btn--accent" type="submit">Сохранить изменения</button>
+    <a class="btn btn--ghost" href="/admin/webhooks">Отмена</a>
+  </div>
+</form>
+{% endblock %}

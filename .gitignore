@@ -1,0 +1,32 @@
+node_modules/
+dist/
+*.tsbuildinfo
+
+# pipeline artefacts - regenerate with tools/geo/stage*.py
+data/*.npz
+data/*.log
+data/*-report.json
+
+# runtime state - belongs in the container's volume, not in the repository
+data/rooms/
+data/records/
+data/uploads/
+data/tree.json
+
+# data/runtime/ is deliberately NOT ignored: the baked topology bundle is what
+# the map serves, and rebuilding it needs Python, shapely and the 1 GB source
+# GeoJSON - not something a container build should be doing.
+
+.dev-screenshots/
+
+# the previous build, kept as reference. Its caches and the half-gigabyte
+# source GeoJSON it was built from do not belong in the repository; the parts
+# worth keeping (design system, components) are small text files.
+old/**/.next/
+old/**/.venv/
+old/**/*.geojson
+# tile archives (192 MB and 91 MB) and the border caches the old backend
+# recomputed on every edit - GitHub refuses anything over 100 MB anyway, and
+# the whole point of the arc topology is that none of this is needed again
+old/**/*.pmtiles
+old/**/*_cache.json

@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block title %}Отправка — {{ app_title }}{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1 class="page-title">Отправка новости</h1>
+    <p class="page-sub">«{{ news.title }}»</p>
+  </div>
+  <a class="btn btn--ghost" href="/admin/news">К списку</a>
+</div>
+
+{% if news.tags %}
+  <div class="routing">
+    <span class="routing__label mono">Теги новости:</span>
+    {% for tag in news.tags %}
+      <span class="chip" style="--chip: {{ tag.color | to_hex }}">{{ tag.name }}</span>
+    {% endfor %}
+    <span class="routing__hint">— отмечены каналы, совпавшие по этим тегам.</span>
+  </div>
+{% else %}
+  <div class="empty empty--inline">У новости нет тегов, поэтому ничего не отмечено автоматически. Выберите каналы вручную.</div>
+{% endif %}
+
+<form class="send-form" method="post" action="/admin/news/{{ news.id }}/send">
+  {% if webhooks %}
+    <div class="wh-list">
+      {% for wh in webhooks %}
+        <label class="wh-item {% if not wh.enabled %}is-disabled{% endif %}">
+          <input type="checkbox" name="webhooks" value="{{ wh.id }}"
+                 {% if wh.id in matched_ids and wh.enabled %}checked{% endif %}
+                 {% if not wh.enabled %}disabled{% endif %}>
+          <span class="wh-item__info">
+            <span class="wh-item__name">{{ wh.name }}</span>
+            <span class="wh-item__meta mono">
+              #{{ wh.id }}
+              {% if not wh.enabled %} · выключен{% endif %}
+            </span>
+            {% if wh.tags %}
+              <span class="chips chips--tight">
+                {% for tag in wh.tags %}
+                  <span class="chip chip--xs" style="--chip: {{ tag.color | to_hex }}">{{ tag.name }}</span>
+                {% endfor %}
+              </span>
+            {% endif %}
+          </span>
+        </label>
+      {% endfor %}
+    </div>
+
+    <div class="editor__actions">
+      <button class="btn btn--accent" type="submit">Опубликовать в выбранные</button>
+      <a class="btn btn--ghost" href="/admin/news">Отмена</a>
+    </div>
+  {% else %}
+    <div class="empty">Нет ни одного вебхука. <a href="/admin/webhooks">Добавьте вебхук</a>, чтобы было куда отправлять.</div>
+  {% endif %}
+</form>
+{% endblock %}

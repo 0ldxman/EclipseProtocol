@@ -1,0 +1,762 @@
+[
+ {
+  "fid": 59,
+  "name": "Bordj Bou Arreridj?",
+  "group": "DZA"
+ },
+ {
+  "fid": 343,
+  "name": "Br?ko District",
+  "group": "BIH"
+ },
+ {
+  "fid": 656,
+  "name": "Po?ega-Slavonia",
+  "group": "HRV"
+ },
+ {
+  "fid": 659,
+  "name": "Me?imurje",
+  "group": "HRV"
+ },
+ {
+  "fid": 660,
+  "name": "Koprivnica-Kri?evci",
+  "group": "HRV"
+ },
+ {
+  "fid": 661,
+  "name": "Vara?din",
+  "group": "HRV"
+ },
+ {
+  "fid": 670,
+  "name": "?ibenik-Knin",
+  "group": "HRV"
+ },
+ {
+  "fid": 784,
+  "name": "Hlavní m?sto Praha",
+  "group": "DUN"
+ },
+ {
+  "fid": 785,
+  "name": "St?edo?eský kraj",
+  "group": "DUN"
+ },
+ {
+  "fid": 786,
+  "name": "Jiho?eský kraj",
+  "group": "DUN"
+ },
+ {
+  "fid": 787,
+  "name": "Plze?ský kraj",
+  "group": "DUN"
+ },
+ {
+  "fid": 793,
+  "name": "Kraj Vyso?ina",
+  "group": "DUN"
+ },
+ {
+  "fid": 1034,
+  "name": "Samtskhe?Javakheti",
+  "group": "GEO"
+ },
+ {
+  "fid": 1214,
+  "name": "Gy?r-Moson-Sopron",
+  "group": "DUN"
+ },
+ {
+  "fid": 1571,
+  "name": "Al?ksnes novads",
+  "group": "LVA"
+ },
+ {
+  "fid": 1572,
+  "name": "L?v?nu novads",
+  "group": "LVA"
+ },
+ {
+  "fid": 1578,
+  "name": "R?zeknes",
+  "group": "LVA"
+ },
+ {
+  "fid": 1579,
+  "name": "J?rmalas",
+  "group": "LVA"
+ },
+ {
+  "fid": 1581,
+  "name": "R?ga",
+  "group": "LVA"
+ },
+ {
+  "fid": 1582,
+  "name": "Liep?jas",
+  "group": "LVA"
+ },
+ {
+  "fid": 1584,
+  "name": "Kuld?gas novads",
+  "group": "LVA"
+ },
+ {
+  "fid": 1590,
+  "name": "M?rupes novads",
+  "group": "LVA"
+ },
+ {
+  "fid": 1594,
+  "name": "J?kabpils novads",
+  "group": "LVA"
+ },
+ {
+  "fid": 1596,
+  "name": "R?zeknes novads",
+  "group": "LVA"
+ },
+ {
+  "fid": 1600,
+  "name": "C?su novads",
+  "group": "LVA"
+ },
+ {
+  "fid": 1602,
+  "name": "?da?u novads",
+  "group": "LVA"
+ },
+ {
+  "fid": 1603,
+  "name": "Ropa?u novads",
+  "group": "LVA"
+ },
+ {
+  "fid": 1605,
+  "name": "Prei?u novads",
+  "group": "LVA"
+ },
+ {
+  "fid": 1606,
+  "name": "Kr?slavas novads",
+  "group": "LVA"
+ },
+ {
+  "fid": 1608,
+  "name": "?ekavas novads",
+  "group": "LVA"
+ },
+ {
+  "fid": 1611,
+  "name": "Limba?u novads",
+  "group": "LVA"
+ },
+ {
+  "fid": 1612,
+  "name": "Aug?daugavas novads",
+  "group": "LVA"
+ },
+ {
+  "fid": 1613,
+  "name": "Varak??nu novads",
+  "group": "LVA"
+ },
+ {
+  "fid": 1728,
+  "name": "Ro?aje Municipality",
+  "group": "MNE"
+ },
+ {
+  "fid": 1737,
+  "name": "Kola?in Municipality",
+  "group": "MNE"
+ },
+ {
+  "fid": 1740,
+  "name": "Nik?i? Municipality",
+  "group": "MNE"
+ },
+ {
+  "fid": 1742,
+  "name": "Plu?ine Municipality",
+  "group": "MNE"
+ },
+ {
+  "fid": 1745,
+  "name": "?avnik Municipality",
+  "group": "MNE"
+ },
+ {
+  "fid": 1746,
+  "name": "?abljak Municipality",
+  "group": "MNE"
+ },
+ {
+  "fid": 1825,
+  "name": "?ebbu? Gozo",
+  "group": "MLT"
+ },
+ {
+  "fid": 1826,
+  "name": "Ker?em",
+  "group": "MLT"
+ },
+ {
+  "fid": 1830,
+  "name": "Xg?ajra",
+  "group": "MLT"
+ },
+ {
+  "fid": 1835,
+  "name": "Mellie?a",
+  "group": "MLT"
+ },
+ {
+  "fid": 1836,
+  "name": "G?ira",
+  "group": "MLT"
+ },
+ {
+  "fid": 1837,
+  "name": "M?arr",
+  "group": "MLT"
+ },
+ {
+  "fid": 1840,
+  "name": "G?arg?ur",
+  "group": "MLT"
+ },
+ {
+  "fid": 1852,
+  "name": "?amrun",
+  "group": "MLT"
+ },
+ {
+  "fid": 1863,
+  "name": "Xag?ra",
+  "group": "MLT"
+ },
+ {
+  "fid": 1866,
+  "name": "?ebbu? Malta",
+  "group": "MLT"
+ },
+ {
+  "fid": 1869,
+  "name": "Si??iewi",
+  "group": "MLT"
+ },
+ {
+  "fid": 1876,
+  "name": "?urrieq",
+  "group": "MLT"
+ },
+ {
+  "fid": 1883,
+  "name": "G?axaq",
+  "group": "MLT"
+ },
+ {
+  "fid": 1884,
+  "name": "Bir?ebbu?a",
+  "group": "MLT"
+ },
+ {
+  "fid": 1885,
+  "name": "?ejtun",
+  "group": "MLT"
+ },
+ {
+  "fid": 1886,
+  "name": "?abbar",
+  "group": "MLT"
+ },
+ {
+  "fid": 2153,
+  "name": "?ód? Voivodeship",
+  "group": "POL"
+ },
+ {
+  "fid": 2156,
+  "name": "?wi?tokrzyskie Voivodeship",
+  "group": "POL"
+ },
+ {
+  "fid": 2234,
+  "name": "Khanty-Mansiysk Autonomous Okrug ? Ugra",
+  "group": "RUS"
+ },
+ {
+  "fid": 2264,
+  "name": "North Ossetia?Alania",
+  "group": "UKR"
+ },
+ {
+  "fid": 2416,
+  "name": "Region of Tren?ín",
+  "group": "DUN"
+ },
+ {
+  "fid": 2418,
+  "name": "Region of ?ilina",
+  "group": "DUN"
+ },
+ {
+  "fid": 2420,
+  "name": "Region of Pre?ov",
+  "group": "DUN"
+ },
+ {
+  "fid": 2421,
+  "name": "Region of Ko?ice",
+  "group": "DUN"
+ },
+ {
+  "fid": 2848,
+  "name": "Bà R?a?V?ng Tàu",
+  "group": "VNM"
+ },
+ {
+  "fid": 2849,
+  "name": "B?c Giang",
+  "group": "VNM"
+ },
+ {
+  "fid": 2850,
+  "name": "B?c K?n",
+  "group": "VNM"
+ },
+ {
+  "fid": 2851,
+  "name": "B?c Liêu",
+  "group": "VNM"
+ },
+ {
+  "fid": 2852,
+  "name": "B?c Ninh",
+  "group": "VNM"
+ },
+ {
+  "fid": 2853,
+  "name": "B?n Tre",
+  "group": "VNM"
+ },
+ {
+  "fid": 2854,
+  "name": "Bình ??nh",
+  "group": "VNM"
+ },
+ {
+  "fid": 2855,
+  "name": "Bình D??ng",
+  "group": "VNM"
+ },
+ {
+  "fid": 2856,
+  "name": "Bình Ph??c",
+  "group": "VNM"
+ },
+ {
+  "fid": 2857,
+  "name": "Bình Thu?n",
+  "group": "VNM"
+ },
+ {
+  "fid": 2859,
+  "name": "C?n Th?",
+  "group": "VNM"
+ },
+ {
+  "fid": 2860,
+  "name": "Cao B?ng",
+  "group": "VNM"
+ },
+ {
+  "fid": 2861,
+  "name": "Côn ??o",
+  "group": "VNM"
+ },
+ {
+  "fid": 2862,
+  "name": "?à N?ng",
+  "group": "VNM"
+ },
+ {
+  "fid": 2863,
+  "name": "??k L?k",
+  "group": "VNM"
+ },
+ {
+  "fid": 2864,
+  "name": "??k Nông",
+  "group": "VNM"
+ },
+ {
+  "fid": 2865,
+  "name": "?i?n Biên",
+  "group": "VNM"
+ },
+ {
+  "fid": 2866,
+  "name": "??ng Nai",
+  "group": "VNM"
+ },
+ {
+  "fid": 2867,
+  "name": "??ng Tháp",
+  "group": "VNM"
+ },
+ {
+  "fid": 2871,
+  "name": "Hà N?i\t",
+  "group": "VNM"
+ },
+ {
+  "fid": 2872,
+  "name": "Hà T?nh",
+  "group": "VNM"
+ },
+ {
+  "fid": 2873,
+  "name": "H?i D??ng",
+  "group": "VNM"
+ },
+ {
+  "fid": 2874,
+  "name": "H?i Phòng",
+  "group": "VNM"
+ },
+ {
+  "fid": 2875,
+  "name": "H?u Giang",
+  "group": "VNM"
+ },
+ {
+  "fid": 2878,
+  "name": "H?ng Yên",
+  "group": "VNM"
+ },
+ {
+  "fid": 2883,
+  "name": "Lâm ??ng",
+  "group": "VNM"
+ },
+ {
+  "fid": 2884,
+  "name": "L?ng S?n",
+  "group": "VNM"
+ },
+ {
+  "fid": 2887,
+  "name": "Nam ??nh",
+  "group": "VNM"
+ },
+ {
+  "fid": 2888,
+  "name": "Ngh? An",
+  "group": "VNM"
+ },
+ {
+  "fid": 2890,
+  "name": "Ninh Thu?n",
+  "group": "VNM"
+ },
+ {
+  "fid": 2891,
+  "name": "Phú Th?",
+  "group": "VNM"
+ },
+ {
+  "fid": 2893,
+  "name": "Qu?ng Bình",
+  "group": "VNM"
+ },
+ {
+  "fid": 2894,
+  "name": "Qu?ng Nam",
+  "group": "VNM"
+ },
+ {
+  "fid": 2895,
+  "name": "Qu?ng Ngãi",
+  "group": "VNM"
+ },
+ {
+  "fid": 2896,
+  "name": "Qu?ng Ninh",
+  "group": "VNM"
+ },
+ {
+  "fid": 2897,
+  "name": "Qu?ng Tr?",
+  "group": "VNM"
+ },
+ {
+  "fid": 2898,
+  "name": "Sóc Tr?ng",
+  "group": "VNM"
+ },
+ {
+  "fid": 2899,
+  "name": "S?n La",
+  "group": "VNM"
+ },
+ {
+  "fid": 2904,
+  "name": "Th?a Thiên Hu?",
+  "group": "VNM"
+ },
+ {
+  "fid": 2905,
+  "name": "Ti?n Giang",
+  "group": "VNM"
+ },
+ {
+  "fid": 2908,
+  "name": "V?nh Long",
+  "group": "VNM"
+ },
+ {
+  "fid": 2909,
+  "name": "V?nh Phúc",
+  "group": "VNM"
+ },
+ {
+  "fid": 2931,
+  "name": "San?a?",
+  "group": "UAP"
+ },
+ {
+  "fid": 2932,
+  "name": "San?a? Governorate",
+  "group": "UAP"
+ },
+ {
+  "fid": 2934,
+  "name": "?Adan Governorate",
+  "group": "UAP"
+ },
+ {
+  "fid": 3006,
+  "name": "Ad?yaman",
+  "group": "TUR"
+ },
+ {
+  "fid": 3008,
+  "name": "A?r?",
+  "group": "TUR"
+ },
+ {
+  "fid": 3012,
+  "name": "Ayd?n",
+  "group": "TUR"
+ },
+ {
+  "fid": 3013,
+  "name": "Bal?kesir",
+  "group": "TUR"
+ },
+ {
+  "fid": 3017,
+  "name": "Bart?n",
+  "group": "TUR"
+ },
+ {
+  "fid": 3027,
+  "name": "Çank?r?",
+  "group": "TUR"
+ },
+ {
+  "fid": 3030,
+  "name": "Diyarbak?r",
+  "group": "TUR"
+ },
+ {
+  "fid": 3033,
+  "name": "Elaz??",
+  "group": "TUR"
+ },
+ {
+  "fid": 3036,
+  "name": "Eski?ehir",
+  "group": "TUR"
+ },
+ {
+  "fid": 3039,
+  "name": "Gümü?hane",
+  "group": "TUR"
+ },
+ {
+  "fid": 3042,
+  "name": "I?d?r",
+  "group": "TUR"
+ },
+ {
+  "fid": 3044,
+  "name": "?stanbul",
+  "group": "TUR"
+ },
+ {
+  "fid": 3045,
+  "name": "?zmir",
+  "group": "TUR"
+ },
+ {
+  "fid": 3046,
+  "name": "Kahramanmara?",
+  "group": "TUR"
+ },
+ {
+  "fid": 3053,
+  "name": "K?r?kkale",
+  "group": "TUR"
+ },
+ {
+  "fid": 3054,
+  "name": "K?rklareli",
+  "group": "TUR"
+ },
+ {
+  "fid": 3055,
+  "name": "K?r?ehir",
+  "group": "TUR"
+ },
+ {
+  "fid": 3063,
+  "name": "Mu?la",
+  "group": "TUR"
+ },
+ {
+  "fid": 3064,
+  "name": "Mu?",
+  "group": "TUR"
+ },
+ {
+  "fid": 3065,
+  "name": "Nev?ehir",
+  "group": "TUR"
+ },
+ {
+  "fid": 3066,
+  "name": "Ni?de",
+  "group": "TUR"
+ },
+ {
+  "fid": 3075,
+  "name": "Tekirda?",
+  "group": "TUR"
+ },
+ {
+  "fid": 3079,
+  "name": "U?ak",
+  "group": "TUR"
+ },
+ {
+  "fid": 3084,
+  "name": "??rnak",
+  "group": "TUR"
+ },
+ {
+  "fid": 3085,
+  "name": "?anl?urfa",
+  "group": "TUR"
+ },
+ {
+  "fid": 3115,
+  "name": "Mah?r?shtra",
+  "group": "IND"
+ },
+ {
+  "fid": 3116,
+  "name": "N?g?land",
+  "group": "IND"
+ },
+ {
+  "fid": 3119,
+  "name": "Tamil N?du",
+  "group": "IND"
+ },
+ {
+  "fid": 3120,
+  "name": "Chhatt?sgarh",
+  "group": "IND"
+ },
+ {
+  "fid": 3121,
+  "name": "Gujar?t",
+  "group": "IND"
+ },
+ {
+  "fid": 3127,
+  "name": "Bih?r",
+  "group": "IND"
+ },
+ {
+  "fid": 3128,
+  "name": "Lad?kh",
+  "group": "IND"
+ },
+ {
+  "fid": 3129,
+  "name": "R?jasth?n",
+  "group": "IND"
+ },
+ {
+  "fid": 3130,
+  "name": "Telang?na",
+  "group": "IND"
+ },
+ {
+  "fid": 3133,
+  "name": "Arun?chal Pradesh",
+  "group": "IND"
+ },
+ {
+  "fid": 3134,
+  "name": "Megh?laya",
+  "group": "IND"
+ },
+ {
+  "fid": 3135,
+  "name": "Jh?rkhand",
+  "group": "IND"
+ },
+ {
+  "fid": 3138,
+  "name": "Karn?taka",
+  "group": "IND"
+ },
+ {
+  "fid": 3139,
+  "name": "Uttar?khand",
+  "group": "IND"
+ },
+ {
+  "fid": 3140,
+  "name": "D?dra and Nagar Haveli and Dam?n and Diu",
+  "group": "IND"
+ },
+ {
+  "fid": 3144,
+  "name": "Chand?garh",
+  "group": "IND"
+ },
+ {
+  "fid": 3146,
+  "name": "Him?chal Pradesh",
+  "group": "IND"
+ },
+ {
+  "fid": 3147,
+  "name": "Jammu and Kashm?r",
+  "group": "IND"
+ },
+ {
+  "fid": 3149,
+  "name": "Hary?na",
+  "group": "IND"
+ }
+]

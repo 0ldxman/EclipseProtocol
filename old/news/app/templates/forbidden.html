@@ -1,0 +1,21 @@
+{% extends "feed_base.html" %}
+{% block title %}Недостаточно прав — {{ app_title }}{% endblock %}
+
+{% block content %}
+<div class="auth-card">
+  <div class="auth-card__code">403</div>
+  <h1 class="auth-card__title">Недостаточно прав</h1>
+  <p class="auth-card__sub">
+    Этот раздел доступен только администраторам.
+    {% if viewer and viewer.authenticated %}
+      Вы вошли как «{{ viewer.role_label }}».
+    {% endif %}
+  </p>
+  <div class="auth-actions">
+    <a class="discord-btn discord-btn--ghost" href="/">К ленте новостей</a>
+    {% if viewer and viewer.authenticated %}
+      <a class="auth-link" href="/logout">Сменить аккаунт</a>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

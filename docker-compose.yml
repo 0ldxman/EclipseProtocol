@@ -1,0 +1,68 @@
+# Aether - one process serving the public wiki (/), the admin (/admin/) and the
+# map (/map/), plus the collaboration websocket.
+#
+# Written for a Portainer stack: paste it in, set the variables below in the
+# stack's environment section, deploy. Nothing else is needed - there is no
+# database, no cache, no worker. The wiki keeps its state as files.
+#
+#   AETHER_IMAGE   ghcr.io/<owner>/<repo>:latest   image built by the workflow
+#   AETHER_PORT    3010                            host port to publish on
+#   AETHER_DOMAIN  wiki.example.com                only for the `proxy` profile
+#
+# A named volume is used deliberately rather than a host path: the container
+# runs as an unprivileged user, and Docker gives a fresh named volume the
+# ownership the image's /data has, while a bind mount arrives owned by root and
+# the first write fails.
+
+services:
+  aether:
+    image: ${AETHER_IMAGE:-ghcr.io/OWNER/aether:latest}
+    container_name: aether
+    restart: unless-stopped
+    environment:
+      PORT: 3010
+      # Records, rooms, uploads and the folder tree. Everything that must
+      # survive an image update lives here.
+      DATA_DIR: /data
+      # The baked province topology, part of the image.
+      GEO_DIR: /app/geo
+      LOG_LEVEL: ${AETHER_LOG_LEVEL:-info}
+    ports:
+      - "${AETHER_PORT:-3010}:3010"
+    volumes:
+      - aether-data:/data
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:3010/api/health >/dev/null || exit 1"]
+      interval: 30s
+      timeout: 5s
+      start_period: 20s
+      retries: 3
+    # Uploaded reference images can be tens of megabytes and the topology bundle
+    # is decoded in memory on the client, not here - the server itself stays
+    # small, so this cap is about catching a leak, not about sizing.
+    mem_limit: ${AETHER_MEM_LIMIT:-1g}
+
+  # Optional: a TLS-terminating reverse proxy, for when this is reachable from
+  # outside. Start it with `--profile proxy` (in Portainer: add `proxy` to the
+  # stack's COMPOSE_PROFILES variable). Caddy gets a certificate on its own and
+  # forwards websocket upgrades without extra configuration, so no config file
+  # is needed here.
+  proxy:
+    image: caddy:2-alpine
+    container_name: aether-proxy
+    profiles: ["proxy"]
+    restart: unless-stopped
+    depends_on:
+      - aether
+    command: caddy reverse-proxy --from ${AETHER_DOMAIN:-localhost} --to aether:3010
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - caddy-data:/data
+      - caddy-config:/config
+
+volumes:
+  aether-data:
+  caddy-data:
+  caddy-config:

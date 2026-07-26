@@ -1,0 +1,1041 @@
+/**
+ * AETHER design system.
+ *
+ * This is a framework-free port of the previous build's `@aether/ui`, which was
+ * shadcn components restyled into a terminal look. The components there are the
+ * design - the tokens alone are not enough, because the character of the system
+ * lives in details you only get by reading them:
+ *
+ *   - a button reads as `[ label ]`, brackets drawn by CSS, not typed;
+ *   - the default button is an amber outline that fills solid on hover;
+ *   - a card marks all four corners with a small amber angle;
+ *   - an input is a command line: a `>` prompt, a block caret, no rounding;
+ *   - a vertical separator is a "/" glyph, not a rule;
+ *   - radius is 0 everywhere and JetBrains Mono is the *body* face.
+ *
+ * Everything is plain CSS classes so the three apps (public wiki, admin, map)
+ * share one implementation without sharing a framework.
+ */
+
+@import "./fonts.css";
+
+:root {
+  color-scheme: dark;
+
+  --background: #0d0e0f;
+  --foreground: #f2f1ee;
+  --card: #141517;
+  --card-foreground: #f2f1ee;
+  --popover: #141517;
+  --popover-foreground: #f2f1ee;
+  --primary: #e8a13c;
+  --primary-foreground: #0d0e0f;
+  --secondary: #1c1d1f;
+  --secondary-foreground: #f2f1ee;
+  --muted: #1c1d1f;
+  --muted-foreground: #9a9a9c;
+  --accent: #1c1d1f;
+  --accent-foreground: #f2f1ee;
+  --destructive: #e5484d;
+  --success: #10b981;
+  --border: rgba(255, 255, 255, 0.1);
+  --input: rgba(255, 255, 255, 0.15);
+  --ring: #e8a13c;
+
+  /* Amber ramp, used for country colours and any series of related values. */
+  --chart-1: #f5c177;
+  --chart-2: #e8a13c;
+  --chart-3: #c9842e;
+  --chart-4: #a66a23;
+  --chart-5: #7d4f1a;
+
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --radius: 0;
+
+  --step-1: 4px;
+  --step-2: 8px;
+  --step-3: 12px;
+  --step-4: 16px;
+  --step-5: 24px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  height: 100%;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font: 13px/1.5 var(--font-mono);
+  -webkit-font-smoothing: antialiased;
+}
+
+::selection {
+  background: color-mix(in srgb, var(--primary) 35%, transparent);
+}
+
+/* Terminal scrollbars: thin, dim, amber on hover. */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--foreground) 18%, transparent) transparent;
+}
+*::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+*::-webkit-scrollbar-track,
+*::-webkit-scrollbar-corner {
+  background: transparent;
+}
+*::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--foreground) 18%, transparent);
+}
+*::-webkit-scrollbar-thumb:hover {
+  background: var(--primary);
+}
+
+/* ---- type ------------------------------------------------------------- */
+
+h1,
+h2,
+h3,
+h4 {
+  font-weight: 600;
+  margin: 0;
+}
+
+a {
+  color: var(--primary);
+}
+
+/** Uppercase letterspaced section label - "ДОСЬЕ" over a block of rows. */
+.eyebrow {
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted-foreground);
+}
+
+.muted {
+  color: var(--muted-foreground);
+}
+.accent {
+  color: var(--primary);
+}
+
+/* ---- button ----------------------------------------------------------- */
+
+/**
+ * The bracket pair is the signature of this system: every button is drawn as
+ * `[ label ]`, dimmed, so a row of controls reads like a command line. Icon-only
+ * buttons opt out - there is no label to wrap.
+ */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  flex-shrink: 0;
+  height: 32px;
+  padding: 0 10px;
+  border: 1px solid transparent;
+  background-clip: padding-box;
+  font: 500 12px/1 var(--font-mono);
+  white-space: nowrap;
+  user-select: none;
+  cursor: pointer;
+  transition:
+    background-color 0.12s,
+    border-color 0.12s,
+    color 0.12s;
+
+  border-color: var(--primary);
+  background: color-mix(in srgb, var(--primary) 10%, transparent);
+  color: var(--primary);
+}
+.btn::before {
+  content: "[ ";
+  opacity: 0.6;
+}
+.btn::after {
+  content: " ]";
+  opacity: 0.6;
+}
+.btn:hover {
+  background: var(--primary);
+  color: var(--background);
+}
+.btn:focus-visible {
+  outline: none;
+  border-color: var(--ring);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--ring) 40%, transparent);
+}
+.btn:active {
+  translate: 0 1px;
+}
+.btn:disabled {
+  pointer-events: none;
+  opacity: 0.5;
+}
+.btn svg {
+  flex: none;
+  pointer-events: none;
+}
+
+.btn--outline {
+  border-color: var(--border);
+  background: var(--background);
+  color: var(--foreground);
+}
+.btn--outline:hover {
+  background: var(--muted);
+  color: var(--foreground);
+}
+
+.btn--secondary {
+  border-color: var(--secondary-foreground);
+  background: var(--secondary);
+  color: var(--secondary-foreground);
+}
+.btn--secondary:hover {
+  background: var(--secondary-foreground);
+  color: var(--background);
+}
+
+.btn--ghost {
+  border-color: transparent;
+  background: transparent;
+  color: var(--foreground);
+}
+.btn--ghost:hover {
+  border-color: var(--foreground);
+  background: transparent;
+  color: var(--foreground);
+}
+
+.btn--destructive {
+  border-color: var(--destructive);
+  background: color-mix(in srgb, var(--destructive) 10%, transparent);
+  color: var(--destructive);
+}
+.btn--destructive:hover {
+  background: var(--destructive);
+  color: var(--background);
+}
+
+.btn--link {
+  border-color: transparent;
+  background: transparent;
+  color: var(--primary);
+  text-underline-offset: 4px;
+}
+.btn--link:hover {
+  background: transparent;
+  color: var(--primary);
+  text-decoration: underline;
+}
+
+/** A pressed toggle stays in the button's hover state. */
+.btn.is-active {
+  background: var(--primary);
+  color: var(--background);
+  border-color: var(--primary);
+}
+
+.btn--xs {
+  height: 24px;
+  padding: 0 8px;
+  gap: 4px;
+}
+.btn--sm {
+  height: 28px;
+  padding: 0 10px;
+  gap: 4px;
+}
+.btn--lg {
+  height: 36px;
+}
+.btn--icon {
+  width: 32px;
+  padding: 0;
+}
+.btn--icon.btn--xs {
+  width: 24px;
+}
+.btn--icon.btn--sm {
+  width: 28px;
+}
+.btn--icon::before,
+.btn--icon::after {
+  content: none;
+}
+
+/* ---- card ------------------------------------------------------------- */
+
+/**
+ * Corner brackets on all four corners. The old card drew them as four absolute
+ * spans; two gradients on ::before/::after do the same with no extra elements,
+ * and stay in the right place when the card scrolls.
+ */
+.card {
+  position: relative;
+  background: var(--card);
+  color: var(--card-foreground);
+  box-shadow: inset 0 0 0 1px var(--border);
+  padding: var(--step-4);
+  font-size: 12px;
+  line-height: 1.6;
+}
+.card::before,
+.card::after {
+  content: "";
+  position: absolute;
+  height: 10px;
+  left: 0;
+  right: 0;
+  pointer-events: none;
+  /* two 10px corner angles per edge, drawn with borders on a clipped box */
+  background:
+    linear-gradient(var(--primary), var(--primary)) 0 0 / 10px 2px no-repeat,
+    linear-gradient(var(--primary), var(--primary)) 100% 0 / 10px 2px no-repeat,
+    linear-gradient(var(--primary), var(--primary)) 0 0 / 2px 10px no-repeat,
+    linear-gradient(var(--primary), var(--primary)) 100% 0 / 2px 10px no-repeat;
+}
+.card::before {
+  top: 0;
+}
+.card::after {
+  bottom: 0;
+  rotate: 180deg;
+}
+
+/** Amber rule along the top edge - the dashboard's section card. */
+.card--secondary::before,
+.card--secondary::after {
+  content: none;
+}
+.card--secondary {
+  border-top: 2px solid var(--primary);
+}
+
+/** Amber bar down the left edge - a note or an aside. */
+.card--accent::before,
+.card--accent::after {
+  content: none;
+}
+.card--accent {
+  border-left: 2px solid var(--primary);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--muted-foreground) 30%, transparent);
+}
+
+.card--outline::before,
+.card--outline::after {
+  content: none;
+}
+.card--outline {
+  box-shadow: none;
+  border: 1px dashed color-mix(in srgb, var(--muted-foreground) 40%, transparent);
+}
+
+/** Filled header strip, as on the old "main" card. */
+.card--main::before,
+.card--main::after {
+  content: none;
+}
+.card--main {
+  padding: 0;
+}
+.card--main > .card-head {
+  background: var(--primary);
+  color: var(--background);
+  padding: 6px var(--step-4);
+  font-weight: 600;
+}
+.card--main > .card-body {
+  padding: var(--step-4);
+}
+
+.card-title {
+  font-size: 13px;
+  font-weight: 500;
+  margin-bottom: var(--step-2);
+}
+
+/** Plain surface with no brackets, for panels that are not content cards. */
+.panel {
+  background: var(--card);
+  border: 1px solid var(--border);
+}
+.panel--accent {
+  border-top: 2px solid var(--primary);
+}
+
+/** Single top-left angle. Cheaper than a card when only a hint is wanted. */
+.bracket {
+  position: relative;
+}
+.bracket::before {
+  content: "";
+  position: absolute;
+  top: -1px;
+  left: -1px;
+  width: 14px;
+  height: 14px;
+  border-top: 2px solid var(--primary);
+  border-left: 2px solid var(--primary);
+  pointer-events: none;
+}
+
+/* ---- label / value rows ----------------------------------------------- */
+
+.rows {
+  display: grid;
+  gap: 2px;
+}
+.row {
+  display: flex;
+  align-items: baseline;
+  gap: var(--step-3);
+}
+.row > .k {
+  color: var(--muted-foreground);
+  white-space: nowrap;
+}
+.row > .v {
+  margin-left: auto;
+  text-align: right;
+  font-weight: 600;
+}
+
+/* ---- badge ------------------------------------------------------------ */
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  height: 20px;
+  width: fit-content;
+  padding: 0 8px;
+  border: 1px solid transparent;
+  font-size: 11px;
+  font-weight: 500;
+  white-space: nowrap;
+
+  border-color: var(--primary);
+  background: color-mix(in srgb, var(--primary) 10%, transparent);
+  color: var(--primary);
+}
+.badge--secondary {
+  border-color: color-mix(in srgb, var(--muted-foreground) 30%, transparent);
+  background: var(--secondary);
+  color: var(--secondary-foreground);
+}
+.badge--destructive {
+  border-color: var(--destructive);
+  background: color-mix(in srgb, var(--destructive) 10%, transparent);
+  color: var(--destructive);
+}
+.badge--success {
+  border-color: var(--success);
+  background: color-mix(in srgb, var(--success) 10%, transparent);
+  color: var(--success);
+}
+.badge--outline {
+  border: 1px dashed var(--muted-foreground);
+  background: transparent;
+  color: var(--muted-foreground);
+}
+.badge--filled {
+  border-color: var(--primary);
+  background: var(--primary);
+  color: var(--background);
+}
+.badge--accent {
+  border-color: color-mix(in srgb, var(--muted-foreground) 30%, transparent);
+  border-left: 2px solid var(--primary);
+  background: var(--secondary);
+  color: var(--secondary-foreground);
+}
+/** A status dot instead of a border colour. */
+.badge--dot {
+  border-color: color-mix(in srgb, var(--muted-foreground) 30%, transparent);
+  background: var(--secondary);
+  color: var(--secondary-foreground);
+}
+.badge--dot::before {
+  content: "";
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--primary);
+}
+/** Bracketed, like a button, but not clickable. */
+.badge--ghost {
+  border-color: transparent;
+  background: transparent;
+  color: var(--foreground);
+}
+.badge--ghost::before {
+  content: "[ ";
+  opacity: 0.6;
+}
+.badge--ghost::after {
+  content: " ]";
+  opacity: 0.6;
+}
+
+/* ---- controls --------------------------------------------------------- */
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  border-radius: var(--radius);
+}
+
+/**
+ * Command line. The `>` prompt is drawn by the wrapper so the caret sits where
+ * a shell would put it; `caret-shape: block` finishes the illusion in browsers
+ * that support it.
+ */
+.field {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+.field::before {
+  content: ">";
+  position: absolute;
+  left: 10px;
+  color: var(--muted-foreground);
+  pointer-events: none;
+  user-select: none;
+}
+.field > .input {
+  padding-left: 24px;
+}
+
+.input {
+  width: 100%;
+  min-width: 0;
+  height: 32px;
+  padding: 0 10px;
+  background: transparent;
+  border: 1px solid var(--input);
+  color: var(--foreground);
+  font-size: 12px;
+  caret-color: var(--primary);
+  caret-shape: block;
+  transition: border-color 0.12s;
+}
+.input::placeholder {
+  color: var(--muted-foreground);
+}
+.input:focus {
+  outline: none;
+  border-color: var(--ring);
+}
+
+.textarea {
+  width: 100%;
+  padding: var(--step-2) 10px;
+  background: transparent;
+  border: 1px solid var(--input);
+  color: var(--foreground);
+  font-size: 12px;
+  caret-color: var(--primary);
+}
+.textarea:focus {
+  outline: none;
+  border-color: var(--ring);
+}
+
+.kbd {
+  padding: 1px 5px;
+  border: 1px solid var(--border);
+  background: var(--muted);
+  color: var(--muted-foreground);
+  font-size: 10px;
+  line-height: 1.4;
+}
+
+/* ---- separator -------------------------------------------------------- */
+
+.sep {
+  height: 1px;
+  width: 100%;
+  background: var(--border);
+  border: 0;
+}
+/** Vertical separators are a glyph, not a rule. */
+.sep--v {
+  display: inline-flex;
+  align-items: center;
+  align-self: stretch;
+  height: auto;
+  width: auto;
+  background: none;
+  color: var(--muted-foreground);
+  user-select: none;
+}
+.sep--v::before {
+  content: "/";
+}
+
+/* ---- progress --------------------------------------------------------- */
+
+.progress {
+  position: relative;
+  height: 4px;
+  width: 100%;
+  background: var(--muted);
+  overflow: hidden;
+}
+.progress > span {
+  display: block;
+  height: 100%;
+  background: var(--primary);
+  transition: width 0.2s;
+}
+
+/* ---- avatar ----------------------------------------------------------- */
+
+.avatar {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  flex: none;
+  border: 1px solid var(--primary);
+  background: color-mix(in srgb, var(--primary) 12%, transparent);
+  color: var(--primary);
+  font-size: 11px;
+  font-weight: 500;
+  user-select: none;
+}
+.avatar--sm {
+  width: 24px;
+  height: 24px;
+  font-size: 10px;
+}
+.avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* ---- table ------------------------------------------------------------ */
+
+/**
+ * Cell borders appear only while the table is hovered, so a table at rest is a
+ * quiet grid of text and becomes a spreadsheet when you reach for it.
+ */
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+.table th,
+.table td {
+  padding: 6px 8px;
+  text-align: left;
+  border-right: 1px solid transparent;
+  border-bottom: 1px solid transparent;
+  transition: border-color 0.12s;
+}
+.table th {
+  height: 34px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+.table:hover th,
+.table:hover td {
+  border-color: var(--border);
+}
+.table th:last-child,
+.table td:last-child {
+  border-right-color: transparent;
+}
+.table tbody tr:nth-child(even) {
+  background: color-mix(in srgb, var(--muted) 30%, transparent);
+}
+.table tbody tr:hover {
+  background: color-mix(in srgb, var(--muted) 40%, transparent);
+}
+.table tbody tr[aria-selected="true"] {
+  background: color-mix(in srgb, var(--primary) 15%, transparent);
+}
+
+/* ---- menu ------------------------------------------------------------- */
+
+.menu {
+  min-width: 180px;
+  background: var(--popover);
+  color: var(--popover-foreground);
+  box-shadow: inset 0 0 0 1px var(--border);
+  padding: 0;
+}
+.menu-item {
+  display: flex;
+  align-items: center;
+  gap: var(--step-2);
+  width: 100%;
+  padding: 7px 12px;
+  background: none;
+  border: 0;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.menu-item:hover,
+.menu-item:focus-visible {
+  outline: none;
+  background: var(--secondary);
+  color: var(--primary);
+}
+.menu-item:disabled {
+  opacity: 0.5;
+  pointer-events: none;
+}
+.menu-sep {
+  height: 1px;
+  background: var(--border);
+}
+
+/* ---- tooltip ---------------------------------------------------------- */
+
+.tooltip {
+  position: absolute;
+  z-index: 60;
+  padding: 3px 8px;
+  background: var(--popover);
+  box-shadow: inset 0 0 0 1px var(--border);
+  color: var(--foreground);
+  font-size: 11px;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+/* ---- animation -------------------------------------------------------- */
+
+/** The logo diamond breathes: a live-signal indicator, not decoration. */
+@keyframes ae-live-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.15;
+  }
+}
+.live-dot {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: ae-live-pulse 1.4s ease-in-out infinite;
+}
+
+@keyframes ae-caret-blink {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0;
+  }
+}
+.caret {
+  animation: ae-caret-blink 1.05s steps(1, end) infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .live-dot,
+  .caret {
+    animation: none;
+  }
+}
+
+/* ---- record content --------------------------------------------------- */
+
+.prose {
+  max-width: 74ch;
+}
+.prose h1 {
+  font-size: 21px;
+  margin: 0 0 var(--step-3);
+}
+.prose h2 {
+  font-size: 16px;
+  margin: var(--step-5) 0 var(--step-2);
+  padding-bottom: var(--step-1);
+  border-bottom: 1px solid var(--border);
+}
+.prose h3 {
+  font-size: 14px;
+  margin: var(--step-4) 0 var(--step-2);
+}
+.prose p {
+  margin: 0 0 var(--step-3);
+}
+.prose ul,
+.prose ol {
+  margin: 0 0 var(--step-3);
+  padding-left: 20px;
+}
+.prose table {
+  border-collapse: collapse;
+  margin: 0 0 var(--step-4);
+  width: 100%;
+}
+.prose th,
+.prose td {
+  border: 1px solid var(--border);
+  padding: 4px 10px;
+  text-align: left;
+}
+.prose th {
+  background: var(--secondary);
+  color: var(--muted-foreground);
+  font-weight: 600;
+}
+.prose code {
+  background: var(--secondary);
+  padding: 1px 5px;
+}
+.prose pre {
+  background: var(--secondary);
+  border: 1px solid var(--border);
+  padding: var(--step-3);
+  overflow-x: auto;
+}
+.prose pre code {
+  background: none;
+  padding: 0;
+}
+.prose hr {
+  border: 0;
+  border-top: 1px solid var(--border);
+  margin: var(--step-5) 0;
+}
+
+/* ---- widgets ---------------------------------------------------------- */
+
+.wikilink {
+  color: var(--primary);
+  text-decoration: none;
+  border-bottom: 1px solid color-mix(in srgb, var(--primary) 35%, transparent);
+}
+.wikilink:hover {
+  border-bottom-color: var(--primary);
+}
+.wikilink.is-broken {
+  color: var(--destructive);
+  border-bottom: 1px dashed color-mix(in srgb, var(--destructive) 60%, transparent);
+}
+
+/**
+ * Infobox.
+ *
+ * On the public record page it is lifted out of the body into its own column,
+ * where it is simply a card. Inside the body - the admin's preview pane, or a
+ * second infobox mid-article - it floats right, and drops to full width when
+ * the container is too narrow for a float to leave readable prose beside it.
+ */
+.w-infobox {
+  position: relative;
+  padding: var(--step-3) var(--step-4);
+  background: var(--card);
+  box-shadow: inset 0 0 0 1px var(--border);
+  font-size: 12px;
+}
+.w-infobox::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 10px;
+  height: 10px;
+  border-top: 2px solid var(--primary);
+  border-left: 2px solid var(--primary);
+}
+.w-infobox::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 10px;
+  height: 10px;
+  border-bottom: 2px solid var(--primary);
+  border-right: 2px solid var(--primary);
+}
+.prose > .w-infobox {
+  float: right;
+  width: 260px;
+  margin: 0 0 var(--step-4) var(--step-5);
+}
+@container (max-width: 640px) {
+  .prose > .w-infobox {
+    float: none;
+    width: 100%;
+    margin: 0 0 var(--step-4) 0;
+  }
+}
+
+.w-infobox-title {
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted-foreground);
+  margin-bottom: var(--step-2);
+}
+.w-infobox p {
+  margin: 0 0 6px;
+}
+.w-infobox strong {
+  color: var(--muted-foreground);
+  font-weight: 400;
+}
+
+.w-image {
+  margin: 0 0 var(--step-3);
+}
+.w-image img {
+  max-width: 100%;
+  display: block;
+  border: 1px solid var(--border);
+}
+.w-image figcaption {
+  color: var(--muted-foreground);
+  font-size: 11px;
+  margin-top: var(--step-1);
+}
+
+.w-tag {
+  display: inline-block;
+  padding: 0 7px;
+  font-size: 11px;
+  border: 1px solid var(--border);
+  background: var(--secondary);
+  color: var(--foreground);
+}
+.w-tag.is-ok {
+  color: var(--success);
+  border-color: color-mix(in srgb, var(--success) 45%, transparent);
+}
+.w-tag.is-warn {
+  color: var(--primary);
+  border-color: color-mix(in srgb, var(--primary) 45%, transparent);
+}
+.w-tag.is-danger {
+  color: var(--destructive);
+  border-color: color-mix(in srgb, var(--destructive) 45%, transparent);
+}
+.w-tag.is-info {
+  color: #7fa8ff;
+  border-color: #263450;
+}
+
+/** Redacted text reads as struck-through material, not as decoration. */
+.w-classified {
+  background: repeating-linear-gradient(
+    45deg,
+    color-mix(in srgb, var(--destructive) 14%, transparent),
+    color-mix(in srgb, var(--destructive) 14%, transparent) 5px,
+    transparent 5px,
+    transparent 10px
+  );
+  border-bottom: 1px solid color-mix(in srgb, var(--destructive) 55%, transparent);
+  padding: 0 3px;
+}
+
+.w-spoiler {
+  background: var(--secondary);
+  color: transparent;
+  cursor: help;
+}
+.w-spoiler:hover,
+.w-spoiler:focus {
+  color: inherit;
+}
+
+.w-bar,
+.w-dotbar {
+  display: flex;
+  align-items: center;
+  gap: var(--step-2);
+  font-size: 11px;
+  margin: 3px 0;
+}
+.w-bar-label {
+  color: var(--muted-foreground);
+}
+.w-bar-track {
+  flex: 1;
+  height: 4px;
+  background: var(--secondary);
+  border: 1px solid var(--border);
+}
+.w-bar-fill {
+  display: block;
+  height: 100%;
+  background: var(--primary);
+}
+.w-bar-value {
+  color: var(--muted-foreground);
+}
+.w-dots {
+  display: flex;
+  gap: 3px;
+}
+.w-dot {
+  width: 8px;
+  height: 8px;
+  background: var(--secondary);
+  border: 1px solid var(--border);
+  display: inline-block;
+}
+.w-dot.is-on {
+  background: var(--primary);
+  border-color: var(--primary);
+}
+
+.w-quote {
+  margin: 0 0 var(--step-4);
+  padding-left: var(--step-3);
+  border-left: 2px solid var(--primary);
+}
+.w-quote-by {
+  color: var(--muted-foreground);
+  font-size: 11px;
+}
+
+.w-map {
+  height: 220px;
+  border: 1px dashed var(--border);
+  display: grid;
+  place-items: center;
+  color: var(--muted-foreground);
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+.w-map::after {
+  content: "карта";
+}
+
+.w-timestamp,
+.w-countdown {
+  color: var(--primary);
+}

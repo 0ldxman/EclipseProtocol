@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+{% block title %}Вебхуки — {{ app_title }}{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1 class="page-title">Вебхуки</h1>
+    <p class="page-sub">Каждый вебхук привязан к каналу. Теги решают, какие новости в него уйдут.</p>
+  </div>
+</div>
+
+<section class="stack">
+  <div class="section-label">Список <span class="counter">{{ webhooks|length }}</span></div>
+
+  {% if webhooks %}
+    <div class="table">
+      <div class="table__head">
+        <span>Имя</span>
+        <span>Теги</span>
+        <span>Статус</span>
+        <span></span>
+      </div>
+      {% for wh in webhooks %}
+        <div class="table__row">
+          <span class="table__name">{{ wh.name }}</span>
+          <span class="chips chips--tight">
+            {% for tag in wh.tags %}
+              <span class="chip chip--xs" style="--chip: {{ tag.color | to_hex }}">{{ tag.name }}</span>
+            {% else %}
+              <span class="muted">без тегов</span>
+            {% endfor %}
+          </span>
+          <span>
+            {% if wh.enabled %}
+              <span class="badge badge--sent">включён</span>
+            {% else %}
+              <span class="badge badge--off">выключен</span>
+            {% endif %}
+          </span>
+          <span class="table__actions">
+            <a class="btn btn--small" href="/admin/webhooks/{{ wh.id }}/edit">Изменить</a>
+            <form class="inline" method="post" action="/admin/webhooks/{{ wh.id }}/delete"
+                  onsubmit="return confirm('Удалить вебхук «{{ wh.name }}»?');">
+              <button class="btn btn--small btn--ghost" type="submit">Удалить</button>
+            </form>
+          </span>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="empty">Вебхуков пока нет. Добавьте первый ниже.</div>
+  {% endif %}
+</section>
+
+<section class="stack">
+  <div class="section-label">Добавить вебхук</div>
+  <form class="panel form-grid" method="post" action="/admin/webhooks">
+    <label class="field">
+      <span class="field__label">Имя</span>
+      <input class="input" type="text" name="name" required placeholder="Полигон #админ">
+    </label>
+    <label class="field">
+      <span class="field__label">URL вебхука Discord</span>
+      <input class="input" type="url" name="url" required
+             placeholder="https://discord.com/api/webhooks/…">
+    </label>
+    <div class="grid-2">
+      <label class="field">
+        <span class="field__label">Имя по умолчанию <span class="hint">необязательно</span></span>
+        <input class="input" type="text" name="default_username" placeholder="Штаб">
+      </label>
+      <label class="field">
+        <span class="field__label">Аватар по умолчанию <span class="hint">URL, необязательно</span></span>
+        <input class="input" type="url" name="default_avatar" placeholder="https://…/avatar.png">
+      </label>
+    </div>
+
+    <div class="field">
+      <span class="field__label">Теги</span>
+      {% if tags %}
+        <div class="checks">
+          {% for tag in tags %}
+            <label class="check" style="--chip: {{ tag.color | to_hex }}">
+              <input type="checkbox" name="tags" value="{{ tag.id }}">
+              <span class="check__chip">{{ tag.name }}</span>
+            </label>
+          {% endfor %}
+        </div>
+      {% else %}
+        <p class="empty empty--inline">Сначала <a href="/admin/tags">создайте теги</a>.</p>
+      {% endif %}
+    </div>
+
+    <label class="switch">
+      <input type="checkbox" name="enabled" checked>
+      <span>Включён (участвует в рассылке)</span>
+    </label>
+
+    <div class="editor__actions">
+      <button class="btn btn--accent" type="submit">Добавить вебхук</button>
+    </div>
+  </form>
+</section>
+{% endblock %}

@@ -1,0 +1,38 @@
+{% extends "feed_base.html" %}
+{% block title %}{{ news.title }} — {{ app_title }}{% endblock %}
+
+{% block content %}
+<article class="article">
+  <a class="article__back" href="/">← Все новости</a>
+
+  {% if news.tags %}
+    <div class="kicker">
+      {% for tag in news.tags %}
+        <a class="kicker__tag" style="--chip: {{ tag.color | to_hex }}"
+           href="/?tag={{ tag.id }}">{{ tag.name }}</a>
+      {% endfor %}
+    </div>
+  {% endif %}
+
+  <h1 class="article__title">{{ news.title }}</h1>
+
+  <div class="article__meta">
+    <span>{{ (news.sent_at or news.created_at) | timeago }}</span>
+    {% if news.sent_at %}
+      <span class="article__date">{{ news.sent_at.strftime('%d.%m.%Y %H:%M') }}</span>
+    {% endif %}
+  </div>
+
+  {% if news.image_url %}
+    <figure class="article__hero">
+      <img src="{{ news.image_url }}" alt="" loading="lazy">
+    </figure>
+  {% elif news.thumbnail_url %}
+    <figure class="article__hero article__hero--sm">
+      <img src="{{ news.thumbnail_url }}" alt="" loading="lazy">
+    </figure>
+  {% endif %}
+
+  <div class="article__body">{{ news.content }}</div>
+</article>
+{% endblock %}

@@ -1,0 +1,8 @@
+fastapi>=0.110
+uvicorn[standard]>=0.27
+SQLAlchemy>=2.0
+pydantic>=2.6
+httpx>=0.26
+Jinja2>=3.1
+python-multipart>=0.0.9
+itsdangerous>=2.1

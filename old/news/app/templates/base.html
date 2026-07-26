@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}{{ app_title }}{% endblock %}</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar__inner">
+      <a class="brand" href="/admin/news">
+        <span class="brand__mark">//</span>
+        <span class="brand__name">{{ app_title }}</span>
+      </a>
+      <nav class="nav">
+        <a class="nav__link {% if active == 'news' %}is-active{% endif %}" href="/admin/news">Новости</a>
+        <a class="nav__link {% if active == 'webhooks' %}is-active{% endif %}" href="/admin/webhooks">Вебхуки</a>
+        <a class="nav__link {% if active == 'tags' %}is-active{% endif %}" href="/admin/tags">Теги</a>
+        <a class="nav__link" href="/" target="_blank" rel="noopener">Лента ↗</a>
+      </nav>
+      {% if viewer %}
+      <div class="who">
+        <span class="who__role">{{ viewer.role_label }}</span>
+        {% if viewer.username %}<span class="who__name">{{ viewer.username }}</span>{% endif %}
+        <a class="who__logout" href="/logout">Выйти</a>
+      </div>
+      {% endif %}
+    </div>
+  </header>
+
+  <main class="container">
+    {% block content %}{% endblock %}
+  </main>
+
+  {% block scripts %}{% endblock %}
+</body>
+</html>

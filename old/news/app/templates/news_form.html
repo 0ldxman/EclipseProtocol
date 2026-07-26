@@ -1,0 +1,122 @@
+{% extends "base.html" %}
+{% block title %}{% if news %}Редактирование{% else %}Новая новость{% endif %} — {{ app_title }}{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1 class="page-title">{% if news %}Редактирование новости{% else %}Новая новость{% endif %}</h1>
+    <p class="page-sub">Слева — содержание, справа — как это придёт в Discord.</p>
+  </div>
+  <a class="btn btn--ghost" href="/admin/news">К списку</a>
+</div>
+
+<form id="news-form" class="editor" method="post"
+      action="{% if news %}/admin/news/{{ news.id }}{% else %}/admin/news{% endif %}">
+  <div class="editor__main">
+    <label class="field">
+      <span class="field__label">Заголовок</span>
+      <input class="input" type="text" name="title" maxlength="256" required
+             value="{{ news.title if news else '' }}"
+             placeholder="Например: Открыт набор в гарнизон">
+    </label>
+
+    <label class="field">
+      <span class="field__label">Текст новости</span>
+      <textarea class="input textarea" name="content" rows="8" required
+                placeholder="То, что увидят в эмбеде. Поддерживается разметка Discord.">{{ news.content if news else '' }}</textarea>
+    </label>
+
+    <div class="grid-2">
+      <label class="field">
+        <span class="field__label">Цвет края эмбеда</span>
+        <input class="input input--color" type="color" name="color"
+               value="{{ (news.color if news else None) | to_hex }}">
+      </label>
+      <label class="field">
+        <span class="field__label">Имя отправителя <span class="hint">необязательно</span></span>
+        <input class="input" type="text" name="username" maxlength="80"
+               value="{{ news.username or '' if news else '' }}"
+               placeholder="Иначе — имя из вебхука">
+      </label>
+    </div>
+
+    <label class="field">
+      <span class="field__label">Аватар отправителя <span class="hint">URL, необязательно</span></span>
+      <input class="input" type="url" name="avatar_url"
+             value="{{ news.avatar_url or '' if news else '' }}"
+             placeholder="https://…/avatar.png">
+    </label>
+
+    <div class="grid-2">
+      <label class="field">
+        <span class="field__label">Thumbnail <span class="hint">квадрат в углу</span></span>
+        <input class="input" type="url" name="thumbnail_url"
+               value="{{ news.thumbnail_url or '' if news else '' }}"
+               placeholder="https://…/thumb.png">
+      </label>
+      <label class="field">
+        <span class="field__label">Вложение <span class="hint">большая картинка</span></span>
+        <input class="input" type="url" name="image_url"
+               value="{{ news.image_url or '' if news else '' }}"
+               placeholder="https://…/image.png">
+      </label>
+    </div>
+
+    <div class="field">
+      <span class="field__label">Теги <span class="hint">определяют, в какие каналы уйдёт новость</span></span>
+      {% if tags %}
+        <div class="checks">
+          {% for tag in tags %}
+            <label class="check" style="--chip: {{ tag.color | to_hex }}">
+              <input type="checkbox" name="tags" value="{{ tag.id }}"
+                     {% if tag.id in selected_tag_ids %}checked{% endif %}>
+              <span class="check__chip">{{ tag.name }}</span>
+            </label>
+          {% endfor %}
+        </div>
+      {% else %}
+        <p class="empty empty--inline">Тегов пока нет. <a href="/admin/tags">Создайте первый</a>, чтобы настроить маршрутизацию.</p>
+      {% endif %}
+    </div>
+
+    <div class="editor__actions">
+      <button class="btn" type="submit" name="action" value="save">Сохранить</button>
+      <button class="btn btn--accent" type="submit" name="action" value="save_and_send">Сохранить и отправить</button>
+    </div>
+    <p class="note">«Сохранить и отправить» опубликует новость во все вебхуки, совпавшие по тегам. Точечный выбор каналов — на странице «Отправить…».</p>
+  </div>
+
+  <aside class="editor__preview">
+    <div class="preview-label mono">Предпросмотр</div>
+    <div id="embed" class="embed" style="--edge: {{ (news.color if news else None) | to_hex }}">
+      <div class="embed__edge"></div>
+      <div class="embed__content">
+        <div class="embed__author">
+          <img id="pv-avatar" class="embed__avatar" alt=""
+               src="{{ news.avatar_url or '' if news else '' }}"
+               {% if not (news and news.avatar_url) %}hidden{% endif %}>
+          <span id="pv-username" class="embed__username">{{ news.username or 'Вебхук' if news else 'Вебхук' }}</span>
+        </div>
+        <div class="embed__row">
+          <div class="embed__main">
+            <div id="pv-title" class="embed__title">{{ news.title if news else 'Заголовок новости' }}</div>
+            <div id="pv-desc" class="embed__desc">{{ news.content if news else 'Текст появится здесь по мере набора.' }}</div>
+          </div>
+          <img id="pv-thumb" class="embed__thumb" alt=""
+               src="{{ news.thumbnail_url or '' if news else '' }}"
+               {% if not (news and news.thumbnail_url) %}hidden{% endif %}>
+        </div>
+        <img id="pv-image" class="embed__image" alt=""
+             src="{{ news.image_url or '' if news else '' }}"
+             {% if not (news and news.image_url) %}hidden{% endif %}>
+        <div id="pv-footer" class="embed__footer"
+             {% if not (news and news.tags) %}hidden{% endif %}>{% if news and news.tags %}{{ news.tags | map(attribute='name') | join(' • ') }}{% endif %}</div>
+      </div>
+    </div>
+  </aside>
+</form>
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/app.js"></script>
+{% endblock %}
