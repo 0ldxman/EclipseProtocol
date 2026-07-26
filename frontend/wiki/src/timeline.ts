@@ -30,7 +30,14 @@ function plural(n: number, forms: [string, string, string]): string {
 const EVENTS: [string, string, string] = ["событие", "события", "событий"];
 
 function eventCard(event: TimelineEvent, side: "l" | "r"): HTMLElement {
+  // Снимок берётся из самой записи: отдельного поля «картинка события» нет,
+  // поэтому и разойтись с записью ему не с чем.
+  const shot = event.image
+    ? el("span", { class: "shot" }, [el("img", { src: event.image, alt: "", loading: "lazy" })])
+    : null;
+
   const card = el("a", { class: "card", href: href(`/wiki/${event.slug}`) }, [
+    shot,
     el("span", { class: "txt" }, [
       el("div", { class: "line" }, [
         el("span", { class: "date" }, [event.at]),

@@ -16,7 +16,14 @@
 
 import { readFile, readdir, stat } from "node:fs/promises";
 import path from "node:path";
-import { coverAttributes, eventOf, renderMarkup, wikiLinkTargets, type RecordEvent } from "@aether/markup";
+import {
+  coverAttributes,
+  eventOf,
+  firstImageOf,
+  renderMarkup,
+  wikiLinkTargets,
+  type RecordEvent,
+} from "@aether/markup";
 import type { FastifyInstance, FastifyRequest } from "fastify";
 import type * as Y from "yjs";
 import type { RoomRegistry } from "./collab.js";
@@ -50,6 +57,8 @@ interface IndexEntry {
   access: number;
   updatedAt: string;
   parentId: string | null;
+  /** Первая картинка тела: карточке в летописи больше нечем себя показать. */
+  image: string | null;
   /** Заполнено, если запись объявила себя событием летописи. */
   event: RecordEvent | null;
 }
@@ -107,6 +116,7 @@ class RecordIndex {
           access: this.tree.effectiveAccess(node.id),
           updatedAt: node.updatedAt,
           parentId: node.parentId,
+          image: firstImageOf(text),
           event: eventOf(text),
         } satisfies IndexEntry;
       }),
@@ -283,8 +293,10 @@ export async function registerWiki(app: FastifyInstance, options: WikiOptions): 
           epoch: entry.event!.epoch || "без эпохи",
           access: entry.access,
           restricted,
-          // Тело закрытой записи не покидает сервер и здесь тоже.
+          // Тело закрытой записи не покидает сервер и здесь тоже — ни текстом,
+          // ни картинкой.
           summary: restricted ? "" : snippet(entry.text, "", 150),
+          image: restricted ? "" : (entry.image ?? ""),
         };
       })
       .sort((a, b) => a.at.localeCompare(b.at));

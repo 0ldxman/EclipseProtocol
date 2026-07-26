@@ -62,7 +62,7 @@ const kremen = await mkRecord("Кремень", people.id);
 const apollo = await mkRecord("Протокол Аполлон", ops.id);
 const noon = await mkRecord("Тихий Полдень", vault.id);
 // Обложка категории — обычная запись с этим именем внутри папки.
-await mkRecord("_cover", ops.id);
+const cover = await mkRecord("_cover", ops.id);
 await api(`/api/tree/nodes/${apollo.id}`, { method: "PATCH", body: JSON.stringify({ slug: "apollo" }) });
 
 const browser = await chromium.launch({
@@ -85,8 +85,10 @@ await editor.waitForFunction(() => document.querySelectorAll(".tree-row").length
   timeout: 30_000,
 });
 
-const write = async (title, source) => {
-  await editor.locator(".tree-row", { hasText: title }).first().click();
+// Строка адресуется по идентификатору, а не по подписи: обложка выводится
+// в дереве как «титульный лист», и поиск по тексту искал бы не то.
+const write = async (node, source) => {
+  await editor.locator(`.tree-row[data-id="${node.id}"]`).first().click();
   await editor.waitForSelector(".cm-content", { timeout: 20_000 });
   await editor.waitForTimeout(700);
   await editor.evaluate((value) => window.__setSource(value), source);
@@ -94,7 +96,7 @@ const write = async (title, source) => {
 };
 
 await write(
-  "Кремень",
+  kremen,
   [
     "# Кремень",
     "",
@@ -130,7 +132,7 @@ await write(
 );
 
 await write(
-  "Протокол Аполлон",
+  apollo,
   [
     "# Протокол Аполлон",
     "",
@@ -143,7 +145,7 @@ await write(
 // Титульный лист категории. Внешний контейнер обязан иметь больше двоеточий,
 // чем вложенный, иначе забор закрывает не то, что нужно.
 await write(
-  "_cover",
+  cover,
   [
     '::::::cover{theme=black-red pattern=rays org="Архивная служба" volume="том II"}',
     "# Операции",
@@ -169,7 +171,7 @@ await write(
 );
 
 await write(
-  "Тихий Полдень",
+  noon,
   [
     "# Тихий Полдень",
     "",
@@ -201,6 +203,15 @@ const titleSearch = await api("/api/wiki/search?q=Тихий");
 ok(
   "a restricted record is still findable by title",
   titleSearch.results.some((r) => r.slug === noon.slug && r.restricted === true),
+);
+
+// Карточка летописи показывает первую картинку записи — но не у закрытой:
+// снимок такая же часть тела, как и текст.
+const chronologyApi = await api("/api/wiki/timeline");
+const sealedEvent = chronologyApi.events.find((e) => e.slug === noon.slug);
+ok(
+  "a sealed event carries neither summary nor picture",
+  sealedEvent?.restricted === true && sealedEvent.summary === "" && sealedEvent.image === "",
 );
 
 // --- the reader's screens -------------------------------------------------

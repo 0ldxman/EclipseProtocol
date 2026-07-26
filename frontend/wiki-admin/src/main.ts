@@ -151,11 +151,26 @@ async function main(): Promise<void> {
   const insertBar = document.getElementById("insert-bar")!;
   const countEl = document.getElementById("tree-count")!;
 
+  const previewBody = document.getElementById("preview-body")!;
+  const sheet = document.getElementById("preview-sheet")!;
+
   let nodes: TreeNode[] = [];
   let current: TreeNode | null = null;
   let collab: CollabClient | null = null;
   let view: EditorView | null = null;
   let renderTimer: number | null = null;
+
+  /* ── вкладки правой колонки ───────────────────────────────────────────── */
+  function selectTab(name: "preview" | "props"): void {
+    for (const tab of document.querySelectorAll<HTMLButtonElement>("#view-tabs button")) {
+      tab.classList.toggle("on", tab.dataset.tab === name);
+    }
+    previewBody.hidden = name !== "preview";
+    propsHost.hidden = name !== "props";
+  }
+  for (const tab of document.querySelectorAll<HTMLButtonElement>("#view-tabs button")) {
+    tab.onclick = () => selectTab(tab.dataset.tab as "preview" | "props");
+  }
 
   function note(message: string, isError = false): void {
     statusEl.textContent = message;
@@ -183,7 +198,7 @@ async function main(): Promise<void> {
     onRename: async (node, name) => {
       if (await guard(() => api.rename(node.id, name))) {
         await refreshTree();
-        if (current?.id === node.id) showSelected();
+        if (current?.id === node.id) refreshSelected();
       }
     },
     onCreate: async (kind, name, parentId) => {
@@ -256,9 +271,25 @@ async function main(): Promise<void> {
     try {
       const result: RenderResult = await api.render(source);
       previewHost.innerHTML = result.html;
+      rebaseAssets(previewHost);
       showWarnings(result);
     } catch (error) {
       note(`просмотр недоступен: ${(error as Error).message}`, true);
+    }
+  }
+
+  /**
+   * Вложения в разметке адресуются относительно корня сайта (`uploads/…`), а
+   * админка отдаётся из `/admin/`, поэтому в просмотре они бы искались этажом
+   * ниже. Правится здесь, а не в разметке: на сайте адрес верный.
+   */
+  function rebaseAssets(root: HTMLElement): void {
+    const base = API_BASE || "";
+    for (const node of root.querySelectorAll<HTMLElement>("[src], [href]")) {
+      for (const attribute of ["src", "href", "poster"] as const) {
+        const value = node.getAttribute(attribute);
+        if (value?.startsWith("uploads/")) node.setAttribute(attribute, `${base}/${value}`);
+      }
     }
   }
 
@@ -305,6 +336,8 @@ async function main(): Promise<void> {
     renderActions(node);
     renderProps(node);
     insertBar.hidden = false;
+    sheet.hidden = false;
+    selectTab("preview");
 
     // Имя комнаты повторяет серверный `recordRoom()`.
     collab = new CollabClient(collabUrl(`record.${node.id}`, API_BASE));
@@ -359,7 +392,11 @@ async function main(): Promise<void> {
     presenceEl.textContent = others.length === 0 ? "только вы" : `редактируют ещё: ${others.length}`;
   }
 
-  /** Папка редактором не открывается — у неё есть только свойства. */
+  /**
+   * Папка редактором не открывается — у неё есть только свойства, поэтому
+   * правая колонка сама переключается на них: пустой лист бумаги рядом с
+   * пустым редактором ничего не сообщает.
+   */
   function showFolder(node: TreeNode): void {
     closeRecord();
     current = node;
@@ -367,22 +404,42 @@ async function main(): Promise<void> {
     breadcrumbEl.textContent = chainOf(node).map((n) => n.name).join("  ›  ");
     renderActions(node);
     renderProps(node);
-    previewHost.replaceChildren(
+    sheet.hidden = true;
+    selectTab("props");
+    editorHost.replaceChildren(
       el("div", { class: "empty" }, [
-        el("b", {}, ["папка"]),
-        el("span", {}, ["У категории нет текста. Титульный лист — отдельная запись «_cover»."]),
+        el("b", {}, ["категория"]),
+        el("span", {}, [
+          "У папки нет текста — только свойства и содержимое.",
+          el("br"),
+          "Титульный лист категории заводится кнопкой наверху.",
+        ]),
       ]),
     );
   }
 
-  function showSelected(): void {
-    const node = tree.selected;
+  /**
+   * Перечитать выбранное, не трогая редактор.
+   *
+   * Правка свойства не должна ни перезапускать сеанс совместного набора, ни
+   * уводить взгляд обратно на просмотр: человек в этот момент заполняет
+   * соседнее поле.
+   */
+  function refreshSelected(): void {
+    if (!current) return;
+    const node = nodes.find((n) => n.id === current!.id);
     if (!node) return;
-    if (node.kind === "folder") showFolder(node);
-    else {
-      current = null;
-      void openRecord(node);
-    }
+    current = node;
+    titleEl.textContent =
+      node.kind === "record" && node.name === COVER ? `Титульный лист · ${node.name}` : node.name;
+    breadcrumbEl.textContent = [
+      ...chainOf(node).map((n) => n.name),
+      node.kind === "record" ? (node.slug ?? "") : "",
+    ]
+      .filter(Boolean)
+      .join("  ›  ");
+    renderActions(node);
+    renderProps(node);
   }
 
   /* ── действия над выбранным ───────────────────────────────────────────── */
@@ -512,7 +569,7 @@ async function main(): Promise<void> {
       if (!value || value === node.name) return;
       if (await guard(() => api.rename(node.id, value))) {
         await refreshTree();
-        showSelected();
+        refreshSelected();
       }
     };
     name.onkeydown = (event) => {
@@ -534,7 +591,7 @@ async function main(): Promise<void> {
           return;
         }
         await refreshTree();
-        showSelected();
+        refreshSelected();
       };
       slug.onkeydown = (event) => {
         if (event.key === "Enter") void applySlug(slug.value);
@@ -556,7 +613,7 @@ async function main(): Promise<void> {
         if (list.join(",") === (node.tags ?? []).join(",")) return;
         if (await guard(() => api.update(node.id, { tags: list }))) {
           await refreshTree();
-          showSelected();
+          refreshSelected();
         }
       };
       tags.onkeydown = (event) => {
@@ -578,7 +635,7 @@ async function main(): Promise<void> {
       button.onclick = async () => {
         if (await guard(() => api.update(node.id, { accessLevel: level }))) {
           await refreshTree();
-          showSelected();
+          refreshSelected();
         }
       };
       levels.append(button);
@@ -607,7 +664,7 @@ async function main(): Promise<void> {
     parent.onchange = async () => {
       if (await guard(() => api.update(node.id, { parentId: parent.value || null }))) {
         await refreshTree();
-        showSelected();
+        refreshSelected();
       }
     };
     const picker = el("div", { class: "pick" }, [parent]);
@@ -619,19 +676,6 @@ async function main(): Promise<void> {
       propBlock("Создано", [el("span", { class: "chrome chrome--plain" }, [when(node.createdAt)])]),
       propBlock("Изменено", [el("span", { class: "chrome chrome--plain" }, [when(node.updatedAt)])]),
     );
-  }
-
-  /* ── вкладки правой колонки ───────────────────────────────────────────── */
-
-  const previewBody = document.getElementById("preview-body")!;
-  for (const tab of document.querySelectorAll<HTMLButtonElement>("#view-tabs button")) {
-    tab.onclick = () => {
-      for (const other of document.querySelectorAll("#view-tabs button")) {
-        other.classList.toggle("on", other === tab);
-      }
-      previewBody.hidden = tab.dataset.tab !== "preview";
-      propsHost.hidden = tab.dataset.tab !== "props";
-    };
   }
 
   /* ── создание и фильтр ────────────────────────────────────────────────── */

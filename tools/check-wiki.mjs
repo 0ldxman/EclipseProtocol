@@ -50,12 +50,18 @@ const openTab = async (label) => {
   page.on("pageerror", (e) => errors.push(`[${label}] ${e.message}`));
   page.on("dialog", (d) => d.accept(d.defaultValue() || "ok"));
   await page.goto(URL_BASE, { waitUntil: "networkidle" });
-  await page.waitForFunction(() => /записей/.test(document.getElementById("status")?.textContent ?? ""), null, { timeout: 30_000 });
+  // Счётчик дерева — признак того, что дерево пришло; в шапке теперь стоит
+  // не он, а сообщение о последнем действии.
+  await page.waitForFunction(
+    () => /записей/.test(document.getElementById("tree-count")?.textContent ?? ""),
+    null,
+    { timeout: 30_000 },
+  );
   return page;
 };
 
 const a = await openTab("A");
-console.log("A: loaded ->", (await a.textContent("#status"))?.trim());
+console.log("A: loaded ->", (await a.textContent("#tree-count"))?.trim());
 
 // --- build a small tree through the API, then check the UI shows it ------
 const folder = await api("/api/tree/nodes", {
@@ -161,6 +167,80 @@ const cycle = await api(`/api/tree/nodes/${folder.id}`, {
 });
 if (!cycle.error) throw new Error("moving a folder into its own child was allowed");
 console.log("guard: folder into own descendant ->", cycle.error);
+
+// --- заводить записи и править их свойства можно из самой админки --------
+// Это отдельная проверка потому, что раньше всё это делалось только через API:
+// в интерфейсе не было ни слага, ни меток, ни допуска, и метка, по которой
+// ищет читатель, не могла быть проставлена вообще никак.
+await a.reload({ waitUntil: "networkidle" });
+await a.waitForFunction(
+  () => /записей/.test(document.getElementById("tree-count")?.textContent ?? ""),
+  null,
+  { timeout: 20_000 },
+);
+
+await a.locator(`.tree-row[data-id="${folder.id}"]`).click();
+await a.locator("#new-record").click();
+await a.waitForSelector(".tree-input", { timeout: 10_000 });
+await a.keyboard.type("Северный Ветер");
+await a.keyboard.press("Enter");
+await a.waitForFunction(
+  () => [...document.querySelectorAll(".tree-name")].some((n) => n.textContent === "Северный Ветер"),
+  null,
+  { timeout: 20_000 },
+);
+const created = (await api("/api/tree")).nodes.find((n) => n.name === "Северный Ветер");
+if (!created || created.parentId !== folder.id) throw new Error("новая запись легла не в ту папку");
+console.log("create: запись заведена строкой в дереве ->", created.slug);
+
+await a.locator('#view-tabs button[data-tab="props"]').click();
+const prop = (label) =>
+  a.locator(".prop", { has: a.locator(".chrome", { hasText: label }) }).locator("input").first();
+
+await prop("Слаг").fill("severny-veter");
+await prop("Слаг").press("Enter");
+await a.waitForTimeout(600);
+await prop("Метки").fill("операции, ветер");
+await prop("Метки").press("Enter");
+await a.waitForTimeout(600);
+await a.locator('.levels button[data-level="2"]').click();
+await a.waitForTimeout(600);
+
+const saved = (await api("/api/tree")).nodes.find((n) => n.id === created.id);
+if (saved.slug !== "severny-veter") throw new Error(`слаг не сохранился: ${saved.slug}`);
+if ((saved.tags ?? []).join(",") !== "операции,ветер") {
+  throw new Error(`метки не сохранились: ${JSON.stringify(saved.tags)}`);
+}
+if (saved.accessLevel !== 2) throw new Error(`допуск не сохранился: ${saved.accessLevel}`);
+console.log("props: слаг, метки и допуск правятся из админки ->", saved.slug, saved.tags.join("·"), saved.accessLevel);
+
+// Титульный лист категории — договорённость, о которой нельзя догадаться,
+// поэтому у неё есть кнопка.
+await a.locator(`.tree-row[data-id="${folder.id}"]`).click();
+await a.locator("#record-actions button", { hasText: "титульный лист" }).click();
+await a.waitForSelector(".cm-content", { timeout: 20_000 });
+await a.waitForFunction(() => (window.__source() ?? "").includes("::::::cover{"), null, {
+  timeout: 20_000,
+});
+const cover = (await api("/api/tree")).nodes.find((n) => n.name === "_cover");
+if (!cover || cover.parentId !== folder.id) throw new Error("обложка не заведена в папке");
+console.log("cover: титульный лист заведён и заполнен заготовкой");
+
+// Удаление спрашивает на месте и говорит, сколько уйдёт вместе с папкой.
+await a.locator(`.tree-row[data-id="${created.id}"]`).click();
+await a.locator("#record-actions button", { hasText: "удалить" }).click();
+await a.locator("#record-actions button", { hasText: "да" }).click();
+await a.waitForFunction(
+  (id) => !document.querySelector(`.tree-row[data-id="${id}"]`),
+  created.id,
+  { timeout: 20_000 },
+);
+if ((await api("/api/tree")).nodes.some((n) => n.id === created.id)) {
+  throw new Error("запись осталась после подтверждения удаления");
+}
+console.log("delete: подтверждение на месте, запись удалена");
+
+await a.screenshot({ path: path.join(SHOTS, "wiki-03-props.png") });
 
 console.log("\nconsole errors:", errors.length ? errors : "none");
 await browser.close();

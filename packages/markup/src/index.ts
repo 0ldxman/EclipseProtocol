@@ -214,6 +214,6 @@ export function renderMarkup(source: string, options: RenderOptions = {}): Rende
 }
 
 export { wikiLinkTargets } from "./wikilinks.js";
-export { eventOf, coverAttributes, type RecordEvent } from "./events.js";
+export { eventOf, firstImageOf, coverAttributes, type RecordEvent } from "./events.js";
 export type { Heading } from "./derive.js";
 export { DIRECTIVES, KNOWN_DIRECTIVES } from "./directives.js";

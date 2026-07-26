@@ -216,6 +216,15 @@
       #insert-bar .chrome {
         margin-right: 4px;
       }
+      /* [hidden] — стиль браузера, а он слабее авторского display:flex */
+      #insert-bar[hidden],
+      #preview-sheet[hidden] {
+        display: none;
+      }
+      /* Пустой редактор: не дыра, а объяснение, что делать дальше. */
+      #editor .empty {
+        padding: 60px 20px;
+      }
       #editor {
         flex: 1;
         overflow: hidden;
@@ -310,6 +319,25 @@
       #props {
         padding: 0;
       }
+      /* Просмотр — это лист бумаги, как и на сайте: разметка документа
+         рассчитана на светлый материал, и показывать её на тёмном значит
+         показывать не то, что увидит читатель. */
+      #preview-body {
+        background: var(--ink);
+        padding: 20px;
+      }
+      #preview-sheet {
+        max-width: 720px;
+        margin: 0 auto;
+      }
+      #preview-sheet .paper__in {
+        padding: 30px 34px 36px;
+      }
+      /* Инфобокс на сайте стоит в своей колонке; в просмотре он остаётся в
+         теле, поэтому ширина задаётся здесь — иначе он врёт о своём размере. */
+      #preview .w-infobox {
+        max-width: 300px;
+      }
       .prop {
         padding: 12px 18px;
         border-bottom: 1px solid var(--rule);
@@ -323,6 +351,16 @@
         display: flex;
         gap: 6px;
         align-items: center;
+      }
+      .prop .row > .levels,
+      .prop .row > .pick {
+        flex: 1;
+      }
+      .prop .pick select {
+        width: 100%;
+      }
+      .prop .row--split {
+        justify-content: space-between;
       }
       .prop .note {
         margin-top: 7px;
@@ -430,7 +468,7 @@
       <div id="tree"></div>
       <div id="tree-foot">
         <span class="chrome" id="tree-count"></span>
-        <span class="chrome" style="margin-left: auto">dbl — переименовать</span>
+        <span class="chrome" style="margin-left: auto">dbl · F2 — имя</span>
       </div>
     </div>
 
@@ -455,7 +493,15 @@
         <button type="button" class="on" data-tab="preview">просмотр</button>
         <button type="button" data-tab="props">свойства</button>
       </div>
-      <div class="view-body" id="preview-body"><div id="preview" class="prose"></div></div>
+      <div class="view-body" id="preview-body">
+        <article class="paper" id="preview-sheet">
+          <div class="paper__head">
+            <span>просмотр</span>
+            <span class="sp">так это увидит читатель</span>
+          </div>
+          <div class="paper__in"><div id="preview" class="prose"></div></div>
+        </article>
+      </div>
       <div class="view-body" id="props" hidden></div>
     </div>
 

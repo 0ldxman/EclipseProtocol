@@ -274,15 +274,14 @@ export async function renderRecord(view: HTMLElement, slug: string): Promise<voi
 
   // Рельс строится после того, как документ оказался в дереве: слежению за
   // прокруткой нужны настоящие заголовки с настоящими координатами.
+  // Пустой рельс со страницы не убирается: дорожка под него — часть кадра, и
+  // без неё документ съезжает в колонку якорей. Пуст он только визуально.
   const slot = row.querySelector<HTMLElement>(".toc-slot")!;
   if (!page.restricted) {
     hydrateWidgets(article);
     const present = page.headings.filter((heading) => document.getElementById(heading.id) !== null);
     const rail = articleToc(present, document.documentElement);
     if (rail) slot.replaceWith(rail);
-    else slot.remove();
-  } else {
-    slot.remove();
   }
 
   setFootCount(page.restricted ? "доступ ограничен" : "");

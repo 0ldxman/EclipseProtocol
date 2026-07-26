@@ -43,10 +43,13 @@ export class ApiError extends Error {
 }
 
 async function request<T>(base: string, path: string, init?: RequestInit): Promise<T> {
-  const response = await fetch(`${base}${path}`, {
-    ...init,
-    headers: { "Content-Type": "application/json", ...(init?.headers ?? {}) },
-  });
+  // Заголовок объявляется только когда тело есть. Fastify отклоняет запрос,
+  // который назвался application/json и не прислал ничего, — из-за чего
+  // удаление из админки молча возвращало 400 и узел оставался на месте.
+  const headers = init?.body
+    ? { "Content-Type": "application/json", ...(init.headers ?? {}) }
+    : (init?.headers ?? {});
+  const response = await fetch(`${base}${path}`, { ...init, headers });
   const payload = await response.json().catch(() => ({}));
   if (!response.ok) {
     throw new ApiError((payload as { error?: string }).error ?? response.statusText, response.status);

@@ -38,6 +38,19 @@ export function eventOf(source: string): RecordEvent | null {
   return null;
 }
 
+/**
+ * Первая картинка записи — то, чем карточка в летописи себя показывает.
+ *
+ * Берётся так же по сырому тексту: индексу нужен только адрес, и поднимать
+ * ради него весь документ значило бы разбирать каждую запись дважды.
+ */
+export function firstImageOf(source: string): string | null {
+  const found = /^::image\{([^}]*)\}\s*$/im.exec(source);
+  if (!found) return null;
+  const src = attributes(found[1] ?? "").src?.trim();
+  return src ? src : null;
+}
+
 /** Атрибуты обёртки `:::cover{…}`, без разбора всего документа. */
 export function coverAttributes(source: string): Record<string, string> | null {
   const found = /^:{3}cover\{([^}]*)\}\s*$/im.exec(source);

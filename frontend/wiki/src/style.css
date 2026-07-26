@@ -412,7 +412,15 @@ a.mini__row:hover b {
   margin: 0 0 4px;
 }
 
-@media (max-width: 1280px) {
+/* Три колонки главной складываются не сразу в одну: на промежуточной ширине
+   лента ещё читается рядом с метками, и только потом всё встаёт столбиком. */
+@media (max-width: 1440px) {
+  .home-split {
+    grid-template-columns: minmax(0, 1fr) 300px;
+  }
+}
+
+@media (max-width: 1120px) {
   .split,
   .home-split {
     grid-template-columns: minmax(0, 1fr);
@@ -582,8 +590,34 @@ a.mini__row:hover b {
   flex-direction: row-reverse;
 }
 .ev .txt {
+  position: relative;
   min-width: 0;
   flex: 0 1 auto;
+}
+/* Снимок события. Крупный намеренно: лента — единственный экран, где
+   картинка работает как ориентир, а не как иллюстрация к тексту. */
+.ev .shot {
+  flex: none;
+  width: 132px;
+  height: 88px;
+  overflow: hidden;
+  background: var(--ink-2);
+  box-shadow: inset 0 0 0 1px var(--rule-2);
+  transition: 0.22s var(--ease);
+}
+.ev .shot img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  filter: grayscale(0.55) contrast(1.05);
+  transition: 0.22s var(--ease);
+}
+.ev:hover .shot {
+  box-shadow: inset 0 0 0 1px rgba(232, 161, 60, 0.45);
+}
+.ev:hover .shot img {
+  filter: none;
 }
 .ev .line {
   display: flex;
@@ -606,13 +640,23 @@ a.mini__row:hover b {
   color: var(--fg);
 }
 .ev .extra {
+  /* Подпись вынута из потока: свёрнутая, она всё равно занимала бы место по
+     ширине, и снимок отъезжал бы от названия на длину скрытого текста. */
+  position: absolute;
+  top: 100%;
+  width: 250px;
   max-height: 0;
-  max-width: 250px;
   opacity: 0;
   overflow: hidden;
   transition: 0.26s;
   font: 11px/1.7 var(--mono);
   color: var(--dim);
+}
+.ev--l .extra {
+  right: 0;
+}
+.ev--r .extra {
+  left: 0;
 }
 .ev:hover .extra,
 .ev:focus-within .extra {

@@ -57,6 +57,8 @@ export interface TimelineEvent {
   access: number;
   restricted: boolean;
   summary: string;
+  /** Первая картинка записи; у закрытой — пусто. */
+  image: string;
 }
 
 export interface Timeline {
