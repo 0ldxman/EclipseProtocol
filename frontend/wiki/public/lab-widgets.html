@@ -1,0 +1,314 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AETHER — виджеты записи</title>
+<link rel="stylesheet" href="lab.css">
+<style>
+  .wg{display:grid;grid-template-columns:300px minmax(0,1fr);gap:1px;background:var(--rule);margin-bottom:1px}
+  .wg__l{background:var(--ink);padding:20px}
+  .wg__l h3{margin:0;font:500 13px/1.3 var(--display);letter-spacing:.09em;text-transform:uppercase;color:var(--fg)}
+  .wg__l pre{margin:11px 0 0;font:11px/1.8 var(--mono);color:var(--amber);white-space:pre-wrap;word-break:break-word}
+  .wg__l p{margin:11px 0 0;font:11px/1.7 var(--mono);color:var(--dim)}
+  .wg__r{background:var(--paper);color:var(--paper-ink);padding:24px 28px;display:flex;flex-direction:column;justify-content:center}
+  .wg__r>*:first-child{margin-top:0}
+  .wg--dark .wg__r{background:var(--ink-2);color:var(--fg)}
+  .new{display:inline-block;margin-left:8px;border:1px solid rgba(232,161,60,.5);padding:0 5px;font:9px/1.7 var(--mono);letter-spacing:.09em;text-transform:uppercase;color:var(--amber);vertical-align:2px}
+  @media (max-width:900px){.wg{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<nav class="labnav">
+  <a href="lab.html">система</a>
+  <a href="lab-record.html">запись</a>
+  <a href="lab-widgets.html" class="on">виджеты</a>
+  <a href="lab-nav.html">навигация</a>
+  <a href="lab-timeline.html">хронология</a>
+  <a class="sp" data-open-palette style="cursor:pointer">CTRL+K</a>
+</nav>
+
+<header class="lead">
+  <h1>Виджеты записи</h1>
+  <p>Каждый виджет — директива markdown, а не собственный синтаксис. Отсюда бесплатно берутся
+     экранирование, вложенность и кавычки в значениях: виджет может стоять внутри виджета,
+     а запятая внутри подписи не ломает строку.</p>
+  <p>Слева — как это пишет автор, справа — как это выглядит на бумаге. Виджеты, помеченные
+     <span class="new">новый</span>, в разметке пока не реализованы: это предложение.</p>
+</header>
+
+<!-- ═══ ТЕКСТОВЫЕ ══════════════════════════════════════════════════════ -->
+<div class="sec"><span>01</span><b>В строке текста</b></div>
+
+<div class="wg">
+  <div class="wg__l"><h3>Метка</h3>
+    <pre>:tag[Пропал без вести]{style=danger}</pre>
+    <p>Шесть видов: neutral, info, ok, warn, danger, ghost. Точка слева повторяет
+       индикаторы прибора, поэтому метка читается как состояние, а не как ярлык.</p></div>
+  <div class="wg__r">
+    <p style="font:400 16px/1.9 var(--serif);margin:0">
+      <span class="w-tag">Черновик</span>
+      <span class="w-tag is-info">Внешний источник</span>
+      <span class="w-tag is-ok">Подтверждено</span>
+      <span class="w-tag is-warn">Требует проверки</span>
+      <span class="w-tag is-danger">Пропал без вести</span>
+      <span class="w-tag is-ghost">без пометки</span>
+    </p>
+  </div>
+</div>
+
+<div class="wg">
+  <div class="wg__l"><h3>Спойлер</h3>
+    <pre>:spoiler[он выжил]</pre>
+    <p>Скрыто до щелчка. Это выбор читателя, а не допуск, поэтому текст честно лежит
+       в разметке и его видно в исходнике.</p></div>
+  <div class="wg__r"><p style="font:400 16px/1.7 var(--serif);margin:0">
+    В официальном отчёте — погиб при отходе. На деле <span class="w-spoiler">он выжил и вышел
+    к своим через одиннадцать суток</span>. <em style="font:400 13px/1 var(--mono);color:var(--paper-dim)">← щёлкните</em></p></div>
+</div>
+
+<div class="wg">
+  <div class="wg__l"><h3>Зачёркнутое</h3>
+    <pre>:classified[отчёт 12-Б]{level=3}</pre>
+    <p>Решение, что читателю видно, принимает сервер: он переписывает дерево до отдачи.
+       Прятать текст стилями значило бы отправить тайну в браузер и назвать это защитой.</p></div>
+  <div class="wg__r"><p style="font:400 16px/1.7 var(--serif);margin:0">
+    Первая группа вышла в срок.
+    <span class="w-classified">Вторая и третья задержаны на семнадцать часов</span>.
+    Связь восстановлена частично.</p></div>
+</div>
+
+<div class="wg">
+  <div class="wg__l"><h3>Дата и отсчёт</h3>
+    <pre>:timestamp{at=2031-04-12T11:00}
+:countdown{until=2027-01-17}</pre>
+    <p>Обе набраны моноширинным прямо посреди серифа — дата в этой вселенной величина
+       машинная, и выглядеть должна как показание, а не как слово.</p></div>
+  <div class="wg__r"><p style="font:400 16px/1.9 var(--serif);margin:0">
+    Последний контакт — <time class="w-timestamp">12 апр. 2031, 11:00</time>.
+    До истечения договора <span class="w-countdown">173 дня 04:12:33</span>.</p></div>
+</div>
+
+<!-- ═══ БЛОЧНЫЕ ════════════════════════════════════════════════════════ -->
+<div class="sec"><span>02</span><b>Блоки</b></div>
+
+<div class="wg">
+  <div class="wg__l"><h3>Полоса и точки</h3>
+    <pre>::bar{name="Готовность" max=10 current=7}
+::dotbar{name="Допуск" max=5 current=3}</pre>
+    <p>Полоса — для непрерывных величин, точки — для дискретных. На бумаге заливка чёрная:
+       янтарный здесь не нужен, потому что величина — не состояние.</p></div>
+  <div class="wg__r">
+    <div class="w-bar"><span class="w-bar-label">Готовность</span>
+      <span class="w-bar-track"><span class="w-bar-fill" style="width:70%"></span></span>
+      <span class="w-bar-value">7/10</span></div>
+    <div class="w-bar"><span class="w-bar-label">Потери</span>
+      <span class="w-bar-track"><span class="w-bar-fill" style="width:25%"></span></span>
+      <span class="w-bar-value">3/12</span></div>
+    <span class="w-dotbar"><span class="w-bar-label">Допуск</span>
+      <span class="w-dots"><i class="w-dot is-on"></i><i class="w-dot is-on"></i><i class="w-dot is-on"></i><i class="w-dot"></i><i class="w-dot"></i></span></span>
+  </div>
+</div>
+
+<div class="wg">
+  <div class="wg__l"><h3>Цитата</h3>
+    <pre>:::quote{author="Куратор" date="2030-11-04"}
+Исполнителен до буквальности.
+:::</pre>
+    <p>Внутри — обычный markdown, поэтому в цитате могут стоять ссылки и другие виджеты.</p></div>
+  <div class="wg__r">
+    <figure class="w-quote"><p>Исполнителен до буквальности. Не задаёт вопросов, на которые
+      не рассчитывает получить ответ.</p>
+      <figcaption class="w-quote-by">Куратор группы · 2030-11-04</figcaption></figure>
+  </div>
+</div>
+
+<div class="wg">
+  <div class="wg__l"><h3>Картинка</h3>
+    <pre>::image{src=… caption=… align=right}</pre>
+    <p>Три положения: <code>full</code> во всю колонку, <code>left</code> и <code>right</code>
+       с обтеканием. Подпись отделена волосяной линией и набрана моноширинным — она принадлежит
+       прибору, а не тексту.</p></div>
+  <div class="wg__r">
+    <figure class="w-image is-right" style="width:38%">
+      <img alt="" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 300 220'%3E%3Crect width='300' height='220' fill='%23c9c4b8'/%3E%3Cpath d='M-60 220L300-80M-60 300L360-80' stroke='%23b3ada0' stroke-width='22'/%3E%3C/svg%3E">
+      <figcaption>Меридиан, июль 2022</figcaption></figure>
+    <p style="font:400 16px/1.68 var(--serif);margin:0">Штаб оставлен за девять часов.
+      Что именно вывезли, а что осталось в подвалах восточного корпуса, расходится в трёх
+      независимых отчётах — и ни один из них не подписан.</p>
+  </div>
+</div>
+
+<div class="wg">
+  <div class="wg__l"><h3>Галерея</h3>
+    <pre>:::gallery
+::image{src=… caption=…}
+::image{src=… caption=…}
+:::</pre>
+    <p>Сетка подстраивается под ширину: в теле три-четыре колонки, в инфобоксе — одна.</p></div>
+  <div class="wg__r">
+    <div class="w-gallery">
+      <figure class="w-image"><img alt="" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 150'%3E%3Crect width='200' height='150' fill='%23c9c4b8'/%3E%3Cpath d='M-40 150L200-60' stroke='%23b3ada0' stroke-width='18'/%3E%3C/svg%3E"><figcaption>01 · подход</figcaption></figure>
+      <figure class="w-image"><img alt="" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 150'%3E%3Crect width='200' height='150' fill='%23c4bfb2'/%3E%3Cpath d='M-40 150L200-60' stroke='%23aea89a' stroke-width='18'/%3E%3C/svg%3E"><figcaption>02 · периметр</figcaption></figure>
+      <figure class="w-image"><img alt="" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 150'%3E%3Crect width='200' height='150' fill='%23cec9bd'/%3E%3Cpath d='M-40 150L200-60' stroke='%23b8b2a4' stroke-width='18'/%3E%3C/svg%3E"><figcaption>03 · отход</figcaption></figure>
+    </div>
+  </div>
+</div>
+
+<div class="wg">
+  <div class="wg__l"><h3>Карта</h3>
+    <pre>::map{id=world lng=44.7 lat=41.4 zoom=6
+      at=2022-07-11}</pre>
+    <p>Единственный тёмный виджет на бумаге — и намеренно: это не иллюстрация, а экран,
+       вставленный в документ. <code>at</code> показывает границы на дату из хронологии.</p></div>
+  <div class="wg__r">
+    <div class="w-map" data-label="меридиан · 41.4° с. ш., 44.7° в. д. · на 11.07.2022">
+      <span class="w-map__pin" style="left:44%;top:48%"></span>
+      <span class="w-map__go"><a class="btn btn--sm" href="#">открыть карту</a></span>
+    </div>
+  </div>
+</div>
+
+<div class="wg">
+  <div class="wg__l"><h3>Сводка по стране</h3>
+    <pre>::country-stats{tag=MER}</pre>
+    <p>Заполняется из данных карты при отдаче страницы. Автор не переписывает цифры руками —
+       и они не разъезжаются с картой.</p></div>
+  <div class="wg__r">
+    <div class="w-country-stats"><dl>
+      <dt>провинций</dt><dd>34</dd>
+      <dt>население</dt><dd>11 240 000</dd>
+      <dt>столица</dt><dd>Меридиан</dd>
+      <dt>контроль с</dt><dd>2019-08-02</dd>
+    </dl></div>
+  </div>
+</div>
+
+<!-- ═══ ПРЕДЛАГАЕМЫЕ ═══════════════════════════════════════════════════ -->
+<div class="sec"><span>03</span><b>Предлагаю добавить</b></div>
+
+<div class="wg">
+  <div class="wg__l"><h3>Видео<span class="new">новый</span></h3>
+    <pre>::video{src=… poster=… caption=…}</pre>
+    <p>Того же семейства, что картинка: рамка, подпись под волосяной линией, полоса метаданных
+       по нижней кромке кадра. Файл лежит в <code>uploads</code>, как и изображения.</p></div>
+  <div class="wg__r">
+    <figure class="w-video">
+      <div class="w-video__frame">
+        <span class="w-video__play">▶</span>
+        <span class="w-video__meta"><span>запись камеры 04</span><span>02:17</span><span>без звука</span></span>
+      </div>
+      <figcaption>Последняя передача с борта, 12.04.2031</figcaption>
+    </figure>
+  </div>
+</div>
+
+<div class="wg">
+  <div class="wg__l"><h3>Врезка<span class="new">новый</span></h3>
+    <pre>:::note{style=warn title="Расхождение"}
+Три отчёта не сходятся в датах.
+:::</pre>
+    <p>Четыре вида: обычная, info, warn, danger. Нужна там, где редактору важно предупредить
+       читателя, не выдавая это за текст записи.</p></div>
+  <div class="wg__r">
+    <div class="w-note"><b>примечание</b><p>Запись сведена из двух дел, объединённых в 2033 году.</p></div>
+    <div class="w-note is-warn"><b>расхождение</b><p>Три отчёта не сходятся в датах отхода.
+      Приведена версия штаба.</p></div>
+    <div class="w-note is-danger"><b>оспорено</b><p>Орден Затмения официально отрицает
+      изложенное ниже.</p></div>
+  </div>
+</div>
+
+<div class="wg">
+  <div class="wg__l"><h3>Таблица<span class="new">новый</span></h3>
+    <pre>:::table{caption="Состав группы"}
+| позывной | роль | статус |
+| Кремень | стрелок | пропал |
+:::</pre>
+    <p>Обычные таблицы markdown работают и сейчас, но им нужен собственный вид на бумаге:
+       линии под шапкой и волосяные между строк, без сетки.</p></div>
+  <div class="wg__r">
+    <table class="w-table" style="margin:0">
+      <thead><tr><th>позывной</th><th>роль</th><th>статус</th></tr></thead>
+      <tbody>
+        <tr><td>Кремень</td><td>стрелок</td><td>пропал без вести</td></tr>
+        <tr><td>Ковач</td><td>связь</td><td>вернулся</td></tr>
+        <tr><td>Ларин</td><td>командир</td><td>вернулся</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="wg">
+  <div class="wg__l"><h3>Карточка записи<span class="new">новый</span></h3>
+    <pre>::record{slug=protokol-apollon}</pre>
+    <p>Ссылка на другую запись, набранная как объект, а не как слово в строке. Название,
+       категория и шифр подставляются сервером — если запись переименуют, карточка не соврёт.</p></div>
+  <div class="wg__r">
+    <a class="w-record" href="#"><i>◆</i><span><b>Протокол Аполлон</b><s>операция · 2029—2031</s></span><em>REC-0007</em></a>
+    <a class="w-record" href="#"><i>◇</i><span><b>Тихий Полдень</b><s>операция · требуется допуск 3</s></span><em>REC-0019</em></a>
+  </div>
+</div>
+
+<div class="wg">
+  <div class="wg__l"><h3>Вложение<span class="new">новый</span></h3>
+    <pre>::file{src=… name="Отчёт 12-Б" size="240 КБ"}</pre>
+    <p>Документы, которые не показываются, а скачиваются. Считаются во «что скрыто»,
+       когда запись под грифом.</p></div>
+  <div class="wg__r">
+    <a class="w-file" href="#"><span>▣</span><span>Отчёт 12-Б · расшифровка</span><em>PDF · 240 КБ</em></a>
+    <a class="w-file" href="#"><span>▣</span><span>Схема отхода, лист 2</span><em>PNG · 1,4 МБ</em></a>
+  </div>
+</div>
+
+<div class="wg">
+  <div class="wg__l"><h3>Поля инфобокса<span class="new">новый</span></h3>
+    <pre>:::fields
+Позывной :: «Кремень»
+Шифр :: AC/*0041
+:::</pre>
+    <p>Сейчас пары «ключ — значение» в инфобоксе приходится набирать списком, и они не
+       выравниваются. Отдельная директива даёт им вид и разбор.</p></div>
+  <div class="wg__r" style="background:var(--paper-2)">
+    <dl class="w-fields" style="max-width:280px">
+      <dt>Позывной</dt><dd>«Кремень»</dd>
+      <dt>Шифр</dt><dd>AC/*0041</dd>
+      <dt>Подразделение</dt><dd>Аполлон</dd>
+      <dt>Статус</dt><dd>Пропал без вести</dd>
+    </dl>
+  </div>
+</div>
+
+<p class="note"><b>Что это значит по работе.</b> Шесть новых директив — это правки в
+   <code>packages/markup/src/directives.ts</code> и стили в теме; разбор и санитайзер уже
+   всё умеют, потому что каждая из них укладывается в существующие три вида директив.
+   Виджеты <code>video</code> и <code>file</code> потребуют ещё и приёма файлов в админке.</p>
+
+<p class="note" style="margin-top:38px"><b>Дальше.</b>
+   <a href="lab-nav.html">навигация и поиск</a> ·
+   <a href="lab-record.html">страница записи целиком</a></p>
+
+</div>
+
+<div class="pal" id="pal">
+  <div class="pal__box">
+    <i></i><i></i><i></i><i></i>
+    <div class="pal__in"><b>aether@eclipse</b><s>:~$</s>
+      <input id="pal-q" placeholder="запись, категория, метка или команда…" autocomplete="off"><kbd class="kbd">ESC</kbd></div>
+    <div class="pal__scopes" id="pal-scopes">
+      <span class="on">все</span><span>записи</span><span><b>/</b> категории</span><span><b>#</b> метки</span><span><b>@</b> события</span><span><b>&gt;</b> команды</span>
+    </div>
+    <div class="pal__list" id="pal-list"></div>
+    <div class="pal__foot"><span>↑↓ выбор</span><span>↵ открыть</span><span>esc закрыть</span><span class="sp">CTRL+K</span></div>
+  </div>
+</div>
+
+<script type="module">
+import { palette, spoilers } from "./lab.js";
+palette(document.getElementById("pal"));
+spoilers();
+</script>
+</body>
+</html>

@@ -3,713 +3,256 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>AETHER — направление оформления</title>
-
+<title>AETHER — система оформления</title>
+<link rel="stylesheet" href="lab.css">
 <style>
-/* ─────────────────────────────────────────────────────────────────────────
-   Шрифты. Три роли: Tektur — дисплей, IBM Plex Serif — документ,
-   JetBrains Mono — хром. Кириллица у всех трёх проверена.
-   ───────────────────────────────────────────────────────────────────── */
-@font-face{font-family:Tektur;src:url(lab-fonts/tektur-cyrillic-400-normal.woff2)format("woff2");font-weight:400;unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116;font-display:block}
-@font-face{font-family:Tektur;src:url(lab-fonts/tektur-latin-400-normal.woff2)format("woff2");font-weight:400;font-display:block}
-@font-face{font-family:Tektur;src:url(lab-fonts/tektur-cyrillic-500-normal.woff2)format("woff2");font-weight:500;unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116;font-display:block}
-@font-face{font-family:Tektur;src:url(lab-fonts/tektur-latin-500-normal.woff2)format("woff2");font-weight:500;font-display:block}
-@font-face{font-family:Tektur;src:url(lab-fonts/tektur-cyrillic-700-normal.woff2)format("woff2");font-weight:700;unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116;font-display:block}
-@font-face{font-family:Tektur;src:url(lab-fonts/tektur-latin-700-normal.woff2)format("woff2");font-weight:700;font-display:block}
-
-@font-face{font-family:"Plex Serif";src:url(lab-fonts/ibm-plex-serif-cyrillic-400-normal.woff2)format("woff2");font-weight:400;unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116;font-display:swap}
-@font-face{font-family:"Plex Serif";src:url(lab-fonts/ibm-plex-serif-latin-400-normal.woff2)format("woff2");font-weight:400;font-display:swap}
-@font-face{font-family:"Plex Serif";src:url(lab-fonts/ibm-plex-serif-cyrillic-400-italic.woff2)format("woff2");font-weight:400;font-style:italic;unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116;font-display:swap}
-@font-face{font-family:"Plex Serif";src:url(lab-fonts/ibm-plex-serif-latin-400-italic.woff2)format("woff2");font-weight:400;font-style:italic;font-display:swap}
-@font-face{font-family:"Plex Serif";src:url(lab-fonts/ibm-plex-serif-cyrillic-600-normal.woff2)format("woff2");font-weight:600;unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116;font-display:swap}
-@font-face{font-family:"Plex Serif";src:url(lab-fonts/ibm-plex-serif-latin-600-normal.woff2)format("woff2");font-weight:600;font-display:swap}
-
-@font-face{font-family:"JetBrains Mono";src:url(lab-fonts/jetbrains-mono-cc545e63.woff2)format("woff2");font-weight:100 800;unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116;font-display:swap}
-@font-face{font-family:"JetBrains Mono";src:url(lab-fonts/jetbrains-mono-3fe682a8.woff2)format("woff2");font-weight:100 800;font-display:swap}
-@font-face{font-family:"JetBrains Mono";src:url(lab-fonts/jetbrains-mono-70bc3e13.woff2)format("woff2");font-weight:100 800;font-display:swap}
-
-/* ─────────────────────────────────────────────────────────────────────────
-   Токены
-   ───────────────────────────────────────────────────────────────────── */
-:root{
-  color-scheme:dark;
-
-  /* прибор */
-  --ink:#0a0b0c;          /* фон */
-  --ink-2:#111214;        /* панель */
-  --ink-3:#17181b;        /* панель поднятая */
-  --fg:#e8e7e4;           /* текст прибора, используется скупо */
-  --dim:#6e7073;          /* весь служебный текст — по умолчанию именно он */
-  --dimmer:#45474a;
-  --rule:rgba(255,255,255,.07);
-  --rule-2:rgba(255,255,255,.13);
-
-  /* документ */
-  --paper:#e9e7e1;
-  --paper-2:#dedbd3;      /* поля, шапка распечатки */
-  --paper-ink:#16171a;
-  --paper-dim:#5d5b55;
-  --paper-link:#8a4b12;
-
-  /* состояние — бюджет три пятна на экран */
-  --amber:#e8a13c;
-  --red:#d8443c;
-
-  --mono:"JetBrains Mono",ui-monospace,monospace;
-  --display:Tektur,"JetBrains Mono",monospace;
-  --serif:"Plex Serif",Georgia,serif;
-
-  --rail-top:46px;
-  --rail-bottom:26px;
-}
-
-*{box-sizing:border-box}
-html,body{margin:0}
-body{
-  background:var(--ink);
-  color:var(--dim);
-  font:11px/1.5 var(--mono);
-  -webkit-font-smoothing:antialiased;
-}
-a{color:inherit}
-
-/* мелкий служебный текст — один класс на весь интерфейс */
-.chrome{
-  font:10px/1.4 var(--mono);
-  letter-spacing:.09em;
-  text-transform:uppercase;
-  color:var(--dim);
-}
-.chrome--on{color:var(--fg)}
-.chrome--amber{color:var(--amber)}
-
-/* уголковые засечки: четыре Г-образные метки, рамки нет */
-@property --t{syntax:"<color>";inherits:false;initial-value:rgba(255,255,255,.13)}
-.ticks{position:relative}
-.ticks::before{
-  content:"";position:absolute;inset:0;pointer-events:none;z-index:2;
-  --t:var(--rule-2);
-  background:
-    linear-gradient(var(--t),var(--t)) 0 0/9px 1px no-repeat,
-    linear-gradient(var(--t),var(--t)) 0 0/1px 9px no-repeat,
-    linear-gradient(var(--t),var(--t)) 100% 0/9px 1px no-repeat,
-    linear-gradient(var(--t),var(--t)) 100% 0/1px 9px no-repeat,
-    linear-gradient(var(--t),var(--t)) 0 100%/9px 1px no-repeat,
-    linear-gradient(var(--t),var(--t)) 0 100%/1px 9px no-repeat,
-    linear-gradient(var(--t),var(--t)) 100% 100%/9px 1px no-repeat,
-    linear-gradient(var(--t),var(--t)) 100% 100%/1px 9px no-repeat;
-  transition:--t .15s;
-}
-.ticks:hover::before{--t:var(--amber)}
-
-/* панель прибора: ярлык-вкладка на верхней кромке */
-.panel{position:relative;background:var(--ink-2);padding:18px 16px 16px}
-.panel__tab{
-  position:absolute;top:0;left:0;transform:translateY(-50%);
-  background:var(--ink-3);padding:2px 8px;
-  font:10px/1.4 var(--mono);letter-spacing:.09em;text-transform:uppercase;color:var(--dim);
-  z-index:3;
-}
-.panel__tab::before{content:"[ ";color:var(--dimmer)}
-.panel__tab::after{content:" ]";color:var(--dimmer)}
-
-/* строка данных: > КЛЮЧ ·· значение */
-.kv{display:grid;grid-template-columns:1fr auto;gap:4px 10px;align-items:baseline}
-.kv dt{
-  font:10px/1.7 var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--dim);
-  white-space:nowrap;overflow:hidden;
-}
-.kv dt::before{content:"> ";color:var(--dimmer)}
-.kv dt::after{
-  content:" ···························································";
-  color:var(--dimmer);
-}
-.kv dd{margin:0;font:11px/1.7 var(--mono);color:var(--fg);text-align:right;white-space:nowrap}
-
-/* кнопки — скобочная форма из прежнего набора, но обводка волосяная */
-.btn{
-  display:inline-flex;align-items:center;height:26px;padding:0 10px;
-  border:1px solid var(--rule-2);background:none;color:var(--dim);
-  font:10px/1 var(--mono);letter-spacing:.09em;text-transform:uppercase;
-  cursor:pointer;transition:.15s;
-}
-.btn::before{content:"[\00a0";color:var(--dimmer)}
-.btn::after{content:"\00a0]";color:var(--dimmer)}
-.btn:hover{color:var(--fg);border-color:var(--rule-2)}
-.btn--go{border-color:var(--amber);color:var(--amber)}
-.btn--go:hover{background:var(--amber);color:var(--ink)}
-.btn--go:hover::before,.btn--go:hover::after{color:var(--ink)}
-
-/* индикатор допуска */
-.clr{display:inline-flex;gap:3px;vertical-align:-1px}
-.clr i{width:7px;height:7px;background:var(--rule-2);display:block}
-.clr i.on{background:var(--amber)}
-
-.dot{width:4px;height:4px;background:var(--amber);display:inline-block;vertical-align:2px;margin-right:6px}
-.dot--live{animation:pulse 2.4s infinite}
-@keyframes pulse{0%,100%{opacity:1}50%{opacity:.25}}
-
-/* ─────────────────────────────────────────────────────────────────────────
-   Каркас экрана
-   ───────────────────────────────────────────────────────────────────── */
-.screen{
-  position:relative;background:var(--ink);
-  border:1px solid var(--rule);
-  overflow:hidden;
-}
-.screen__grid{position:absolute;inset:0;pointer-events:none;z-index:0}
-.screen__grid i{position:absolute;top:0;bottom:0;width:1px;background:var(--rule)}
-
-.rail{
-  position:relative;z-index:4;height:var(--rail-top);
-  display:flex;align-items:center;gap:20px;padding-inline:max(18px,calc(50% - 564px));
-  border-bottom:1px solid var(--rule);background:var(--ink);
-}
-.mark{display:flex;align-items:center;gap:9px;flex:none}
-.mark i{
-  width:17px;height:17px;border:1px solid var(--rule-2);display:grid;place-items:center;
-  font:9px/1 var(--mono);color:var(--dim);
-}
-.mark b{font:500 12px/1 var(--display);letter-spacing:.16em;color:var(--fg)}
-
-.cmd{
-  flex:1;max-width:380px;display:flex;align-items:center;gap:8px;height:26px;padding:0 9px;
-  border:1px solid var(--rule);background:var(--ink-2);color:var(--dim);
-  font:11px/1 var(--mono);
-}
-.cmd::before{content:">_";color:var(--amber);opacity:.8}
-.cmd kbd{margin-left:auto;border:1px solid var(--rule-2);padding:1px 4px;font:9px/1 var(--mono);color:var(--dimmer)}
-
-.who{margin-left:auto;display:flex;align-items:center;gap:10px;text-align:right}
-
-/* полоса контекста под шапкой */
-.strip{
-  position:relative;z-index:4;height:26px;display:flex;align-items:center;gap:14px;
-  padding-inline:max(18px,calc(50% - 564px));border-bottom:1px solid var(--rule);background:var(--ink);
-}
-.strip s{text-decoration:none;color:var(--dimmer)}
-
-/* нижняя строка статуса */
-.foot{
-  position:relative;z-index:4;height:var(--rail-bottom);
-  display:flex;align-items:center;gap:16px;padding-inline:max(18px,calc(50% - 564px));
-  border-top:1px solid var(--rule);background:var(--ink);
-}
-.foot .sp{margin-left:auto}
-
-/* ─────────────────────────────────────────────────────────────────────────
-   Документ — светлая распечатка внутри прибора
-   ───────────────────────────────────────────────────────────────────── */
-.body{position:relative;z-index:1;padding:26px 18px 34px}
-.body__in{max-width:1128px;margin:0 auto;display:flex;gap:28px}
-
-/* рельс оглавления: ромбы + вертикальная подпись текущего раздела */
-.toc{flex:none;width:30px;padding-top:52px;display:flex;gap:10px}
-.toc ol{margin:0;padding:0;list-style:none;position:relative;flex:none;width:11px}
-.toc ol::before{content:"";position:absolute;top:5px;bottom:5px;left:5px;width:1px;background:var(--rule)}
-.toc li{position:relative;height:34px}
-.toc a{
-  position:absolute;left:0;top:0;display:block;width:11px;height:11px;
-  transform:rotate(45deg) scale(.6);border:1px solid var(--dimmer);background:var(--ink);
-}
-.toc a:hover{border-color:var(--fg)}
-.toc li.on a{border-color:var(--amber);background:var(--amber)}
-.toc li.sub a{transform:rotate(45deg) scale(.38)}
-.toc em{
-  writing-mode:vertical-rl;font-style:normal;align-self:start;margin-top:2px;
-  font:10px/1 var(--mono);letter-spacing:.16em;text-transform:uppercase;color:var(--dimmer);
-}
-
-.paper{
-  position:relative;flex:1;min-width:0;max-width:760px;
-  background:var(--paper);color:var(--paper-ink);
-  box-shadow:0 0 0 1px rgba(0,0,0,.6), 0 18px 50px -20px rgba(0,0,0,.9);
-}
-/* волокно бумаги — едва заметное, иначе читается как шум */
-.paper::after{
-  content:"";position:absolute;inset:0;pointer-events:none;
-  background:repeating-linear-gradient(0deg,rgba(22,23,26,.022) 0 1px,transparent 1px 4px);
-}
-.paper__head{
-  display:flex;align-items:center;gap:12px;padding:6px 22px;
-  background:var(--paper-2);border-bottom:1px solid rgba(22,23,26,.18);
-  font:10px/1.4 var(--mono);letter-spacing:.09em;text-transform:uppercase;color:var(--paper-dim);
-}
-.paper__head .sp{margin-left:auto;margin-right:14px}
-.paper__in{padding:38px 52px 44px}
-
-h1.rec{
-  margin:0;font:700 40px/1.02 var(--display);letter-spacing:.05em;text-transform:uppercase;
-  color:var(--paper-ink);
-}
-.rec-rule{height:1px;background:rgba(22,23,26,.25);margin:16px 0 0}
-.lede{margin:16px 0 0;font:italic 400 16px/1.55 var(--serif);color:#3c3a35}
-
-.prose{font:400 16.5px/1.68 var(--serif);color:var(--paper-ink)}
-.prose p{margin:16px 0 0}
-.prose h2{
-  margin:34px 0 0;display:flex;align-items:center;gap:12px;
-  font:500 12px/1 var(--display);letter-spacing:.16em;text-transform:uppercase;color:#4a4842;
-}
-.prose h2::after{content:"";flex:1;height:1px;background:rgba(22,23,26,.16)}
-.prose a{color:var(--paper-link);text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:3px}
-.prose a:hover{background:rgba(232,161,60,.3);text-decoration-color:transparent}
-.prose time{font:400 14px/1 var(--mono);color:#4a4842;background:rgba(22,23,26,.06);padding:1px 4px}
-
-/* зачёркнутое: настоящие плашки поверх настоящего текста */
-.rd{background:var(--paper-ink);color:transparent;user-select:none;box-decoration-break:clone}
-/* на тёмной стороне плашка не может быть чёрной — она становится глухой серой */
-.panel .rd{background:var(--rule-2);color:transparent}
-
-/* правая колонка — машинная сторона, остаётся тёмной */
-.aside{flex:none;width:284px;display:flex;flex-direction:column;gap:22px;padding-top:30px}
-
-/* ─────────────────────────────────────────────────────────────────────────
-   Витрина
-   ───────────────────────────────────────────────────────────────────── */
-.wrap{max-width:1340px;margin:0 auto;padding:52px 24px 90px}
-.lead{margin:0 0 46px}
-.lead h1{margin:0;font:700 30px/1.1 var(--display);letter-spacing:.1em;text-transform:uppercase;color:var(--fg)}
-.lead p{margin:12px 0 0;max-width:70ch;font:13px/1.7 var(--mono);color:var(--dim)}
-.sec{margin:0 0 22px;padding-top:52px;display:flex;align-items:center;gap:14px}
-.sec span{font:10px/1 var(--mono);letter-spacing:.16em;text-transform:uppercase;color:var(--dim)}
-.sec b{font:500 15px/1 var(--display);letter-spacing:.09em;text-transform:uppercase;color:var(--fg)}
-.sec::after{content:"";flex:1;height:1px;background:var(--rule)}
-.note{margin:14px 0 0;font:11px/1.7 var(--mono);color:var(--dim);max-width:78ch}
-.note b{color:var(--fg);font-weight:400}
-
-.swatches{display:flex;flex-wrap:wrap;gap:1px;background:var(--rule)}
-.sw{background:var(--ink-2);padding:12px 14px 14px;min-width:152px;flex:1}
-.sw i{display:block;height:32px;margin-bottom:10px;border:1px solid var(--rule)}
-.sw b{display:block;font:400 10px/1.5 var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--fg)}
-.sw s{display:block;text-decoration:none;font:10px/1.5 var(--mono);color:var(--dim)}
-
-.scale{display:flex;flex-direction:column;gap:20px}
-.scale div{display:flex;align-items:baseline;gap:20px}
-.scale em{flex:none;width:210px;font:10px/1.5 var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--dimmer);font-style:normal}
-
-.bits{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:1px;background:var(--rule)}
-.bit{background:var(--ink);padding:26px 20px 22px;display:flex;flex-direction:column;gap:14px}
-.bit>em{font:10px/1 var(--mono);letter-spacing:.09em;text-transform:uppercase;color:var(--dimmer);font-style:normal}
-
-/* таймлайн */
-.tl{position:relative;padding:16px 0 8px;max-width:1040px;margin:0 auto}
-.tl__ruler{display:flex;gap:1px;background:var(--rule);margin-bottom:26px}
-.tl__ruler a{
-  flex:1;background:var(--ink-2);padding:8px 10px;text-decoration:none;
-  border-top:1px solid transparent;
-}
-.tl__ruler a.on{border-top-color:var(--amber);background:var(--ink-3)}
-.tl__ruler b{display:block;font:500 12px/1.3 var(--display);letter-spacing:.1em;text-transform:uppercase;color:var(--fg)}
-.tl__ruler s{display:block;text-decoration:none;font:10px/1.6 var(--mono);letter-spacing:.06em;color:var(--dim)}
-.tl__spine{position:relative;padding:6px 0}
-.tl__spine::before{content:"";position:absolute;top:0;bottom:0;left:50%;width:1px;background:var(--rule)}
-.ev{position:relative;display:grid;grid-template-columns:1fr 1fr;gap:0;padding:7px 0}
-.ev__card{
-  position:relative;background:var(--paper);color:var(--paper-ink);
-  padding:9px 13px;max-width:330px;
-  box-shadow:0 0 0 1px rgba(0,0,0,.5);
-}
-.ev--l .ev__card{grid-column:1;justify-self:end;margin-right:30px}
-.ev--r .ev__card{grid-column:2;margin-left:30px}
-.ev__card time{display:block;font:10px/1.5 var(--mono);letter-spacing:.08em;color:var(--paper-dim)}
-.ev__card b{display:block;font:600 14px/1.35 var(--serif)}
-.ev::after{
-  content:"";position:absolute;top:50%;left:50%;width:7px;height:7px;
-  transform:translate(-50%,-50%) rotate(45deg);background:var(--ink);border:1px solid var(--dimmer);
-}
-/* «сейчас» — не событие, а конец спины: ромб на оси, подпись под ним */
-.now{position:relative;text-align:center;padding-top:26px}
-.now::before{
-  content:"";position:absolute;top:2px;left:50%;width:9px;height:9px;
-  transform:translateX(-50%) rotate(45deg);background:var(--amber);
-}
-.ev__line{position:absolute;top:50%;height:1px;background:var(--rule-2)}
-.ev--l .ev__line{right:50%;width:30px}
-.ev--r .ev__line{left:50%;width:30px}
-.ev--big .ev__card{max-width:380px}
-.ev--big .ev__card b{font-size:17px}
-
-@media (max-width:1100px){
-  .aside{display:none}
-  .toc{display:none}
-}
+  .swatches{display:flex;flex-wrap:wrap;gap:1px;background:var(--rule)}
+  .sw{background:var(--ink-2);padding:12px 14px 14px;min-width:150px;flex:1}
+  .sw i{display:block;height:32px;margin-bottom:10px;border:1px solid var(--rule)}
+  .sw b{display:block;font:400 10px/1.5 var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--fg)}
+  .sw s{display:block;text-decoration:none;font:10px/1.5 var(--mono);color:var(--dim)}
+  .scale{display:flex;flex-direction:column;gap:20px}
+  .scale div{display:flex;align-items:baseline;gap:20px;flex-wrap:wrap}
+  .scale em{flex:none;width:206px;font:10px/1.5 var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--dimmer);font-style:normal}
 </style>
 </head>
 <body>
 <div class="wrap">
 
+<nav class="labnav">
+  <a href="lab.html" class="on">система</a>
+  <a href="lab-record.html">запись</a>
+  <a href="lab-widgets.html">виджеты</a>
+  <a href="lab-nav.html">навигация</a>
+  <a href="lab-timeline.html">хронология</a>
+  <a class="sp" data-open-palette style="cursor:pointer">CTRL+K</a>
+</nav>
+
 <header class="lead">
   <h1>Прибор и документ</h1>
-  <p>Направление оформления публичной вики. Хром — тёмный, плотный, из волосяных линий:
-     его не читают, в нём ориентируются. Документ — светлая распечатка внутри прибора:
-     его читают. Всё остальное выводится из этого разделения.</p>
+  <p>Одно правило, из которого выводится всё остальное. <b>Прибор</b> — тёмный, плотный,
+     моноширинный, из волосяных линий: в нём ориентируются, его не читают. Здесь живёт всё,
+     что система знает сама: шифры, ревизии, допуски, обратные ссылки.
+     <b>Документ</b> — светлая распечатка: её читают. Здесь живёт всё, что написал автор:
+     тело записи, инфобокс и виджеты внутри них.</p>
+  <p>Отсюда сразу следует, какой виджет на каком материале рисуется и почему у одного и того же
+     виджета две шкуры.</p>
 </header>
 
-<!-- ═══ ЭКРАН: ЗАПИСЬ ═══════════════════════════════════════════════════ -->
-<div class="sec"><span>01</span><b>Страница записи</b></div>
-
-<div class="screen">
-  <div class="screen__grid">
-    <i style="left:calc(50% - 564px)"></i>
-    <i style="left:calc(50% + 564px)"></i>
-    <i style="left:calc(50% + 264px)"></i>
-  </div>
-
-  <div class="rail">
-    <div class="mark"><i>◆</i><b>AETHER.WIKI</b></div>
-    <div class="cmd">поиск или команда<kbd>CTRL K</kbd></div>
-    <div class="who">
-      <div>
-        <div class="chrome chrome--on">@гость</div>
-        <div class="chrome">допуск <span class="chrome--amber">0</span></div>
-      </div>
-      <span class="clr"><i class="on"></i><i></i><i></i><i></i><i></i></span>
-    </div>
-  </div>
-
-  <div class="strip">
-    <span class="chrome">архив <s>/</s> персонажи <s>/</s> <span class="chrome--on">кремень</span></span>
-    <span class="chrome">REC-0041</span>
-    <span class="chrome">ревизия 12</span>
-    <span class="chrome">входящих ссылок 3</span>
-    <span class="chrome" style="margin-left:auto">открыто</span>
-  </div>
-
-  <div class="body"><div class="body__in">
-    <nav class="toc">
-      <ol>
-        <li class="on"><a href="#"></a></li>
-        <li class="sub"><a href="#"></a></li>
-        <li><a href="#"></a></li>
-        <li><a href="#"></a></li>
-      </ol>
-      <em>биография</em>
-    </nav>
-
-    <article class="paper">
-      <div class="paper__head">
-        <span>запись · REC-0041</span>
-        <span class="sp">допуск 0 · открыто</span>
-        <span>изменено 26.07.2026</span>
-      </div>
-      <div class="paper__in">
-        <h1 class="rec">Кремень</h1>
-        <div class="rec-rule"></div>
-        <p class="lede">Оперативник полевой группы «Аполлон». Последний подтверждённый
-           контакт — апрель 2031 года, оперативный район Меридиан.</p>
-
-        <div class="prose">
-          <h2>Биография</h2>
-          <p>Родился в промышленном поясе. Служил в войсковой разведке, вербован после
-             операции <a href="#">«Северный Ветер»</a>. К моменту перевода в
-             <a href="#">Протокол Аполлон</a> имел четыре подтверждённых выхода
-             за периметр.</p>
-          <p>Характеристика куратора: «Исполнителен до буквальности. Не задаёт вопросов,
-             на которые не рассчитывает получить ответ».</p>
-
-          <h2>Операции</h2>
-          <p>Участвовал в шести операциях протокола. Последний контакт —
-             <time>12 апр. 2031, 11:00</time>. Далее связь односторонняя, приём
-             подтверждений прекращён.</p>
-
-          <h2>Статус</h2>
-          <p>Пропал без вести. Поиски прекращены решением совета
-             <time>03 июн. 2031</time>. Личное дело переведено в архив без закрытия.</p>
-        </div>
-      </div>
-    </article>
-
-    <aside class="aside">
-      <div class="panel ticks">
-        <span class="panel__tab">Досье</span>
-        <dl class="kv">
-          <dt>позывной</dt><dd>«Кремень»</dd>
-          <dt>шифр</dt><dd>AC/*0041</dd>
-          <dt>статус</dt><dd style="color:var(--amber)">пропал без вести</dd>
-          <dt>подразделение</dt><dd>Аполлон</dd>
-          <dt>последний контакт</dt><dd>2031-04-12</dd>
-          <dt>уровень доступа</dt><dd><span class="clr"><i class="on"></i><i class="on"></i><i class="on"></i><i></i><i></i></span></dd>
-        </dl>
-      </div>
-
-      <div class="panel ticks">
-        <span class="panel__tab">Ссылаются сюда</span>
-        <dl class="kv">
-          <dt><a href="#" style="text-decoration:none">Протокол Аполлон</a></dt><dd>REC-0007</dd>
-          <dt><a href="#" style="text-decoration:none">Тихий Полдень</a></dt><dd>REC-0019</dd>
-          <dt><a href="#" style="text-decoration:none">Меридиан</a></dt><dd>REC-0031</dd>
-        </dl>
-      </div>
-
-      <div class="panel ticks">
-        <span class="panel__tab">В хронологии</span>
-        <dl class="kv">
-          <dt>2029-08-02</dt><dd>вербовка</dd>
-          <dt>2031-04-12</dt><dd>последний контакт</dd>
-          <dt>2031-06-03</dt><dd>поиски прекращены</dd>
-        </dl>
-      </div>
-
-      <div style="display:flex;gap:8px">
-        <button class="btn">на карте</button>
-        <button class="btn">хронология</button>
-      </div>
-    </aside>
-  </div></div>
-
-  <div class="foot">
-    <span class="chrome"><span class="dot dot--live"></span>канал устойчив</span>
-    <span class="chrome">04:12:33 UTC</span>
-    <span class="chrome">записей 41</span>
-    <span class="chrome sp">ЭП — 2026</span>
-  </div>
-</div>
-
-<p class="note"><b>Что здесь происходит.</b> Заголовок набран Tektur вразрядку и стоит
-   на бумаге, а не в хроме — читатель видит документ, а не карточку сайта. Правая колонка
-   осталась тёмной намеренно: бумага — это то, что написал человек, тёмная панель — то,
-   что о записи знает система. Янтарного на экране три пятна: уровень допуска в шапке,
-   статус в досье, живая точка внизу.</p>
-
-<!-- ═══ ЭКРАН: ЗАКРЫТАЯ ЗАПИСЬ ══════════════════════════════════════════ -->
-<div class="sec"><span>02</span><b>Запись выше допуска</b></div>
-
-<div class="screen">
-  <div class="screen__grid">
-    <i style="left:calc(50% - 564px)"></i>
-    <i style="left:calc(50% + 564px)"></i>
-    <i style="left:calc(50% + 264px)"></i>
-  </div>
-
-  <div class="rail">
-    <div class="mark"><i>◆</i><b>AETHER.WIKI</b></div>
-    <div class="cmd">поиск или команда<kbd>CTRL K</kbd></div>
-    <div class="who">
-      <div>
-        <div class="chrome chrome--on">@гость</div>
-        <div class="chrome">допуск <span class="chrome--amber">0</span></div>
-      </div>
-      <span class="clr"><i class="on"></i><i></i><i></i><i></i><i></i></span>
-    </div>
-  </div>
-
-  <div class="strip">
-    <span class="chrome">архив <s>/</s> операции <s>/</s> <span class="chrome--on">тихий полдень</span></span>
-    <span class="chrome">REC-0019</span>
-    <span class="chrome">ревизия 4</span>
-    <span class="chrome" style="margin-left:auto;color:var(--red)">требуется допуск 3</span>
-  </div>
-
-  <div class="body"><div class="body__in">
-    <nav class="toc">
-      <ol><li class="on"><a href="#"></a></li><li><a href="#"></a></li><li><a href="#"></a></li></ol>
-      <em>замысел</em>
-    </nav>
-
-    <article class="paper">
-      <div class="paper__head">
-        <span>запись · REC-0019</span>
-        <span class="sp" style="color:#8f2f28">закрыто · допуск 3</span>
-        <span>изменено 26.07.2026</span>
-      </div>
-      <div class="paper__in">
-        <h1 class="rec">Тихий Полдень</h1>
-        <div class="rec-rule"></div>
-        <p class="lede">Операция протокола. <span class="rd">Кодовое обозначение присвоено
-           после переноса сроков</span>.</p>
-
-        <div class="prose">
-          <h2>Замысел</h2>
-          <p><span class="rd">Одновременный вывод трёх полевых групп из оперативного района
-             Меридиан</span> при участии <a href="#">Кремня</a>.
-             <span class="rd">Окно — шесть часов сорок минут, отсчёт от сигнала «Эфир»</span>.</p>
-          <p><span class="rd">Резервный сценарий предполагал уничтожение узла связи и
-             последующую эвакуацию по южному коридору силами приданной группы</span>.</p>
-
-          <h2>Исполнение</h2>
-          <p><span class="rd">Первая группа вышла в срок</span>.
-             <span class="rd">Вторая и третья задержаны на семнадцать часов, связь
-             восстановлена частично</span>.</p>
-        </div>
-      </div>
-
-      <div style="padding:0 52px 40px">
-        <div class="panel ticks" style="background:rgba(22,23,26,.06);color:var(--paper-ink)">
-          <span class="panel__tab" style="background:var(--paper-2);color:#8f2f28">закрыто</span>
-          <p style="margin:0;font:11px/1.7 var(--mono);color:#4a4842">
-            Текст записи доступен с допуска 3. Ваш уровень — 0.<br>
-            Видны: заголовок, структура, связи. Скрыто: 1 842 знака в 3 разделах.
-          </p>
-        </div>
-      </div>
-    </article>
-
-    <aside class="aside">
-      <div class="panel ticks">
-        <span class="panel__tab" style="color:var(--red)">Гриф</span>
-        <dl class="kv">
-          <dt>требуется</dt><dd style="color:var(--red)">допуск 3</dd>
-          <dt>ваш уровень</dt><dd>0</dd>
-          <dt>гриф присвоен</dt><dd>2031-06-03</dd>
-          <dt>кем</dt><dd class="rd">████████</dd>
-        </dl>
-      </div>
-
-      <div class="panel ticks">
-        <span class="panel__tab">Ссылаются сюда</span>
-        <dl class="kv">
-          <dt><a href="#" style="text-decoration:none">Кремень</a></dt><dd>REC-0041</dd>
-          <dt><a href="#" style="text-decoration:none">Меридиан</a></dt><dd>REC-0031</dd>
-        </dl>
-      </div>
-
-      <div class="panel ticks">
-        <span class="panel__tab">Что скрыто</span>
-        <dl class="kv">
-          <dt>разделов</dt><dd>3</dd>
-          <dt>знаков</dt><dd>1 842</dd>
-          <dt>вложений</dt><dd>2</dd>
-        </dl>
-      </div>
-
-      <button class="btn btn--go">запросить допуск</button>
-    </aside>
-  </div></div>
-
-  <div class="foot">
-    <span class="chrome"><span class="dot dot--live"></span>канал устойчив</span>
-    <span class="chrome">04:12:41 UTC</span>
-    <span class="chrome" style="color:var(--red)">доступ ограничен</span>
-    <span class="chrome sp">ЭП — 2026</span>
-  </div>
-</div>
-
-<p class="note"><b>Вместо шумовой стены.</b> Запись существует, её размер и структура видны,
-   а текст закрыт настоящими плашками поверх настоящих слов. Это и выразительнее, и честнее:
-   читатель понимает, что именно он не видит и сколько этого. Красный появляется ровно там,
-   где есть гриф, и больше нигде во всей системе.</p>
-
-<!-- ═══ ХРОНОЛОГИЯ ══════════════════════════════════════════════════════ -->
-<div class="sec"><span>03</span><b>Хронология</b></div>
-
-<div class="screen">
-  <div class="rail">
-    <div class="mark"><i>◆</i><b>AETHER.WIKI</b></div>
-    <div class="cmd">поиск или команда<kbd>CTRL K</kbd></div>
-    <div class="who"><div><div class="chrome chrome--on">@гость</div><div class="chrome">допуск <span class="chrome--amber">0</span></div></div></div>
-  </div>
-
-  <div style="padding:26px 26px 30px">
-    <div class="tl">
-      <div class="tl__ruler">
-        <a href="#"><b>Пробуждение</b><s>2019 · 3 события</s></a>
-        <a href="#"><b>Восхождение</b><s>2020–2021 · 3 события</s></a>
-        <a href="#" class="on"><b>Разлом</b><s>2022–2026 · 5 событий</s></a>
-      </div>
-
-      <div class="tl__spine">
-        <div class="ev ev--l"><div class="ev__line"></div>
-          <div class="ev__card"><time>2022-07-11</time><b>Падение Меридиана</b></div></div>
-        <div class="ev ev--r"><div class="ev__line"></div>
-          <div class="ev__card"><time>2023-01-17</time><b>Договор Затмения</b></div></div>
-        <div class="ev ev--l ev--big"><div class="ev__line"></div>
-          <div class="ev__card"><time>2024-06-02</time><b>Битва за Аркадию</b></div></div>
-        <div class="ev ev--r"><div class="ev__line"></div>
-          <div class="ev__card"><time>2024-10-30</time><b>Исчезновение Орлова</b></div></div>
-        <div class="ev ev--l"><div class="ev__line"></div>
-          <div class="ev__card"><time>2025-01-19</time><b>Протокол «Затмение»</b></div></div>
-      </div>
-
-      <div class="now">
-        <div class="chrome chrome--amber">сейчас · 2026</div>
-        <div class="chrome" style="margin-top:5px">эпоха III продолжается</div>
-      </div>
-    </div>
-  </div>
-
-  <div class="foot">
-    <span class="chrome">эпох 3</span><span class="chrome">событий 11</span>
-    <span class="chrome sp">ЭП — 2026</span>
-  </div>
-</div>
-
-<p class="note"><b>Что изменилось против макета.</b> Эпохи вынесены наверх в линейку —
-   она же переключатель, поэтому спина сжимается вчетверо и события помещаются на экран.
-   Каждое событие — маленькая распечатка со ссылкой на запись, вес карточки задаётся
-   значимостью события, а не единым шаблоном.</p>
-
-<!-- ═══ ТОКЕНЫ ══════════════════════════════════════════════════════════ -->
-<div class="sec"><span>04</span><b>Цвет</b></div>
+<!-- ═══ ЦВЕТ ═══════════════════════════════════════════════════════════ -->
+<div class="sec"><span>01</span><b>Цвет</b></div>
 <div class="swatches">
   <div class="sw"><i style="background:#0a0b0c"></i><b>ink</b><s>#0A0B0C · фон прибора</s></div>
   <div class="sw"><i style="background:#111214"></i><b>ink-2</b><s>#111214 · панель</s></div>
+  <div class="sw"><i style="background:#17181b"></i><b>ink-3</b><s>#17181B · ярлык, ховер</s></div>
   <div class="sw"><i style="background:rgba(255,255,255,.07)"></i><b>rule</b><s>7% · все линии</s></div>
   <div class="sw"><i style="background:#6e7073"></i><b>dim</b><s>#6E7073 · служебный текст</s></div>
   <div class="sw"><i style="background:#e8e7e4"></i><b>fg</b><s>#E8E7E4 · только значения</s></div>
+</div>
+<div class="swatches" style="margin-top:1px">
   <div class="sw"><i style="background:#e9e7e1"></i><b>paper</b><s>#E9E7E1 · документ</s></div>
+  <div class="sw"><i style="background:#dedbd3"></i><b>paper-2</b><s>#DEDBD3 · инфобокс, шапка</s></div>
+  <div class="sw"><i style="background:#16171a"></i><b>paper-ink</b><s>#16171A · текст документа</s></div>
   <div class="sw"><i style="background:#e8a13c"></i><b>amber</b><s>#E8A13C · только состояние</s></div>
+  <div class="sw"><i style="background:#d2563f"></i><b>ember</b><s>#D2563F · огонь хронологии</s></div>
   <div class="sw"><i style="background:#d8443c"></i><b>red</b><s>#D8443C · только гриф</s></div>
 </div>
 <p class="note"><b>Правило бюджета.</b> Янтарный — не цвет оформления, а обозначение состояния:
-   текущее, живое, выбранное. Три пятна на экран. Красный — исключительно гриф.
-   Всё остальное держится на волосяных линиях в 7% белого и на приглушённом сером тексте.</p>
+   текущее, живое, выбранное. Три пятна на экран. Красный — исключительно гриф. Всё остальное
+   держится на волосяных линиях в 7% белого и приглушённом сером тексте.
+   Исключение одно и оно осознанное: хронология, где янтарь и уголь — материал страницы.</p>
 
-<div class="sec"><span>05</span><b>Шрифт</b></div>
+<!-- ═══ ШРИФТ ══════════════════════════════════════════════════════════ -->
+<div class="sec"><span>02</span><b>Шрифт</b></div>
 <div class="scale">
   <div><em>Tektur 700 / 40 / .05em</em><span style="font:700 40px/1 var(--display);letter-spacing:.05em;text-transform:uppercase;color:var(--fg)">Кремень</span></div>
+  <div><em>Tektur 700 / 22 / .06em</em><span style="font:700 22px/1 var(--display);letter-spacing:.06em;color:var(--fg)">Пробуждение</span></div>
   <div><em>Tektur 500 / 12 / .16em</em><span style="font:500 12px/1 var(--display);letter-spacing:.16em;text-transform:uppercase;color:var(--dim)">Биография</span></div>
   <div><em>Plex Serif 400 / 16.5</em><span style="font:400 16.5px/1.6 var(--serif);color:var(--fg)">Служил в войсковой разведке, вербован после операции «Северный Ветер».</span></div>
   <div><em>Plex Serif italic / 16</em><span style="font:italic 400 16px/1.6 var(--serif);color:var(--dim)">Последний подтверждённый контакт — апрель 2031 года.</span></div>
   <div><em>JetBrains Mono 10 / .09em</em><span class="chrome">допуск · уровень 0 · канал устойчив</span></div>
   <div><em>JetBrains Mono 11</em><span style="font:11px/1.5 var(--mono);color:var(--fg)">AC/*0041 · 2031-04-12 · 11:00</span></div>
 </div>
-<p class="note"><b>Три роли, не больше.</b> Tektur появляется только в заголовках и названиях
-   разделов — он слишком характерный, чтобы им набирать текст. Plex Serif живёт только на
-   бумаге. JetBrains Mono — весь хром, всегда мелко и вразрядку.</p>
+<p class="note"><b>Три роли, не больше.</b> Tektur — только заголовки и названия разделов: он
+   слишком характерный, чтобы им набирать текст. Plex Serif живёт только на бумаге.
+   JetBrains Mono — весь прибор, всегда мелко и вразрядку.</p>
 
-<div class="sec"><span>06</span><b>Детали</b></div>
+<!-- ═══ УПРАВЛЕНИЕ ═════════════════════════════════════════════════════ -->
+<div class="sec"><span>03</span><b>Управление</b></div>
 <div class="bits">
-  <div class="bit"><em>панель · уголки и ярлык</em>
-    <div class="panel ticks"><span class="panel__tab">Состояние</span>
-      <dl class="kv"><dt>записей</dt><dd>41</dd><dt>под грифом</dt><dd>7</dd></dl></div>
-    <span class="chrome" style="text-transform:none;letter-spacing:0">Рамки нет — четыре засечки. На ховере янтарнеют.</span>
-  </div>
-
-  <div class="bit"><em>кнопки</em>
-    <div style="display:flex;gap:8px;flex-wrap:wrap">
+  <div class="bit"><em>кнопки — вид</em>
+    <div class="row">
       <button class="btn">открыть</button>
       <button class="btn btn--go">запросить допуск</button>
+      <button class="btn btn--solid">сохранить</button>
     </div>
-    <span class="chrome" style="text-transform:none;letter-spacing:0">Скобки остались, обводка стала волосяной. Янтарная — только у главного действия.</span>
+    <div class="row">
+      <button class="btn btn--danger">удалить</button>
+      <button class="btn btn--ghost">отмена</button>
+      <button class="btn" disabled>недоступно</button>
+    </div>
+    <span class="cap">Скобки остались из прежнего набора, обводка стала волосяной.
+      Янтарная — только у главного действия на экране.</span>
   </div>
 
-  <div class="bit"><em>командная строка</em>
-    <div class="cmd" style="max-width:none">поиск или команда<kbd>CTRL K</kbd></div>
-    <span class="chrome" style="text-transform:none;letter-spacing:0">Единственное место, где янтарный стоит в покое: приглашение <code>&gt;_</code>.</span>
+  <div class="bit"><em>кнопки — размер</em>
+    <div class="row">
+      <button class="btn btn--sm">мелкая</button>
+      <button class="btn">обычная</button>
+      <button class="btn btn--lg">крупная</button>
+      <button class="btn btn--icon">↗</button>
+      <button class="btn btn--icon">×</button>
+    </div>
+    <span class="cap">У кнопки-значка скобки снимаются: они нужны, чтобы слово читалось
+      как нажимаемое, а значок и так читается.</span>
+  </div>
+
+  <div class="bit"><em>поля ввода</em>
+    <div class="field"><input placeholder="запись, метка или команда"><kbd>CTRL K</kbd></div>
+    <div class="field"><input value="Кремень"></div>
+    <textarea class="area" placeholder="комментарий к ревизии…"></textarea>
+    <span class="cap">Поле — командная строка: приглашение <code>&gt;</code> и блочная каретка.</span>
+  </div>
+
+  <div class="bit"><em>переключатели</em>
+    <div class="row">
+      <label class="check"><input type="checkbox" checked> показывать закрытые</label>
+      <label class="check"><input type="checkbox"> только с картой</label>
+    </div>
+    <div class="row">
+      <label class="check"><input type="radio" name="r" checked> по дате</label>
+      <label class="check"><input type="radio" name="r"> по названию</label>
+    </div>
+    <div class="row">
+      <label class="toggle"><input type="checkbox" checked> подсветка ссылок</label>
+    </div>
+    <div class="row">
+      <span class="pick"><select><option>все категории</option><option>персонажи</option><option>операции</option></select></span>
+    </div>
+  </div>
+
+  <div class="bit"><em>метки состояния</em>
+    <div class="row">
+      <span class="pill">черновик</span>
+      <span class="pill pill--amber">текущая</span>
+      <span class="pill pill--ok">подтверждено</span>
+    </div>
+    <div class="row">
+      <span class="pill pill--red">гриф</span>
+      <span class="pill pill--info">внешний источник</span>
+      <span class="pill pill--plain">ревизия 12</span>
+    </div>
+    <span class="cap">Точка слева — состояние. Без точки метка становится просто ярлыком.</span>
+  </div>
+
+  <div class="bit"><em>метки записи</em>
+    <div class="row">
+      <span class="chip on">пропавшие <b>6</b></span>
+      <span class="chip">первая эпоха <b>11</b></span>
+      <span class="chip">аполлон <b>4</b></span>
+      <span class="chip">меридиан <b>9</b></span>
+    </div>
+    <span class="cap">Второй способ классификации: запись лежит в одной категории,
+      но несёт сколько угодно меток.</span>
   </div>
 
   <div class="bit"><em>допуск</em>
-    <div style="display:flex;gap:16px;align-items:center">
+    <div class="row" style="gap:18px">
       <span class="clr"><i class="on"></i><i></i><i></i><i></i><i></i></span>
       <span class="clr"><i class="on"></i><i class="on"></i><i class="on"></i><i></i><i></i></span>
       <span class="clr"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i></span>
     </div>
-    <span class="chrome" style="text-transform:none;letter-spacing:0">Пять делений вместо числа: уровень читается не глазами, а периферией.</span>
+    <span class="cap">Пять делений вместо числа: уровень читается периферией, не глазами.</span>
   </div>
 
-  <div class="bit"><em>строка данных</em>
-    <dl class="kv"><dt>шифр</dt><dd>AC/*0041</dd><dt>статус</dt><dd style="color:var(--amber)">пропал без вести</dd></dl>
-    <span class="chrome" style="text-transform:none;letter-spacing:0">Ключ приглушён и уходит в точки, значение выровнено вправо и светлое.</span>
+  <div class="bit"><em>панель с ярлыком</em>
+    <div class="panel ticks"><span class="panel__tab">Состояние архива</span>
+      <dl class="kv"><dt>записей</dt><dd>41</dd><dt>под грифом</dt><dd>7</dd><dt>ревизий за сутки</dt><dd>3</dd></dl>
+    </div>
+    <span class="cap">Рамки нет — четыре уголковые засечки. На наведении янтарнеют.</span>
   </div>
 
-  <div class="bit"><em>зачёркивание</em>
-    <p style="margin:0;background:var(--paper);color:var(--paper-ink);padding:12px 14px;font:400 15px/1.6 var(--serif)">
-      Первая группа вышла в срок. <span class="rd">Вторая и третья задержаны на семнадцать часов</span>.</p>
-    <span class="chrome" style="text-transform:none;letter-spacing:0">Плашки лежат поверх настоящего текста — длина строк остаётся правдой.</span>
+  <div class="bit"><em>подсказка и страницы</em>
+    <div class="row"><span class="tip" data-tip="на эту запись ссылаются три других">обратные ссылки</span></div>
+    <div class="row"><nav class="pages"><a href="#">‹</a><a href="#" class="on">1</a><a href="#">2</a><a href="#">3</a><a href="#">…</a><a href="#">9</a><a href="#">›</a></nav></div>
+  </div>
+
+  <div class="bit"><em>загрузка и пустота</em>
+    <div style="display:grid;gap:6px"><span class="skel" style="width:70%"></span><span class="skel" style="width:100%"></span><span class="skel" style="width:45%"></span></div>
+    <div class="empty" style="padding:22px 0 0"><b>категория пуста</b><span>Первая запись появится здесь, как только её создадут.</span></div>
   </div>
 </div>
 
+<!-- ═══ НАБОРЫ ═════════════════════════════════════════════════════════ -->
+<div class="sec"><span>04</span><b>Наборы</b></div>
+
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:36px">
+  <div>
+    <div class="chrome" style="margin-bottom:12px">таблица</div>
+    <table class="table">
+      <thead><tr><th>запись</th><th>категория</th><th class="num">ревизия</th></tr></thead>
+      <tbody>
+        <tr><td>Кремень</td><td>персонажи</td><td class="num">12</td></tr>
+        <tr><td>Протокол Аполлон</td><td>операции</td><td class="num">31</td></tr>
+        <tr><td>Тихий Полдень</td><td>операции</td><td class="num">4</td></tr>
+      </tbody>
+    </table>
+    <p class="note" style="max-width:none">Линии появляются только под курсором — в покое
+      таблица держится выравниванием, а не сеткой.</p>
+  </div>
+
+  <div>
+    <div class="chrome" style="margin-bottom:12px">вкладки</div>
+    <nav class="tabs">
+      <a href="#" class="on"><b>Обзор</b><s>41 запись</s></a>
+      <a href="#"><b>Метки</b><s>18</s></a>
+      <a href="#"><b>Изменения</b><s>за 7 дней</s></a>
+    </nav>
+    <p class="note" style="max-width:none">Активная вкладка отмечена янтарной чертой сверху —
+      тем же приёмом, что и текущая эпоха в хронологии.</p>
+  </div>
 </div>
+
+<div class="chrome" style="margin:38px 0 6px">гармошка</div>
+<div class="acc" style="max-width:820px">
+  <details open><summary><em>01</em><b>Что считается записью?</b><i>+</i></summary>
+    <p>Один markdown-файл в <code>data/records</code>. Имя файла — слаг, всё остальное живёт внутри:
+       заголовок, тело, инфобоксы, виджеты. Отдельной схемы у записи нет, поэтому её можно
+       читать, грепать и диффать чем угодно.</p></details>
+  <details><summary><em>02</em><b>Чем инфобокс отличается от досье?</b><i>+</i></summary>
+    <p>Инфобокс пишет автор — это часть текста записи, поэтому он лежит на бумаге.
+       Досье собирает система из дерева и ссылок — поэтому оно тёмное. Разделение материалов
+       здесь несёт смысл, а не украшает.</p></details>
+  <details><summary><em>03</em><b>Что происходит при нехватке допуска?</b><i>+</i></summary>
+    <p>Сервер не отдаёт тело записи вовсе. Браузер получает заголовок, структуру и объём
+       скрытого — и рисует плашки. Прятать текст стилями было бы враньём.</p></details>
+</div>
+
+<p class="note" style="margin-top:38px"><b>Дальше.</b>
+   <a href="lab-record.html">из чего состоит запись</a> ·
+   <a href="lab-widgets.html">виджеты</a> ·
+   <a href="lab-nav.html">навигация и поиск</a> ·
+   <a href="lab-timeline.html">хронология</a></p>
+
+</div>
+
+<div class="pal" id="pal">
+  <div class="pal__box">
+    <i></i><i></i><i></i><i></i>
+    <div class="pal__in"><b>aether@eclipse</b><s>:~$</s>
+      <input id="pal-q" placeholder="запись, категория, метка или команда…" autocomplete="off"><kbd class="kbd">ESC</kbd></div>
+    <div class="pal__scopes" id="pal-scopes">
+      <span class="on">все</span><span>записи</span><span><b>/</b> категории</span><span><b>#</b> метки</span><span><b>@</b> события</span><span><b>&gt;</b> команды</span>
+    </div>
+    <div class="pal__list" id="pal-list"></div>
+    <div class="pal__foot"><span>↑↓ выбор</span><span>↵ открыть</span><span>esc закрыть</span><span class="sp">CTRL+K</span></div>
+  </div>
+</div>
+
+<script type="module">
+import { palette, spoilers } from "./lab.js";
+palette(document.getElementById("pal"));
+spoilers();
+</script>
 </body>
 </html>

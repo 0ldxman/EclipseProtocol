@@ -1,0 +1,362 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AETHER — из чего состоит запись</title>
+<link rel="stylesheet" href="lab.css">
+</head>
+<body>
+<div class="wrap">
+
+<nav class="labnav">
+  <a href="lab.html">система</a>
+  <a href="lab-record.html" class="on">запись</a>
+  <a href="lab-widgets.html">виджеты</a>
+  <a href="lab-nav.html">навигация</a>
+  <a href="lab-timeline.html">хронология</a>
+  <a class="sp" data-open-palette style="cursor:pointer">CTRL+K</a>
+</nav>
+
+<header class="lead">
+  <h1>Из чего состоит запись</h1>
+  <p>Запись — один markdown-файл. В нём два вида содержимого: <b>тело</b> и <b>инфобокс</b>.
+     Инфобокс не отдельное поле, а именованный блок внутри того же текста, поэтому их может
+     быть два, или один посреди страницы. И тело, и инфобокс могут нести любые виджеты:
+     картинки, видео, полосы, врезки, карту.</p>
+  <p>Сервер вынимает инфобоксы из тела при отдаче и кладёт их в правую колонку. Автор об этом
+     не думает: он пишет один документ сверху вниз.</p>
+</header>
+
+<!-- ═══ ИСХОДНИК И РЕЗУЛЬТАТ ═══════════════════════════════════════════ -->
+<div class="sec"><span>01</span><b>Исходник и результат</b></div>
+
+<div class="pair">
+  <div class="pair__src"><pre><span class="c"># Кремень</span>
+
+Оперативник, участник <span class="d">[[протокол-аполлон|Протокола Аполлон]]</span>.
+Статус — <span class="d">:tag</span>[Пропал без вести]<span class="a">{style=danger}</span>
+
+<span class="d">:::infobox</span><span class="a">{title="Досье"}</span>
+<span class="d">::image</span><span class="a">{src=/uploads/kremen.jpg caption="Последнее фото, 2031"}</span>
+
+<span class="d">:::fields</span>
+Позывной :: «Кремень»
+Шифр :: AC/*0041
+Статус :: Пропал без вести
+<span class="d">:::</span>
+
+<span class="d">::dotbar</span><span class="a">{name="Допуск" max=5 current=3}</span>
+<span class="d">:::</span>
+
+<span class="c">## Биография</span>
+
+Родился в промышленном поясе. Служил в войсковой
+разведке, вербован после операции «Северный Ветер».
+
+<span class="d">:::quote</span><span class="a">{author="Куратор" date="2030-11-04"}</span>
+Исполнителен до буквальности.
+<span class="d">:::</span>
+
+Последний контакт — <span class="d">:timestamp</span><span class="a">{at=2031-04-12T11:00}</span>.
+</pre></div>
+
+  <div class="pair__out" style="background:var(--paper);color:var(--paper-ink);padding:26px 28px 30px">
+    <h1 class="rec" style="font-size:28px">Кремень</h1>
+    <div class="rec-rule"></div>
+    <div class="prose" style="font-size:15px">
+      <aside class="w-infobox" style="float:right;width:210px;margin:16px 0 14px 22px">
+        <div class="w-infobox-title">Досье</div>
+        <figure class="w-image">
+          <img alt="Последнее фото" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 300 400'%3E%3Crect width='300' height='400' fill='%23c9c4b8'/%3E%3Cpath d='M-100 400L400-100M-100 500L500-100' stroke='%23b3ada0' stroke-width='26'/%3E%3C/svg%3E">
+          <figcaption>Последнее фото, 2031</figcaption>
+        </figure>
+        <dl class="w-fields">
+          <dt>Позывной</dt><dd>«Кремень»</dd>
+          <dt>Шифр</dt><dd>AC/*0041</dd>
+          <dt>Статус</dt><dd>Пропал без вести</dd>
+        </dl>
+        <span class="w-dotbar"><span class="w-bar-label">Допуск</span>
+          <span class="w-dots"><i class="w-dot is-on"></i><i class="w-dot is-on"></i><i class="w-dot is-on"></i><i class="w-dot"></i><i class="w-dot"></i></span></span>
+      </aside>
+
+      <p>Оперативник, участник <a href="#">Протокола Аполлон</a>.
+         Статус — <span class="w-tag is-danger">Пропал без вести</span></p>
+      <h2>Биография</h2>
+      <p>Родился в промышленном поясе. Служил в войсковой разведке, вербован после операции
+         «Северный Ветер».</p>
+      <figure class="w-quote"><p>Исполнителен до буквальности.</p>
+        <figcaption class="w-quote-by">Куратор · 2030-11-04</figcaption></figure>
+      <p>Последний контакт — <time class="w-timestamp">12 апр. 2031, 11:00</time>.</p>
+    </div>
+  </div>
+</div>
+
+<p class="note"><b>Так это выглядит в потоке.</b> Инфобокс здесь обтекается текстом, потому что
+   ширины не хватает на отдельную колонку. На полной странице сервер вынимает его вправо —
+   см. следующий раздел. Один и тот же исходник, две раскладки, никакой разметки под каждую.</p>
+
+<!-- ═══ ПОЛНАЯ СТРАНИЦА ════════════════════════════════════════════════ -->
+<div class="sec"><span>02</span><b>Страница целиком</b></div>
+
+<div class="screen">
+  <div class="screen__grid">
+    <i style="left:calc(50% - 564px)"></i><i style="left:calc(50% + 564px)"></i><i style="left:calc(50% + 264px)"></i>
+  </div>
+
+  <div class="rail">
+    <a class="mark" href="lab-nav.html"><i>◆</i><b>AETHER.WIKI</b></a>
+    <div class="cmd" data-open-palette>поиск или команда<kbd>CTRL K</kbd></div>
+    <div class="who">
+      <div><div class="chrome chrome--on">@гость</div><div class="chrome">допуск <span class="chrome--amber">0</span></div></div>
+      <span class="clr"><i class="on"></i><i></i><i></i><i></i><i></i></span>
+    </div>
+  </div>
+
+  <div class="strip">
+    <span class="chrome">архив <s>/</s> персонажи <s>/</s> <span class="chrome--on">кремень</span></span>
+    <span class="chrome">REC-0041</span>
+    <span class="chrome">ревизия 12</span>
+    <span class="chrome">вх. ссылок 3</span>
+    <span class="chrome sp">открыто</span>
+  </div>
+
+  <div class="body"><div class="body__in">
+    <nav class="toc">
+      <ol><li class="on"><a href="#"></a></li><li class="sub"><a href="#"></a></li><li><a href="#"></a></li><li><a href="#"></a></li></ol>
+      <em>биография</em>
+    </nav>
+
+    <article class="paper">
+      <div class="paper__head">
+        <span>запись · REC-0041</span><span class="sp">допуск 0 · открыто</span><span>изменено 26.07.2026</span>
+      </div>
+      <div class="paper__in">
+        <h1 class="rec">Кремень</h1>
+        <div class="rec-rule"></div>
+        <p class="lede">Оперативник полевой группы «Аполлон». Последний подтверждённый контакт —
+           апрель 2031 года, оперативный район Меридиан.</p>
+
+        <div class="prose">
+          <h2>Биография</h2>
+          <p>Родился в промышленном поясе. Служил в войсковой разведке, вербован после операции
+             <a href="#">«Северный Ветер»</a>. К моменту перевода в <a href="#">Протокол Аполлон</a>
+             имел четыре подтверждённых выхода за периметр.</p>
+
+          <figure class="w-quote">
+            <p>Исполнителен до буквальности. Не задаёт вопросов, на которые не рассчитывает
+               получить ответ.</p>
+            <figcaption class="w-quote-by">Куратор группы · 2030-11-04</figcaption>
+          </figure>
+
+          <h2>Операции</h2>
+          <p>Участвовал в шести операциях протокола. Последний контакт —
+             <time class="w-timestamp">12 апр. 2031, 11:00</time>. Далее связь односторонняя,
+             приём подтверждений прекращён.</p>
+
+          <div class="w-bar"><span class="w-bar-label">Выходов за периметр</span>
+            <span class="w-bar-track"><span class="w-bar-fill" style="width:66%"></span></span>
+            <span class="w-bar-value">4/6</span></div>
+
+          <div class="w-map" data-label="меридиан · 41.4° с. ш., 44.7° в. д.">
+            <span class="w-map__pin" style="left:46%;top:52%"></span>
+            <span class="w-map__go"><a class="btn btn--sm" href="#">открыть карту</a></span>
+          </div>
+
+          <h2>Статус</h2>
+          <p>Пропал без вести. Поиски прекращены решением совета
+             <time class="w-timestamp">03 июн. 2031</time>. Личное дело переведено в архив
+             без закрытия.</p>
+
+          <a class="w-record" href="#"><i>◆</i>
+            <span><b>Протокол Аполлон</b><s>операция · 2029—2031</s></span><em>REC-0007</em></a>
+        </div>
+      </div>
+    </article>
+
+    <aside class="aside">
+      <!-- авторское: бумага -->
+      <div class="w-infobox">
+        <div class="w-infobox-title">Досье</div>
+        <figure class="w-image">
+          <img alt="Последнее фото" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 300 400'%3E%3Crect width='300' height='400' fill='%23c9c4b8'/%3E%3Cpath d='M-100 400L400-100M-100 500L500-100' stroke='%23b3ada0' stroke-width='26'/%3E%3C/svg%3E">
+          <figcaption>Последнее фото, 2031</figcaption>
+        </figure>
+        <dl class="w-fields">
+          <dt>Позывной</dt><dd>«Кремень»</dd>
+          <dt>Шифр</dt><dd>AC/*0041</dd>
+          <dt>Подразделение</dt><dd>Аполлон</dd>
+          <dt>Статус</dt><dd>Пропал без вести</dd>
+        </dl>
+        <span class="w-dotbar"><span class="w-bar-label">Допуск</span>
+          <span class="w-dots"><i class="w-dot is-on"></i><i class="w-dot is-on"></i><i class="w-dot is-on"></i><i class="w-dot"></i><i class="w-dot"></i></span></span>
+        <p style="font-size:13px;color:var(--paper-dim)">Сведения приведены по состоянию
+           на последнюю ревизию.</p>
+      </div>
+
+      <!-- системное: прибор -->
+      <div class="panel ticks">
+        <span class="panel__tab">Ссылаются сюда</span>
+        <dl class="kv">
+          <dt><a href="#">Протокол Аполлон</a></dt><dd>REC-0007</dd>
+          <dt><a href="#">Тихий Полдень</a></dt><dd>REC-0019</dd>
+          <dt><a href="#">Меридиан</a></dt><dd>REC-0031</dd>
+        </dl>
+      </div>
+
+      <div class="panel ticks">
+        <span class="panel__tab">Рядом в категории</span>
+        <dl class="kv">
+          <dt><a href="#">← Ковач</a></dt><dd>REC-0040</dd>
+          <dt><a href="#">Ларин →</a></dt><dd>REC-0042</dd>
+        </dl>
+      </div>
+
+      <div class="panel panel--flat">
+        <div class="chrome" style="margin-bottom:9px">метки</div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap">
+          <span class="chip">пропавшие</span><span class="chip">аполлон</span><span class="chip">меридиан</span>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:8px"><button class="btn">на карте</button><button class="btn">хронология</button></div>
+    </aside>
+  </div></div>
+
+  <div class="foot">
+    <span class="chrome"><span class="dot dot--live"></span>канал устойчив</span>
+    <span class="chrome">04:12:33 UTC</span><span class="chrome">записей 41</span>
+    <span class="chrome sp">ЭП — 2026</span>
+  </div>
+</div>
+
+<p class="note"><b>Две колонки справа — из разных материалов, и это не украшение.</b>
+   «Досье» написал автор внутри записи, поэтому оно бумажное и стоит первым. Всё под ним —
+   обратные ссылки, соседи по категории, метки — система вывела сама из дерева и связей,
+   поэтому оно тёмное. Читатель узнаёт источник сведений, не читая подписей.</p>
+
+<!-- ═══ ЗАКРЫТАЯ ЗАПИСЬ ════════════════════════════════════════════════ -->
+<div class="sec"><span>03</span><b>Запись выше допуска</b></div>
+
+<div class="screen">
+  <div class="screen__grid">
+    <i style="left:calc(50% - 564px)"></i><i style="left:calc(50% + 564px)"></i><i style="left:calc(50% + 264px)"></i>
+  </div>
+
+  <div class="rail">
+    <a class="mark" href="lab-nav.html"><i>◆</i><b>AETHER.WIKI</b></a>
+    <div class="cmd" data-open-palette>поиск или команда<kbd>CTRL K</kbd></div>
+    <div class="who">
+      <div><div class="chrome chrome--on">@гость</div><div class="chrome">допуск <span class="chrome--amber">0</span></div></div>
+      <span class="clr"><i class="on"></i><i></i><i></i><i></i><i></i></span>
+    </div>
+  </div>
+
+  <div class="strip">
+    <span class="chrome">архив <s>/</s> операции <s>/</s> <span class="chrome--on">тихий полдень</span></span>
+    <span class="chrome">REC-0019</span><span class="chrome">ревизия 4</span>
+    <span class="chrome chrome--red sp">требуется допуск 3</span>
+  </div>
+
+  <div class="body"><div class="body__in">
+    <nav class="toc">
+      <ol><li class="on"><a href="#"></a></li><li><a href="#"></a></li><li><a href="#"></a></li></ol>
+      <em>замысел</em>
+    </nav>
+
+    <article class="paper">
+      <div class="paper__head">
+        <span>запись · REC-0019</span><span class="sp" style="color:#8f2f28">закрыто · допуск 3</span><span>изменено 26.07.2026</span>
+      </div>
+      <div class="paper__in">
+        <h1 class="rec">Тихий Полдень</h1>
+        <div class="rec-rule"></div>
+        <p class="lede">Операция протокола.
+           <span class="w-classified">Кодовое обозначение присвоено после переноса сроков</span>.</p>
+
+        <div class="prose">
+          <h2>Замысел</h2>
+          <p><span class="w-classified">Одновременный вывод трёх полевых групп из оперативного
+             района Меридиан</span> при участии <a href="#">Кремня</a>.
+             <span class="w-classified">Окно — шесть часов сорок минут, отсчёт от сигнала
+             «Эфир»</span>.</p>
+          <p><span class="w-classified">Резервный сценарий предполагал уничтожение узла связи
+             и последующую эвакуацию по южному коридору силами приданной группы</span>.</p>
+
+          <h2>Исполнение</h2>
+          <p><span class="w-classified">Первая группа вышла в срок</span>.
+             <span class="w-classified">Вторая и третья задержаны на семнадцать часов, связь
+             восстановлена частично</span>.</p>
+
+          <div class="w-note is-danger">
+            <b>закрыто</b>
+            <p>Текст доступен с допуска 3, ваш уровень — 0. Видны заголовок, структура и связи.
+               Скрыто 1 842 знака в трёх разделах и два вложения.</p>
+          </div>
+        </div>
+      </div>
+    </article>
+
+    <aside class="aside">
+      <div class="panel ticks">
+        <span class="panel__tab panel__tab--red">Гриф</span>
+        <dl class="kv">
+          <dt>требуется</dt><dd style="color:var(--red)">допуск 3</dd>
+          <dt>ваш уровень</dt><dd>0</dd>
+          <dt>присвоен</dt><dd>2031-06-03</dd>
+          <dt>кем</dt><dd><span class="w-classified" style="background:var(--rule-2)">████████</span></dd>
+        </dl>
+      </div>
+
+      <div class="panel ticks">
+        <span class="panel__tab">Что скрыто</span>
+        <dl class="kv"><dt>разделов</dt><dd>3</dd><dt>знаков</dt><dd>1 842</dd><dt>вложений</dt><dd>2</dd></dl>
+      </div>
+
+      <div class="panel ticks">
+        <span class="panel__tab">Ссылаются сюда</span>
+        <dl class="kv"><dt><a href="#">Кремень</a></dt><dd>REC-0041</dd><dt><a href="#">Меридиан</a></dt><dd>REC-0031</dd></dl>
+      </div>
+
+      <button class="btn btn--go">запросить допуск</button>
+    </aside>
+  </div></div>
+
+  <div class="foot">
+    <span class="chrome"><span class="dot dot--live"></span>канал устойчив</span>
+    <span class="chrome">04:12:41 UTC</span>
+    <span class="chrome chrome--red">доступ ограничен</span>
+    <span class="chrome sp">ЭП — 2026</span>
+  </div>
+</div>
+
+<p class="note"><b>Инфобокса здесь нет — и это правильно.</b> Он тоже авторский текст, значит
+   тоже закрыт. Осталось то, что система знает и без него: гриф, объём скрытого, связи.
+   Плашки лежат поверх настоящих слов, поэтому длина строк — правда, а не имитация.</p>
+
+<p class="note" style="margin-top:38px"><b>Дальше.</b>
+   <a href="lab-widgets.html">полный набор виджетов</a> ·
+   <a href="lab-nav.html">навигация и поиск</a></p>
+
+</div>
+
+<div class="pal" id="pal">
+  <div class="pal__box">
+    <i></i><i></i><i></i><i></i>
+    <div class="pal__in"><b>aether@eclipse</b><s>:~$</s>
+      <input id="pal-q" placeholder="запись, категория, метка или команда…" autocomplete="off"><kbd class="kbd">ESC</kbd></div>
+    <div class="pal__scopes" id="pal-scopes">
+      <span class="on">все</span><span>записи</span><span><b>/</b> категории</span><span><b>#</b> метки</span><span><b>@</b> события</span><span><b>&gt;</b> команды</span>
+    </div>
+    <div class="pal__list" id="pal-list"></div>
+    <div class="pal__foot"><span>↑↓ выбор</span><span>↵ открыть</span><span>esc закрыть</span><span class="sp">CTRL+K</span></div>
+  </div>
+</div>
+
+<script type="module">
+import { palette, spoilers } from "./lab.js";
+palette(document.getElementById("pal"));
+spoilers();
+</script>
+</body>
+</html>

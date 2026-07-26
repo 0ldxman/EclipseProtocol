@@ -1,0 +1,252 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AETHER — навигация и поиск</title>
+<link rel="stylesheet" href="lab.css">
+<style>
+  .demo{background:rgba(5,6,7,.9);padding:34px;display:flex;justify-content:center;border:1px solid var(--rule)}
+  .home__hero{position:relative;padding:52px 0 40px;text-align:center}
+  .home__hero h1{margin:0;font:700 40px/1 var(--display);letter-spacing:.07em;color:var(--fg)}
+  .home__hero h1 em{font-style:normal;color:var(--amber)}
+  .home__hero p{margin:14px auto 0;max-width:56ch;font:400 15px/1.6 var(--serif);color:var(--dim)}
+  .home__cmd{max-width:520px;margin:26px auto 0}
+  .home__row{display:flex;align-items:baseline;gap:14px;margin:0 0 14px}
+  .home__row b{font:500 13px/1 var(--display);letter-spacing:.12em;text-transform:uppercase;color:var(--fg)}
+  .home__row s{text-decoration:none;font:10px/1 var(--mono);letter-spacing:.09em;text-transform:uppercase;color:var(--dimmer)}
+  .home__row::after{content:"";flex:1;height:1px;background:var(--rule)}
+  .feed{display:grid;gap:1px;background:var(--rule)}
+  .feed a{display:flex;align-items:baseline;gap:14px;padding:9px 12px;background:var(--ink);text-decoration:none}
+  .feed a:hover{background:var(--ink-2)}
+  .feed time{font:10px/1.6 var(--mono);color:var(--dimmer);flex:none;width:82px}
+  .feed b{flex:1;font:400 14px/1.5 var(--serif);color:var(--fg);font-weight:400}
+  .feed s{text-decoration:none;font:9px/1.6 var(--mono);letter-spacing:.09em;text-transform:uppercase;color:var(--dimmer)}
+  .gate{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:1px;background:var(--rule)}
+  .gate a{position:relative;display:block;padding:22px 20px 20px;background:var(--ink-2);text-decoration:none;transition:.15s}
+  .gate a:hover{background:var(--ink-3)}
+  .gate b{display:block;font:500 15px/1.2 var(--display);letter-spacing:.09em;text-transform:uppercase;color:var(--fg)}
+  .gate s{display:block;margin-top:8px;text-decoration:none;font:11px/1.6 var(--mono);color:var(--dim)}
+  .gate em{position:absolute;right:18px;top:22px;font-style:normal;color:var(--dimmer)}
+  .levels{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:1px;background:var(--rule)}
+  .level{background:var(--ink);padding:24px 20px}
+  .level i{display:block;font-style:normal;font:10px/1 var(--mono);letter-spacing:.16em;color:var(--dimmer);margin-bottom:12px}
+  .level b{display:block;font:500 14px/1.3 var(--display);letter-spacing:.09em;text-transform:uppercase;color:var(--fg)}
+  .level p{margin:11px 0 0;font:11px/1.75 var(--mono);color:var(--dim)}
+  .level kbd{border:1px solid var(--rule-2);padding:1px 5px;font:9px/1.4 var(--mono);color:var(--dimmer)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<nav class="labnav">
+  <a href="lab.html">система</a>
+  <a href="lab-record.html">запись</a>
+  <a href="lab-widgets.html">виджеты</a>
+  <a href="lab-nav.html" class="on">навигация</a>
+  <a href="lab-timeline.html">хронология</a>
+  <a class="sp" data-open-palette style="cursor:pointer">CTRL+K</a>
+</nav>
+
+<header class="lead">
+  <h1>Навигация и поиск</h1>
+  <p>Вики устроена по двум осям сразу: запись лежит ровно в одной категории и несёт сколько
+     угодно меток. Плюс третья ось — время. Одним деревом слева это не покрывается, поэтому
+     навигация разложена на три уровня, у каждого своя работа.</p>
+</header>
+
+<div class="levels">
+  <div class="level"><i>уровень 1</i><b>Командная строка</b>
+    <p>Основной способ перемещения. <kbd>CTRL+K</kbd> с любой страницы, приставка задаёт область:
+       <code>#</code> метки, <code>/</code> категории, <code>@</code> события, <code>&gt;</code> команды.
+       Тот, кто знает, куда идёт, попадает туда за два нажатия и ни разу не касается мыши.</p></div>
+  <div class="level"><i>уровень 2</i><b>Картотека</b>
+    <p>Главная страница. Для тех, кто не знает, что ищет: папки, метки, последние изменения
+       и входы в хронологию и на карту. Заменяет вечную боковую панель, которая на странице
+       записи всё равно оказалась бы четвёртой колонкой.</p></div>
+  <div class="level"><i>уровень 3</i><b>Контекст записи</b>
+    <p>Боковая колонка держит связи: обратные ссылки, соседи по категории, метки. Из любой
+       записи можно уйти вбок, не возвращаясь на главную, — а именно так вики и читают.</p></div>
+</div>
+
+<!-- ═══ КАРТОТЕКА ══════════════════════════════════════════════════════ -->
+<div class="sec"><span>01</span><b>Главная — картотека</b></div>
+
+<div class="screen">
+  <div class="screen__grid"><i style="left:calc(50% - 564px)"></i><i style="left:calc(50% + 564px)"></i></div>
+
+  <div class="rail">
+    <a class="mark" href="#"><i>◆</i><b>AETHER.WIKI</b></a>
+    <div class="cmd" data-open-palette>поиск или команда<kbd>CTRL K</kbd></div>
+    <div class="who">
+      <div><div class="chrome chrome--on">@гость</div><div class="chrome">допуск <span class="chrome--amber">0</span></div></div>
+      <span class="clr"><i class="on"></i><i></i><i></i><i></i><i></i></span>
+    </div>
+  </div>
+
+  <div class="strip">
+    <span class="chrome">архив «Eclipse Protocol»</span>
+    <span class="chrome">41 запись</span><span class="chrome">18 меток</span>
+    <span class="chrome">7 под грифом</span>
+    <span class="chrome sp">обновлено 26.07.2026</span>
+  </div>
+
+  <div class="body"><div class="body__in" style="display:block">
+    <div class="home__hero">
+      <h1>ECLIPSE <em>PROTOCOL</em></h1>
+      <p>Летопись протокола: люди, операции, места и то, что от них осталось
+         в открытой части архива.</p>
+      <div class="home__cmd"><div class="cmd" data-open-palette style="max-width:none;height:34px">
+        поиск по архиву — запись, категория, метка<kbd>CTRL K</kbd></div></div>
+    </div>
+
+    <div class="home__row"><b>Категории</b><s>6</s></div>
+    <div class="cards">
+      <a class="folder" href="#"><b>Персонажи</b><s>14 записей · 2 под грифом</s></a>
+      <a class="folder" href="#"><b>Операции</b><s>9 записей · 2 под грифом</s></a>
+      <a class="folder" href="#"><b>Места</b><s>7 записей</s></a>
+      <a class="folder" href="#"><b>Организации</b><s>5 записей</s></a>
+      <a class="folder" href="#"><b>Техника</b><s>6 записей</s></a>
+      <a class="folder folder--sealed" href="#"><b>Приложения</b><s>требуется допуск 3</s><span class="lock">▲</span></a>
+    </div>
+
+    <div class="home__row" style="margin-top:38px"><b>Метки</b><s>18</s></div>
+    <div style="display:flex;gap:7px;flex-wrap:wrap">
+      <span class="chip">пропавшие <b>6</b></span>
+      <span class="chip">первая эпоха <b>11</b></span>
+      <span class="chip">аполлон <b>4</b></span>
+      <span class="chip">меридиан <b>9</b></span>
+      <span class="chip">орден затмения <b>7</b></span>
+      <span class="chip">оспорено <b>3</b></span>
+      <span class="chip">без источника <b>5</b></span>
+      <span class="chip">карта <b>12</b></span>
+    </div>
+
+    <div style="display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);gap:34px;margin-top:38px">
+      <div>
+        <div class="home__row"><b>Последние изменения</b><s>за 7 дней</s></div>
+        <div class="feed">
+          <a href="#"><time>26.07.2026</time><b>Протокол Аполлон</b><s>ревизия 31</s></a>
+          <a href="#"><time>26.07.2026</time><b>Тихий Полдень</b><s>гриф · допуск 3</s></a>
+          <a href="#"><time>25.07.2026</time><b>Кремень</b><s>ревизия 12</s></a>
+          <a href="#"><time>24.07.2026</time><b>Меридиан</b><s>новая запись</s></a>
+          <a href="#"><time>22.07.2026</time><b>Орден Затмения</b><s>ревизия 8</s></a>
+        </div>
+      </div>
+
+      <div>
+        <div class="home__row"><b>Другие входы</b></div>
+        <div class="gate">
+          <a href="lab-timeline.html"><em>↗</em><b>Хронология</b><s>11 событий, три эпохи. Лента от сигнала «Эфир» до сегодняшнего дня.</s></a>
+          <a href="#"><em>↗</em><b>Карта</b><s>Границы на любую дату из хронологии, 214 провинций.</s></a>
+        </div>
+      </div>
+    </div>
+  </div></div>
+
+  <div class="foot">
+    <span class="chrome"><span class="dot dot--live"></span>канал устойчив</span>
+    <span class="chrome">04:12:33 UTC</span>
+    <span class="chrome sp">ЭП — 2026</span>
+  </div>
+</div>
+
+<p class="note"><b>Папка нарисована вкладкой</b> — из Rowden Technologies, где так же
+   выглядит карта сайта. Закрытая категория заштрихована и помечена: видно, что она есть
+   и что в неё нельзя. Скрывать её целиком было бы хуже — читатель не понял бы,
+   что архив показан не полностью.</p>
+
+<!-- ═══ ПОИСК ══════════════════════════════════════════════════════════ -->
+<div class="sec"><span>02</span><b>Командная строка</b></div>
+
+<div class="demo">
+  <div class="pal__box" style="width:600px">
+    <i></i><i></i><i></i><i></i>
+    <div class="pal__in"><b>aether@eclipse</b><s>:~$</s>
+      <input value="мер" readonly><kbd class="kbd">ESC</kbd></div>
+    <div class="pal__scopes">
+      <span class="on">все</span><span>записи</span><span><b>/</b> категории</span><span><b>#</b> метки</span><span><b>@</b> события</span><span><b>&gt;</b> команды</span>
+    </div>
+    <div class="pal__list">
+      <div class="pal__cap">запись</div>
+      <div class="pal__row on"><em>◆</em><b><mark>Мер</mark>идиан</b><q>первый штаб протокола</q><s>место</s></div>
+      <div class="pal__row"><em>◇</em><b>Тихий Полдень</b><q>вывод групп из района <mark>Мер</mark>идиан</q><s class="lock">закрыто</s></div>
+      <div class="pal__cap">событие</div>
+      <div class="pal__row"><em>▸</em><b>Падение <mark>Мер</mark>идиана</b><q>штаб оставлен за девять часов</q><s>2022</s></div>
+      <div class="pal__cap">метка</div>
+      <div class="pal__row"><em>#</em><b><mark>мер</mark>идиан</b><q>9 записей</q><s>метка</s></div>
+    </div>
+    <div class="pal__foot"><span>↑↓ выбор</span><span>↵ открыть</span><span>esc закрыть</span><span class="sp">CTRL+K</span></div>
+  </div>
+</div>
+
+<p class="note"><b>Что здесь работает на читателя.</b> Совпадение подсвечено янтарным —
+   единственное состояние в списке. Результаты сгруппированы по виду, поэтому запись
+   не теряется среди меток. Вторая строка нашлась по телу, а не по названию, и показывает,
+   <b>где</b> нашлась. Закрытая запись видна: заголовки ищутся всегда, тела закрытых — никогда,
+   и приписка «закрыто» объясняет, почему нет отрывка.</p>
+
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(330px,1fr));gap:24px;margin-top:24px">
+  <div class="demo" style="padding:22px">
+    <div class="pal__box" style="width:100%">
+      <i></i><i></i><i></i><i></i>
+      <div class="pal__in"><b>aether@eclipse</b><s>:~$</s><input value="#проп" readonly><kbd class="kbd">ESC</kbd></div>
+      <div class="pal__scopes">
+        <span>все</span><span>записи</span><span><b>/</b> кат.</span><span class="on"><b>#</b> метки</span><span><b>@</b> соб.</span><span><b>&gt;</b> ком.</span>
+      </div>
+      <div class="pal__list">
+        <div class="pal__cap">метка</div>
+        <div class="pal__row on"><em>#</em><b><mark>проп</mark>авшие</b><q>6 записей</q><s>метка</s></div>
+      </div>
+      <div class="pal__foot"><span>↑↓ выбор</span><span>↵ открыть</span><span class="sp">CTRL+K</span></div>
+    </div>
+  </div>
+
+  <div class="demo" style="padding:22px">
+    <div class="pal__box" style="width:100%">
+      <i></i><i></i><i></i><i></i>
+      <div class="pal__in"><b>aether@eclipse</b><s>:~$</s><input value="ызщдды" readonly><kbd class="kbd">ESC</kbd></div>
+      <div class="pal__scopes">
+        <span class="on">все</span><span>записи</span><span><b>/</b> кат.</span><span><b>#</b> метки</span><span><b>@</b> соб.</span><span><b>&gt;</b> ком.</span>
+      </div>
+      <div class="pal__list">
+        <div class="empty"><b>ничего не найдено</b>
+          <span>Проверьте раскладку или сузьте запрос.<br>
+          <code>#</code> — метки, <code>/</code> — категории, <code>&gt;</code> — команды.</span></div>
+      </div>
+      <div class="pal__foot"><span>esc закрыть</span><span class="sp">CTRL+K</span></div>
+    </div>
+  </div>
+</div>
+
+<p class="note"><b>Приставка сама переключает область.</b> Набранный <code>#</code> в начале
+   строки подсвечивает вкладку «метки» — панель областей остаётся подсказкой, а не пультом,
+   по которому нужно щёлкать. Пустой результат не извиняется: он говорит, что проверить.
+   Раскладка в первой строке — самая частая причина, поэтому названа первой.</p>
+
+<p class="note" style="margin-top:38px"><b>Дальше.</b>
+   <a href="lab-record.html">страница записи</a> ·
+   <a href="lab-timeline.html">хронология</a></p>
+
+</div>
+
+<div class="pal" id="pal">
+  <div class="pal__box">
+    <i></i><i></i><i></i><i></i>
+    <div class="pal__in"><b>aether@eclipse</b><s>:~$</s>
+      <input id="pal-q" placeholder="запись, категория, метка или команда…" autocomplete="off"><kbd class="kbd">ESC</kbd></div>
+    <div class="pal__scopes" id="pal-scopes">
+      <span class="on">все</span><span>записи</span><span><b>/</b> категории</span><span><b>#</b> метки</span><span><b>@</b> события</span><span><b>&gt;</b> команды</span>
+    </div>
+    <div class="pal__list" id="pal-list"></div>
+    <div class="pal__foot"><span>↑↓ выбор</span><span>↵ открыть</span><span>esc закрыть</span><span class="sp">CTRL+K</span></div>
+  </div>
+</div>
+
+<script type="module">
+import { palette, spoilers } from "./lab.js";
+palette(document.getElementById("pal"));
+spoilers();
+</script>
+</body>
+</html>
