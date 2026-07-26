@@ -214,6 +214,38 @@ if ((saved.tags ?? []).join(",") !== "операции,ветер") {
 if (saved.accessLevel !== 2) throw new Error(`допуск не сохранился: ${saved.accessLevel}`);
 console.log("props: слаг, метки и допуск правятся из админки ->", saved.slug, saved.tags.join("·"), saved.accessLevel);
 
+// Событие летописи целиком в свойствах: дата ставит запись в ленту, подпись и
+// снимок — то, чем карточка себя показывает. До даты они заперты: показывать
+// их негде.
+const eventText = (n) => a.locator('.prop--event input[type="text"]').nth(n);
+if (!(await eventText(1).isDisabled())) throw new Error("подпись открыта без даты события");
+await a.locator('.prop--event input[type="date"]').fill("2031-04-12");
+await a.waitForTimeout(700);
+await eventText(0).fill("Разлом");
+await eventText(0).press("Enter");
+await a.waitForTimeout(600);
+await eventText(1).fill("Проверочная подпись карточки.");
+await eventText(1).press("Enter");
+await a.waitForTimeout(600);
+await a.locator('.prop--event input[type="file"]').setInputFiles({
+  name: "shot.svg",
+  mimeType: "image/svg+xml",
+  buffer: Buffer.from('<svg xmlns="http://www.w3.org/2000/svg" width="8" height="8"></svg>'),
+});
+await a.waitForSelector(".prop--event .shot img", { timeout: 20_000 });
+
+const dated = (await api("/api/tree")).nodes.find((n) => n.id === created.id);
+if (dated.eventAt !== "2031-04-12" || dated.eventEpoch !== "Разлом") {
+  throw new Error(`дата события не сохранилась: ${dated.eventAt} ${dated.eventEpoch}`);
+}
+if (dated.eventSummary !== "Проверочная подпись карточки.") {
+  throw new Error(`подпись события не сохранилась: ${dated.eventSummary}`);
+}
+if (!dated.eventImage?.startsWith("uploads/")) {
+  throw new Error(`снимок события не загрузился: ${dated.eventImage}`);
+}
+console.log("event: дата, эпоха, подпись и снимок правятся из свойств ->", dated.eventImage);
+
 // Титульный лист категории — договорённость, о которой нельзя догадаться,
 // поэтому у неё есть кнопка.
 await a.locator(`.tree-row[data-id="${folder.id}"]`).click();

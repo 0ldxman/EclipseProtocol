@@ -112,6 +112,8 @@ export async function registerRecords(
       tags?: string[];
       eventAt?: string;
       eventEpoch?: string;
+      eventSummary?: string;
+      eventImage?: string;
       parentId?: string | null;
       order?: number;
       accessLevel?: number;
@@ -125,8 +127,19 @@ export async function registerRecords(
         if (!Array.isArray(body.tags)) return reply.code(400).send({ error: "tags must be an array" });
         node = await tree.setTags(id, body.tags.map(String));
       }
-      if (body.eventAt !== undefined) {
-        node = await tree.setEvent(id, body.eventAt, body.eventEpoch ?? node.eventEpoch ?? "");
+      // Поля события правятся по одному: подпись меняют, не пересылая дату.
+      if (
+        body.eventAt !== undefined ||
+        body.eventEpoch !== undefined ||
+        body.eventSummary !== undefined ||
+        body.eventImage !== undefined
+      ) {
+        node = await tree.setEvent(id, {
+          at: body.eventAt,
+          epoch: body.eventEpoch,
+          summary: body.eventSummary,
+          image: body.eventImage,
+        });
       }
       if (body.accessLevel !== undefined) node = await tree.setAccess(id, body.accessLevel);
       if (body.parentId !== undefined) node = await tree.move(id, body.parentId, body.order);

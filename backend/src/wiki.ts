@@ -16,13 +16,7 @@
 
 import { readFile, readdir, stat } from "node:fs/promises";
 import path from "node:path";
-import {
-  coverAttributes,
-  firstImageOf,
-  renderMarkup,
-  wikiLinkTargets,
-  type RecordEvent,
-} from "@aether/markup";
+import { coverAttributes, renderMarkup, wikiLinkTargets } from "@aether/markup";
 import type { FastifyInstance, FastifyRequest } from "fastify";
 import type * as Y from "yjs";
 import type { RoomRegistry } from "./collab.js";
@@ -47,6 +41,14 @@ function clearanceOf(_req: FastifyRequest): number {
   return 0;
 }
 
+/** Всё, чем событие представлено в ленте, — свойства записи, а не её текст. */
+interface TimelineEntry {
+  at: string;
+  epoch: string;
+  summary: string;
+  image: string;
+}
+
 interface IndexEntry {
   id: string;
   slug: string;
@@ -56,10 +58,8 @@ interface IndexEntry {
   access: number;
   updatedAt: string;
   parentId: string | null;
-  /** Первая картинка тела: карточке в летописи больше нечем себя показать. */
-  image: string | null;
-  /** Заполнено, если запись объявила себя событием летописи. */
-  event: RecordEvent | null;
+  /** Заполнено, если у записи проставлена дата в летописи. */
+  event: TimelineEntry | null;
 }
 
 /**
@@ -115,10 +115,17 @@ class RecordIndex {
           access: this.tree.effectiveAccess(node.id),
           updatedAt: node.updatedAt,
           parentId: node.parentId,
-          image: firstImageOf(text),
           // Событие берётся из свойств записи, а не из её текста: правка
-          // абзаца не должна снимать запись с летописи.
-          event: node.eventAt ? { at: node.eventAt, epoch: node.eventEpoch ?? "" } : null,
+          // абзаца не должна ни снимать запись с летописи, ни переписывать
+          // подпись под её карточкой.
+          event: node.eventAt
+            ? {
+                at: node.eventAt,
+                epoch: node.eventEpoch ?? "",
+                summary: node.eventSummary ?? "",
+                image: node.eventImage ?? "",
+              }
+            : null,
         } satisfies IndexEntry;
       }),
     );
@@ -276,9 +283,9 @@ export async function registerWiki(app: FastifyInstance, options: WikiOptions): 
   /**
    * Летопись.
    *
-   * Собирается из самих записей: запись объявляет себя событием директивой
-   * `::event{at=… epoch=…}`. Отдельного хранилища у ленты нет, поэтому она
-   * не может разойтись с записями, из которых состоит.
+   * Собирается из самих записей: событием запись делает проставленная в её
+   * свойствах дата. Отдельного хранилища у ленты нет, поэтому она не может
+   * разойтись с записями, из которых состоит.
    */
   app.get("/api/wiki/timeline", async (req) => {
     const clearance = clearanceOf(req);
@@ -296,10 +303,10 @@ export async function registerWiki(app: FastifyInstance, options: WikiOptions): 
           epoch: entry.event!.epoch,
           access: entry.access,
           restricted,
-          // Тело закрытой записи не покидает сервер и здесь тоже — ни текстом,
-          // ни картинкой.
-          summary: restricted ? "" : snippet(entry.text, "", 150),
-          image: restricted ? "" : (entry.image ?? ""),
+          // Закрытая запись не показывает в ленте ничего сверх того, что она
+          // существует: ни подписи, ни снимка.
+          summary: restricted ? "" : entry.event!.summary,
+          image: restricted ? "" : entry.event!.image,
         };
       })
       .sort((a, b) => a.at.localeCompare(b.at));

@@ -534,14 +534,23 @@ a.mini__row:hover b {
   color: var(--dim);
 }
 
+/* Событие — строка из двух половин по сторонам оси. Карточка стоит в потоке,
+   а не подвешена: высота строки берётся из неё самой, и отвод с ромбом
+   приходятся ровно на её середину при любом содержимом. Раньше карточка
+   висела на фиксированной высоте и уезжала выше своей линии, стоило снимку
+   не появиться. */
 .ev {
   position: relative;
-  height: 150px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  column-gap: 264px; /* два отвода: карточка начинается там, где он кончился */
+  align-items: center;
+  padding: 11px 0;
 }
 .ev .node {
   position: absolute;
   left: 50%;
-  top: 66px;
+  top: 50%;
   width: 13px;
   height: 13px;
   z-index: 3;
@@ -552,7 +561,7 @@ a.mini__row:hover b {
 }
 .ev .conn {
   position: absolute;
-  top: 66px;
+  top: 50%;
   width: 132px;
   height: 1px;
   background: rgba(232, 161, 60, 0.35);
@@ -560,12 +569,14 @@ a.mini__row:hover b {
   transition: 0.22s;
 }
 .ev .card {
-  position: absolute;
-  top: 12px;
-  max-width: min(440px, calc(50% - 152px));
+  position: relative;
   z-index: 2;
-  padding: 10px 13px;
-  border: 1px solid transparent;
+  max-width: 440px;
+  padding: 12px 14px;
+  border: 1px solid var(--rule);
+  /* Полупрозрачный уголь: карточка держит собственный текст, но не гасит
+     дым за собой — лента стоит в огне, и это её материал. */
+  background: rgba(13, 14, 15, 0.62);
   transition: 0.22s;
   text-decoration: none;
   display: flex;
@@ -576,17 +587,21 @@ a.mini__row:hover b {
 .ev--l .conn {
   right: 50%;
 }
+/* Ширина у всех карточек одна: лента читается лестницей, и карточка, ужатая
+   до своей строки, ломает её ступеньку. */
 .ev--l .card {
-  right: 50%;
-  margin-right: 132px;
+  grid-column: 1;
+  justify-self: end;
+  width: 100%;
   text-align: right;
 }
 .ev--r .conn {
   left: 50%;
 }
 .ev--r .card {
-  left: 50%;
-  margin-left: 132px;
+  grid-column: 2;
+  justify-self: start;
+  width: 100%;
   flex-direction: row-reverse;
 }
 .ev .txt {
@@ -639,30 +654,17 @@ a.mini__row:hover b {
   letter-spacing: 0.04em;
   color: var(--fg);
 }
+/* Подпись — часть карточки, а не всплывающая подсказка: она объясняет
+   событие, и прятать её до наведения значило показывать ленту без объяснений.
+   Три строки — это предел, за которым карточка перестаёт быть карточкой. */
 .ev .extra {
-  /* Подпись вынута из потока: свёрнутая, она всё равно занимала бы место по
-     ширине, и снимок отъезжал бы от названия на длину скрытого текста. */
-  position: absolute;
-  top: 100%;
-  width: 250px;
-  max-height: 0;
-  opacity: 0;
-  overflow: hidden;
-  transition: 0.26s;
-  font: 11px/1.7 var(--mono);
+  margin-top: 6px;
+  font: 11px/1.65 var(--mono);
   color: var(--dim);
-}
-.ev--l .extra {
-  right: 0;
-}
-.ev--r .extra {
-  left: 0;
-}
-.ev:hover .extra,
-.ev:focus-within .extra {
-  max-height: 90px;
-  opacity: 1;
-  margin-top: 7px;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  overflow: hidden;
 }
 .ev:hover .node {
   background: var(--amber);
@@ -729,24 +731,27 @@ a.mini__row:hover b {
   color: var(--dim);
 }
 
+/* Узкий экран: ось уходит к левому краю, и обе стороны становятся одной. */
 @media (max-width: 820px) {
   .ev {
-    height: auto;
-    padding: 14px 0 14px 28px;
+    grid-template-columns: 1fr;
+    column-gap: 0;
+    padding: 9px 0 9px 28px;
   }
   .ev .node {
     left: 0;
-    top: 24px;
   }
   .ev .conn {
     display: none;
   }
-  .ev .card {
-    position: static;
+  .ev .card,
+  .ev--l .card,
+  .ev--r .card {
+    grid-column: 1;
+    justify-self: stretch;
     max-width: none;
-    text-align: left !important;
-    margin: 0 !important;
-    flex-direction: row !important;
+    text-align: left;
+    flex-direction: row;
     justify-content: flex-start;
   }
   .ev--l .line {
@@ -758,12 +763,6 @@ a.mini__row:hover b {
   }
   .epoch > div {
     text-align: left;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .ev .extra {
-    transition: none;
   }
 }
 

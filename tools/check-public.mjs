@@ -182,17 +182,33 @@ await write(
   ].join("\n"),
 );
 
-// Место в летописи — свойство записи, а не строчка в её теле. У «Аполлона»
-// эпохи нет намеренно: события до первой названной эпохи в ленте есть, а
-// плашки не заводят.
-const setEvent = (node, at, epoch) =>
-  api(`/api/tree/nodes/${node.id}`, {
-    method: "PATCH",
-    body: JSON.stringify({ eventAt: at, eventEpoch: epoch }),
-  });
-await setEvent(kremen, "2031-04-12", "Разлом");
-await setEvent(apollo, "2029-08-02", "");
-await setEvent(noon, "2031-06-03", "Разлом");
+// Место в летописи — свойство записи, а не строчка в её теле; подпись и
+// снимок карточки тоже. У «Аполлона» эпохи нет намеренно: события до первой
+// названной эпохи в ленте есть, а плашки не заводят.
+const setEvent = (node, patch) =>
+  api(`/api/tree/nodes/${node.id}`, { method: "PATCH", body: JSON.stringify(patch) });
+
+// Снимок кладётся настоящим файлом: выдуманный путь дал бы 404 в консоли
+// читателя, а консоль здесь тоже под проверкой.
+const upload = await fetch(`${API}/api/uploads`, {
+  method: "POST",
+  headers: { "Content-Type": "image/svg+xml" },
+  body: '<svg xmlns="http://www.w3.org/2000/svg" width="240" height="160"><rect width="240" height="160" fill="#17181b"/></svg>',
+}).then((r) => r.json());
+
+await setEvent(kremen, {
+  eventAt: "2031-04-12",
+  eventEpoch: "Разлом",
+  eventSummary: "Последний сеанс связи с группой.",
+  eventImage: upload.url,
+});
+await setEvent(apollo, { eventAt: "2029-08-02", eventEpoch: "" });
+await setEvent(noon, {
+  eventAt: "2031-06-03",
+  eventEpoch: "Разлом",
+  eventSummary: "Кодовое слово операции — саркофаг.",
+  eventImage: upload.url,
+});
 
 // Clearance goes on the folder and is inherited downwards.
 await api(`/api/tree/nodes/${vault.id}`, { method: "PATCH", body: JSON.stringify({ accessLevel: 3 }) });
@@ -217,13 +233,23 @@ ok(
   titleSearch.results.some((r) => r.slug === noon.slug && r.restricted === true),
 );
 
-// Карточка летописи показывает первую картинку записи — но не у закрытой:
-// снимок такая же часть тела, как и текст.
+// Карточку летописи собирают свойства записи, а не её текст. У закрытой
+// записи не уходит ничего: подпись и снимок закрыты тем же грифом, что и тело.
 const chronologyApi = await api("/api/wiki/timeline");
 const sealedEvent = chronologyApi.events.find((e) => e.slug === noon.slug);
 ok(
   "a sealed event carries neither summary nor picture",
   sealedEvent?.restricted === true && sealedEvent.summary === "" && sealedEvent.image === "",
+);
+const openEvent = chronologyApi.events.find((e) => e.slug === kremen.slug);
+ok(
+  "a card's caption and picture come from the record's properties",
+  openEvent?.summary === "Последний сеанс связи с группой." && openEvent.image === upload.url,
+  `подпись: ${openEvent?.summary ?? "—"}`,
+);
+ok(
+  "an event without a caption gets none invented for it",
+  chronologyApi.events.find((e) => e.slug === "apollo")?.summary === "",
 );
 ok(
   "an event without an epoch does not invent one",
@@ -328,6 +354,27 @@ ok("the chronology is built from the records themselves", chronology.events >= 3
 ok("events are grouped into epochs", chronology.epochs >= 1);
 ok("the fire is a canvas at the end of the page", chronology.fire === true);
 ok("a sealed event is marked but still listed", chronology.sealed >= 1);
+// Подпись живёт внутри карточки, а отвод с ромбом приходится на её середину:
+// раньше подпись висела под карточкой и открывалась по наведению, а карточка
+// стояла на своей высоте и уезжала выше собственной линии.
+const card = await site.evaluate(() => {
+  const row = [...document.querySelectorAll(".tl .ev:not(.ev--sealed)")].find((e) =>
+    e.querySelector(".extra"),
+  );
+  if (!row) return null;
+  const box = row.querySelector(".card").getBoundingClientRect();
+  const caption = row.querySelector(".extra");
+  const text = caption.getBoundingClientRect();
+  const dot = row.querySelector(".node").getBoundingClientRect();
+  return {
+    inside: text.top >= box.top && text.bottom <= box.bottom + 1,
+    shown: text.height > 0 && getComputedStyle(caption).opacity === "1",
+    offset: Math.abs(dot.top + dot.height / 2 - (box.top + box.height / 2)),
+  };
+});
+ok("the caption is inside the card and always visible", card?.inside === true && card.shown === true);
+ok("the node meets the middle of its card", card.offset <= 2, `${card.offset.toFixed(1)}px`);
+
 // Лента — второй путь, которым тело закрытой записи могло бы утечь наружу.
 const timelineLeak = await site.evaluate(() => document.body.innerHTML.includes("саркофаг"));
 ok("the chronology carries no trace of a sealed body", timelineLeak === false);

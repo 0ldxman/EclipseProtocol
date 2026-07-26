@@ -606,6 +606,101 @@ async function main(): Promise<void> {
     return block;
   }
 
+  /**
+   * Событие летописи.
+   *
+   * Карточка в ленте собирается целиком здесь: дата ставит запись в
+   * хронологию, подпись и снимок — то, чем запись себя там показывает. Раньше
+   * и подпись, и снимок выдирались из тела (первый абзац, первая картинка), и
+   * карточка менялась от правки, которая её в виду не имела; к тому же начало
+   * статьи в карточке всегда читалось обрывком.
+   */
+  function eventBlock(node: TreeNode): HTMLElement {
+    const listed = Boolean(node.eventAt);
+    const block = el("div", { class: "prop prop--event" }, [
+      el("span", { class: "chrome" }, ["Событие"]),
+    ]);
+
+    const at = el("input", { type: "date", value: node.eventAt ?? "" });
+    const epoch = el("input", {
+      type: "text",
+      value: node.eventEpoch ?? "",
+      placeholder: "эпоха — можно не заполнять",
+    });
+    const summary = el("input", {
+      type: "text",
+      maxlength: "240",
+      value: node.eventSummary ?? "",
+      placeholder: "подпись в ленте — одна строка",
+    });
+    const image = el("input", {
+      type: "text",
+      value: node.eventImage ?? "",
+      placeholder: "снимок: uploads/…",
+    });
+    const pick = el("button", { class: "btn btn--sm", type: "button" }, ["файл…"]);
+    const file = el("input", { type: "file", accept: "image/*", hidden: "" });
+
+    // Подпись и снимок без даты некуда показать, и незачем их принимать.
+    for (const field of [summary, image, pick]) field.disabled = !listed;
+
+    const apply = async (patch: Parameters<typeof api.update>[1]) => {
+      if (await guard(() => api.update(node.id, patch))) {
+        await refreshTree();
+        refreshSelected();
+      }
+    };
+    const onDone = (input: HTMLInputElement, was: string, send: (value: string) => void) => {
+      const fire = () => {
+        if (input.value.trim() === was) return;
+        send(input.value.trim());
+      };
+      input.onkeydown = (event) => {
+        if (event.key === "Enter") fire();
+      };
+      input.onblur = fire;
+    };
+
+    at.onchange = () => void apply({ eventAt: at.value });
+    onDone(epoch, node.eventEpoch ?? "", (value) => void apply({ eventEpoch: value }));
+    onDone(summary, node.eventSummary ?? "", (value) => void apply({ eventSummary: value }));
+    onDone(image, node.eventImage ?? "", (value) => void apply({ eventImage: value }));
+
+    pick.onclick = () => file.click();
+    file.onchange = async () => {
+      const chosen = file.files?.[0];
+      if (!chosen) return;
+      note(`загрузка: ${chosen.name}`);
+      const result = await guard(() => api.upload(chosen));
+      if (!result) return;
+      image.value = result.url;
+      note(`снимок загружен: ${result.url}`);
+      await apply({ eventImage: result.url });
+    };
+
+    block.append(
+      el("div", { class: "row" }, [at, epoch]),
+      el("div", { class: "row" }, [summary]),
+      el("div", { class: "row" }, [image, pick, file]),
+    );
+
+    if (listed && node.eventImage) {
+      const src = node.eventImage.startsWith("uploads/")
+        ? `${API_BASE || ""}/${node.eventImage}`
+        : node.eventImage;
+      block.append(el("div", { class: "shot" }, [el("img", { src, alt: "" })]));
+    }
+
+    block.append(
+      el("div", { class: "note" }, [
+        listed
+          ? "Подпись и снимок — то, чем событие показано в ленте. Пустая эпоха значит «до первой эпохи» и своей плашки не заводит."
+          : "Без даты записи в летописи нет. Подпись и снимок для карточки появятся вместе с датой.",
+      ]),
+    );
+    return block;
+  }
+
   function renderProps(node: TreeNode): void {
     propsHost.replaceChildren();
 
@@ -670,32 +765,7 @@ async function main(): Promise<void> {
       propsHost.append(propBlock("Метки", [tags], "Метка живёт поперёк дерева: по ней собирается своя страница."));
 
       /* событие летописи */
-      const at = el("input", { type: "date", value: node.eventAt ?? "" });
-      const epoch = el("input", {
-        type: "text",
-        value: node.eventEpoch ?? "",
-        placeholder: "эпоха — можно оставить пустой",
-      });
-      const applyEvent = async () => {
-        if ((at.value || "") === (node.eventAt ?? "") && epoch.value === (node.eventEpoch ?? "")) return;
-        if (await guard(() => api.update(node.id, { eventAt: at.value, eventEpoch: epoch.value }))) {
-          await refreshTree();
-          refreshSelected();
-        }
-      };
-      at.onchange = () => void applyEvent();
-      epoch.onkeydown = (event) => {
-        if (event.key === "Enter") void applyEvent();
-      };
-      epoch.onblur = () => void applyEvent();
-      propsHost.append(
-        propBlock(
-          "Событие",
-          [at, epoch],
-          "С датой запись встаёт в хронологию. Пустая дата снимает её оттуда; " +
-            "пустая эпоха значит «до первой эпохи» и своей плашки не заводит.",
-        ),
-      );
+      propsHost.append(eventBlock(node));
     }
 
     /* допуск */

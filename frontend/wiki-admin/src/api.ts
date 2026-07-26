@@ -20,6 +20,9 @@ export interface TreeNode {
   /** Место записи в летописи: дата и, если есть, эпоха. */
   eventAt?: string;
   eventEpoch?: string;
+  /** Чем событие показывает себя в ленте. */
+  eventSummary?: string;
+  eventImage?: string;
   accessLevel?: number;
   effectiveAccess?: number;
   createdAt: string;
@@ -79,7 +82,16 @@ export class Api {
     patch: Partial<
       Pick<
         TreeNode,
-        "name" | "slug" | "tags" | "eventAt" | "eventEpoch" | "parentId" | "order" | "accessLevel"
+        | "name"
+        | "slug"
+        | "tags"
+        | "eventAt"
+        | "eventEpoch"
+        | "eventSummary"
+        | "eventImage"
+        | "parentId"
+        | "order"
+        | "accessLevel"
       >
     >,
   ): Promise<TreeNode> {
@@ -95,6 +107,19 @@ export class Api {
 
   remove(id: string): Promise<{ removed: string[] }> {
     return request(this.base, `/api/tree/nodes/${id}`, { method: "DELETE" });
+  }
+
+  /**
+   * Картинка уходит сырым телом со своим типом — так её принимает сервер:
+   * файл кладётся рядом с остальными вложениями и возвращает адрес вида
+   * `uploads/…`, который и хранится в свойстве.
+   */
+  upload(file: File): Promise<{ url: string; bytes: number }> {
+    return request(this.base, "/api/uploads", {
+      method: "POST",
+      headers: { "Content-Type": file.type },
+      body: file,
+    });
   }
 
   render(markdown: string): Promise<RenderResult> {

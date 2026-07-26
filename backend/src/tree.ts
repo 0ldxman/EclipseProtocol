@@ -46,6 +46,15 @@ export interface TreeNode {
    */
   eventAt?: string;
   eventEpoch?: string;
+  /**
+   * Чем событие показывает себя в ленте: строка подписи и снимок.
+   *
+   * Тоже свойства, а не выжимка из тела. Первый абзац записи пишется как
+   * начало статьи и в карточке читается обрывком, а первая картинка обычно
+   * иллюстрирует не событие, а предмет записи.
+   */
+  eventSummary?: string;
+  eventImage?: string;
   /** Folders only: minimum access level required, inherited downwards. */
   accessLevel?: number;
   createdAt: string;
@@ -54,6 +63,14 @@ export interface TreeNode {
 
 export interface TreeSnapshot {
   nodes: TreeNode[];
+}
+
+/** Правка события: только присланные поля, каждое — само по себе. */
+export interface EventPatch {
+  at?: string;
+  epoch?: string;
+  summary?: string;
+  image?: string;
 }
 
 const CYRILLIC: Record<string, string> = {
@@ -248,22 +265,44 @@ export class TreeStore {
   }
 
   /**
-   * Место записи в летописи. Пустая дата снимает запись с хронологии.
+   * Место записи в летописи и вид её карточки.
+   *
+   * Правится по частям: подпись меняют, не трогая даты. Пустая дата снимает
+   * запись с хронологии и уносит с собой подпись со снимком — они существуют
+   * только ради карточки, которой больше нет.
    */
-  async setEvent(id: string, at: string, epoch: string): Promise<TreeNode> {
+  async setEvent(id: string, patch: EventPatch): Promise<TreeNode> {
     const node = this.nodes.get(id);
     if (!node || node.kind !== "record") throw new TreeError("record not found", 404);
-    const day = at.trim();
-    if (day && !/^\d{4}-\d{2}-\d{2}$/.test(day)) {
-      throw new TreeError("event date must be YYYY-MM-DD", 400);
-    }
-    if (day) {
+
+    if (patch.at !== undefined) {
+      const day = patch.at.trim();
+      if (day && !/^\d{4}-\d{2}-\d{2}$/.test(day)) {
+        throw new TreeError("event date must be YYYY-MM-DD", 400);
+      }
+      if (!day) {
+        delete node.eventAt;
+        delete node.eventEpoch;
+        delete node.eventSummary;
+        delete node.eventImage;
+        node.updatedAt = new Date().toISOString();
+        await this.persist();
+        return node;
+      }
       node.eventAt = day;
-      node.eventEpoch = epoch.trim();
-    } else {
-      delete node.eventAt;
-      delete node.eventEpoch;
     }
+
+    // Пустая строка — это стирание поля, а не значение: пустая эпоха и пустая
+    // подпись в файле дерева ничего не сообщают.
+    const set = (key: "eventEpoch" | "eventSummary" | "eventImage", value: string, limit: number) => {
+      const trimmed = value.trim().slice(0, limit);
+      if (trimmed) node[key] = trimmed;
+      else delete node[key];
+    };
+    if (patch.epoch !== undefined) set("eventEpoch", patch.epoch, 64);
+    if (patch.summary !== undefined) set("eventSummary", patch.summary, 240);
+    if (patch.image !== undefined) set("eventImage", patch.image, 512);
+
     node.updatedAt = new Date().toISOString();
     await this.persist();
     return node;
