@@ -334,11 +334,21 @@ a{color:inherit}
    справа, документ между ними. */
 .body__in{
   max-width:var(--wide);margin:0 auto;
-  display:grid;grid-template-columns:206px minmax(0,1fr) 340px;gap:0 48px;align-items:start;
+  display:grid;
+  grid-template-columns:minmax(206px,1fr) minmax(0,880px) 380px;
+  column-gap:40px;align-items:start;
 }
-/* Без досье третья дорожка остаётся пустой, но остаётся: иначе документ
-   уезжает вправо от середины кадра. */
-.body__in--bare{grid-template-columns:206px minmax(0,1fr) 206px}
+/* Ячейки расставлены явно. Полоса принадлежности стоит над документом в той
+   же дорожке, а досье начинается со строки документа, а не с полосы: иначе
+   инфобокс висит на два десятка пикселей выше листа. */
+.body__in>.toc,.body__in>.toc-slot{grid-column:1;grid-row:1/span 3}
+.body__in>.belong{grid-column:2;grid-row:1}
+.body__in>.paper{grid-column:2;grid-row:2}
+.body__in>.ends{grid-column:2;grid-row:3}
+.body__in>.aside{grid-column:3;grid-row:2/span 2}
+/* Без досье лишняя ширина уходит влево, к оглавлению: документ остаётся у
+   середины кадра, а не уезжает к правому краю. */
+.body__in--bare{grid-template-columns:minmax(206px,1fr) minmax(0,880px) minmax(206px,1fr)}
 
 /* ── оглавление записи ──────────────────────────────────────────────
    Рельс несёт названия разделов, а не одни ромбы: тридцать пикселей
@@ -363,11 +373,11 @@ a{color:inherit}
 .toc li.sub span{padding-left:13px;color:inherit;opacity:.85}
 .toc li.sub i{transform:rotate(45deg) scale(.4)}
 
-.aside{display:flex;flex-direction:column;gap:22px;padding-top:30px}
+.aside{display:flex;flex-direction:column;gap:22px}
 
 /* ═══ ДОКУМЕНТ ════════════════════════════════════════════════════════ */
 .paper{
-  position:relative;justify-self:center;width:100%;min-width:0;max-width:880px;min-height:min(40vh,440px);
+  position:relative;width:100%;min-width:0;min-height:min(40vh,440px);
   background:var(--paper);color:var(--paper-ink);
   box-shadow:0 0 0 1px rgba(0,0,0,.6),0 18px 50px -20px rgba(0,0,0,.9);
 }
@@ -404,6 +414,17 @@ h1.rec{margin:0;font:700 40px/1.02 var(--display);letter-spacing:.05em;text-tran
 .prose li{margin-top:5px}
 .prose hr{margin:26px 0;border:0;border-top:1px solid rgba(22,23,26,.16)}
 .prose code{font:400 14px/1 var(--mono);background:rgba(22,23,26,.07);padding:1px 4px}
+/* Обычная таблица markdown — такая же таблица, как в `:::table`. Без этого
+   она приходила голой: строки шли текстом, и вёрстка выглядела сломанной. */
+.prose table{margin:24px 0 0;width:100%;border-collapse:collapse;font:400 14px/1.5 var(--serif)}
+.prose th{
+  padding:7px 10px;text-align:left;border-bottom:1px solid rgba(22,23,26,.28);
+  font:10px/1.6 var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--paper-dim);
+}
+.prose td{padding:7px 10px;border-bottom:1px solid rgba(22,23,26,.09)}
+.prose tbody tr:hover{background:rgba(22,23,26,.04)}
+/* `__текст__` — подчёркивание пером, а не браузерная линия впритык. */
+.prose u{text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:3px}
 
 /* :tag[…]{style=…}
    В документе метка залита сплошняком: бумага — плотный материал, обводка на
@@ -425,7 +446,8 @@ h1.rec{margin:0;font:700 40px/1.02 var(--display);letter-spacing:.05em;text-tran
   background:repeating-linear-gradient(45deg,rgba(22,23,26,.18) 0 4px,rgba(22,23,26,.08) 4px 8px);
   color:transparent;cursor:pointer;padding:0 2px;transition:.15s;
 }
-.w-spoiler.open{background:rgba(232,161,60,.22);color:inherit}
+.w-spoiler:hover{background:repeating-linear-gradient(45deg,rgba(22,23,26,.26) 0 4px,rgba(22,23,26,.12) 4px 8px)}
+.w-spoiler.open{background:rgba(232,161,60,.22);color:inherit;cursor:auto}
 
 /* :classified[…] — плашка поверх настоящего текста */
 .w-classified{background:var(--paper-ink);color:transparent;user-select:none;box-decoration-break:clone}
@@ -544,14 +566,21 @@ div.w-classified{display:block;padding:2px 0}
 .w-center{margin:20px 0 0;text-align:center}
 .w-center>*{margin-left:auto;margin-right:auto}
 
-/* ::event{at epoch} — запись объявляет себя событием летописи */
+/* ::event{at epoch} — отметка о времени со ссылкой в летопись.
+   Место записи в хронологии задаётся её свойствами; здесь только отметка. */
 .w-event{
   display:flex;align-items:baseline;gap:12px;margin:0 0 18px;padding-bottom:9px;
-  border-bottom:1px solid rgba(22,23,26,.2);
+  border-bottom:1px solid rgba(22,23,26,.2);text-decoration:none;color:inherit;
 }
 .w-event__at{font:12px/1 var(--mono);letter-spacing:.08em;color:var(--paper-ink)}
 .w-event__epoch{font:10px/1 var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--paper-dim)}
 .w-event__epoch:not(:empty)::before{content:"эпоха · "}
+.w-event__go{margin-left:auto;font:10px/1 var(--mono);letter-spacing:.09em;text-transform:uppercase;color:var(--paper-dim);transition:color .15s}
+/* Отметка — ссылка, но не подчёркнутая строка внутри текста: правило
+   `.prose a` иначе перечёркивает её собственное оформление. */
+.prose a.w-event,.prose a.w-event:hover{text-decoration:none;background:none;color:inherit}
+.w-event:hover .w-event__go{color:var(--paper-link)}
+.w-event:hover{border-bottom-color:var(--paper-link)}
 
 /* карточка записи, которую не удалось разрешить: молча пропасть она не может */
 .w-record.is-broken{
@@ -942,11 +971,16 @@ div.w-classified{display:block;padding:2px 0}
 /* ── узкий кадр: дорожки записи складываются по одной ────────────────
    Первым уходит оглавление: оно вспомогательное, а досье — часть записи. */
 @media (max-width:1180px){
-  .body__in,.body__in--bare{grid-template-columns:minmax(0,1fr) 320px;gap:0 32px}
+  .body__in,.body__in--bare{grid-template-columns:minmax(0,1fr) 340px;column-gap:32px}
+  .body__in>.belong{grid-column:1}
+  .body__in>.paper{grid-column:1}
+  .body__in>.ends{grid-column:1}
+  .body__in>.aside{grid-column:2}
   .toc{display:none}
 }
 @media (max-width:900px){
   .body__in,.body__in--bare{grid-template-columns:minmax(0,1fr)}
-  .aside{padding-top:22px}
+  .body__in>.aside{grid-column:1;grid-row:auto}
+  .body__in>.ends{grid-row:auto}
   .paper{min-height:0}
 }

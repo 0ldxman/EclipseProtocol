@@ -182,6 +182,18 @@ await write(
   ].join("\n"),
 );
 
+// Место в летописи — свойство записи, а не строчка в её теле. У «Аполлона»
+// эпохи нет намеренно: события до первой названной эпохи в ленте есть, а
+// плашки не заводят.
+const setEvent = (node, at, epoch) =>
+  api(`/api/tree/nodes/${node.id}`, {
+    method: "PATCH",
+    body: JSON.stringify({ eventAt: at, eventEpoch: epoch }),
+  });
+await setEvent(kremen, "2031-04-12", "Разлом");
+await setEvent(apollo, "2029-08-02", "");
+await setEvent(noon, "2031-06-03", "Разлом");
+
 // Clearance goes on the folder and is inherited downwards.
 await api(`/api/tree/nodes/${vault.id}`, { method: "PATCH", body: JSON.stringify({ accessLevel: 3 }) });
 await editor.waitForTimeout(3200); // debounced materialisation feeds the index
@@ -212,6 +224,12 @@ const sealedEvent = chronologyApi.events.find((e) => e.slug === noon.slug);
 ok(
   "a sealed event carries neither summary nor picture",
   sealedEvent?.restricted === true && sealedEvent.summary === "" && sealedEvent.image === "",
+);
+ok(
+  "an event without an epoch does not invent one",
+  chronologyApi.events.some((e) => e.slug === "apollo" && e.epoch === "") &&
+    chronologyApi.epochs.every((e) => e.name !== ""),
+  `эпох: ${chronologyApi.epochs.map((e) => e.name).join(", ")}`,
 );
 
 // --- the reader's screens -------------------------------------------------

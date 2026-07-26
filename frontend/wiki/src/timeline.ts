@@ -69,10 +69,12 @@ function spine(data: Timeline): HTMLElement {
     el("div", { class: "firewrap" }, [el("canvas", { id: "tl-fire" })]),
   ]);
 
+  // Плашка эпохи ставится только у названной. События до первой эпохи — а они
+  // и есть предыстория — идут от начала ленты без заголовка.
   let epoch = "";
   let side: "l" | "r" = "l";
   for (const event of data.events) {
-    if (event.epoch !== epoch) {
+    if (event.epoch && event.epoch !== epoch) {
       epoch = event.epoch;
       const meta = data.epochs.find((e) => e.name === epoch);
       const span =

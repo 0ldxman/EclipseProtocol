@@ -278,3 +278,37 @@ test("columns move below the rule while the title stays centred", () => {
   assert.match(html, /class="cover__imprint"/);
   assert.match(html, /class="cover__stamp">для служебного пользования/);
 });
+
+/* ── обычный текст ───────────────────────────────────────────────────────── */
+
+test("a single newline inside a paragraph is a line break, not a space", () => {
+  const { html } = renderMarkup("Операция 1\nОперация 2\nОперация 3");
+  assert.match(html, /Операция 1<br>\s*Операция 2<br>\s*Операция 3/);
+});
+
+test("line-oriented directives keep their newlines as syntax", () => {
+  const { html } = renderMarkup(":::fields\nпозывной :: «Кремень»\nстатус :: жив\n:::");
+  assert.match(html, /<dt>позывной<\/dt><dd>«Кремень»<\/dd>/);
+  assert.match(html, /<dt>статус<\/dt><dd>жив<\/dd>/);
+  assert.doesNotMatch(html, /<br>/);
+});
+
+test("__underline__ and **bold** are told apart by the source, not the tree", () => {
+  const { html } = renderMarkup("__подчёркнуто__ и **полужирно**");
+  assert.match(html, /<u>подчёркнуто<\/u>/);
+  assert.match(html, /<strong>полужирно<\/strong>/);
+});
+
+test("a plain markdown table renders as a table", () => {
+  const { html } = renderMarkup("| год | роль |\n| --- | --- |\n| 2029 | ведущий |");
+  assert.match(html, /<table>/);
+  assert.match(html, /<th>год<\/th>/);
+  assert.match(html, /<td>2029<\/td>/);
+});
+
+test("::event is a link into the chronology, not the source of one", () => {
+  const { html } = renderMarkup('::event{at=2031-04-12 epoch="Разлом"}');
+  assert.match(html, /<a class="w-event" href="\/timeline"/);
+  assert.match(html, /2031-04-12/);
+  assert.match(html, /Разлом/);
+});

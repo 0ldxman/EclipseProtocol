@@ -17,6 +17,9 @@ export interface TreeNode {
   order: number;
   slug?: string;
   tags?: string[];
+  /** Место записи в летописи: дата и, если есть, эпоха. */
+  eventAt?: string;
+  eventEpoch?: string;
   accessLevel?: number;
   effectiveAccess?: number;
   createdAt: string;
@@ -73,7 +76,12 @@ export class Api {
 
   update(
     id: string,
-    patch: Partial<Pick<TreeNode, "name" | "slug" | "tags" | "parentId" | "order" | "accessLevel">>,
+    patch: Partial<
+      Pick<
+        TreeNode,
+        "name" | "slug" | "tags" | "eventAt" | "eventEpoch" | "parentId" | "order" | "accessLevel"
+      >
+    >,
   ): Promise<TreeNode> {
     return request(this.base, `/api/tree/nodes/${id}`, {
       method: "PATCH",

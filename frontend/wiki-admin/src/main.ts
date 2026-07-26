@@ -48,55 +48,74 @@ const COVER = "_cover";
  * догадаться ни про `:::infobox`, ни про число двоеточий у вложенных заборов.
  * Заготовка отвечает на оба вопроса сразу — её правят, а не сочиняют.
  */
-const SNIPPETS: { label: string; title: string; text: string }[] = [
+interface Snippet {
+  label: string;
+  title: string;
+  text: string;
+  /** Строчный виджет ставится в текущую строку, блочный — с новой. */
+  inline?: boolean;
+}
+
+const SNIPPETS: { group: string; items: Snippet[] }[] = [
   {
-    label: "инфобокс",
-    title: "Карточка справа от текста",
-    text: [
-      "::::infobox{title=Досье}",
-      ":::fields",
-      "ключ :: значение",
-      ":::",
-      "",
-      ":tag[Метка]{style=warn}",
-      "::::",
-      "",
-    ].join("\n"),
+    group: "в строке",
+    items: [
+      { label: "метка", title: "Плашка состояния", text: ":tag[Пропал без вести]{style=warn}", inline: true },
+      { label: "спойлер", title: "Скрыто до щелчка", text: ":spoiler[скрытый текст]", inline: true },
+      { label: "гриф", title: "Вымарано ниже допуска", text: ":classified[отчёт 12-Б]{level=3}", inline: true },
+      { label: "дата", title: "Метка времени в поясе читателя", text: ":timestamp[12.04.2031]{at=2031-04-12T09:00:00Z}", inline: true },
+      { label: "отсчёт", title: "Обратный отсчёт до срока", text: ":countdown[до срока]{until=2033-01-01T00:00:00Z}", inline: true },
+      { label: "ссылка", title: "Ссылка на другую запись", text: "[[Название|slug]]", inline: true },
+      { label: "__подчёрк__", title: "Подчёркивание", text: "__подчёркнуто__", inline: true },
+    ],
   },
   {
-    label: "поля",
-    title: "Таблица «ключ — значение»",
-    text: [":::fields", "ключ :: значение", ":::", ""].join("\n"),
+    group: "блоки",
+    items: [
+      {
+        label: "инфобокс",
+        title: "Карточка в колонке справа от документа",
+        text: [
+          "::::infobox{title=Досье}",
+          ":::fields",
+          "ключ :: значение",
+          ":::",
+          "",
+          "::dotbar{name=Допуск max=5 current=3}",
+          "",
+          ":tag[Метка]{style=warn}",
+          "::::",
+        ].join("\n"),
+      },
+      { label: "поля", title: "Таблица «ключ — значение»", text: ":::fields\nключ :: значение\n:::" },
+      { label: "заметка", title: "Выноска: справка, внимание, оспорено", text: ":::note{style=info}\nТекст заметки.\n:::" },
+      { label: "цитата", title: "Цитата с указанием источника", text: ':::quote{by="источник"}\nТекст цитаты.\n:::' },
+      { label: "таблица", title: "Таблица markdown", text: "| столбец | столбец |\n| --- | --- |\n| значение | значение |" },
+      { label: "по центру", title: "Блок по центру полосы", text: ":::center\nТекст по центру.\n:::" },
+      { label: "шкала", title: "Полоса с числом", text: "::bar{name=Готовность max=100 current=60}" },
+      { label: "точки", title: "Дискретная шкала", text: "::dotbar{name=Допуск max=5 current=3}" },
+    ],
   },
   {
-    label: "заметка",
-    title: "Выноска: справка, внимание, оспорено",
-    text: [":::note{style=info}", "Текст заметки.", ":::", ""].join("\n"),
+    group: "медиа и связи",
+    items: [
+      { label: "картинка", title: "Изображение с подписью", text: '::image{src="uploads/файл.png" caption="Подпись"}' },
+      { label: "галерея", title: "Несколько изображений в ряд", text: ':::gallery\n::image{src="uploads/1.png"}\n::image{src="uploads/2.png"}\n:::' },
+      { label: "видео", title: "Проигрыватель с подписью", text: '::video{src="uploads/файл.mp4" poster="uploads/кадр.png" caption="Подпись"}' },
+      { label: "файл", title: "Вложение для скачивания", text: '::file{src="uploads/документ.pdf" name="Документ" size="1,2 МБ"}' },
+      { label: "запись", title: "Карточка другой записи", text: "::record{slug=apollo}" },
+      { label: "карта", title: "Врезка карты с точкой", text: "::map{lng=37.6 lat=55.7 zoom=6 label=«Мыс Тишина»}" },
+      { label: "событие", title: "Отметка о времени со ссылкой в летопись", text: '::event{at=2031-04-12 epoch="Разлом"}' },
+    ],
   },
   {
-    label: "цитата",
-    title: "Цитата с указанием источника",
-    text: [':::quote{by="источник"}', "Текст цитаты.", ":::", ""].join("\n"),
-  },
-  {
-    label: "картинка",
-    title: "Изображение с подписью",
-    text: '::image{src="uploads/файл.png" caption="Подпись"}\n\n',
-  },
-  {
-    label: "событие",
-    title: "Запись попадает в хронологию",
-    text: '::event{at=2031-04-12 epoch="Разлом"}\n\n',
-  },
-  {
-    label: "шкала",
-    title: "Полоса и точки",
-    text: "::bar{name=Готовность max=100 current=60}\n\n::dotbar{name=Допуск max=5 current=3}\n\n",
-  },
-  {
-    label: "таблица",
-    title: "Таблица markdown",
-    text: ["| столбец | столбец |", "| --- | --- |", "| значение | значение |", ""].join("\n"),
+    group: "титульный лист",
+    items: [
+      { label: "обложка", title: "Титульный лист категории целиком", text: "" },
+      { label: "эпиграф", title: "Эпиграф титульного листа", text: ':::::epigraph{cite="источник"}\nСтрока эпиграфа.\n:::::' },
+      { label: "колонки", title: "Низ титульного листа: текст и выходные сведения", text: ":::::columns\nО чём раздел.\n\n::::right\n:::fields\nзаписей :: 0\n:::\n::::\n:::::" },
+      { label: "штамп", title: "Штамп на титульном листе", text: "::stamp[для служебного пользования]" },
+    ],
   },
 ];
 
@@ -303,10 +322,28 @@ async function main(): Promise<void> {
     if (result.links.length) add(`ссылок: ${result.links.length}`, "ghost");
   }
 
-  /** Вставка заготовки на место курсора. */
-  function insert(text: string): void {
+  /**
+   * Вставка заготовки на место курсора.
+   *
+   * Блочная заготовка всегда начинается с новой строки и заканчивается пустой.
+   * Иначе `:::quote` приклеивался к концу предыдущего абзаца, забор переставал
+   * быть забором, и в тексте оставалась строка двоеточий — ровно та поломка,
+   * из-за которой цитата «вставлялась неправильно».
+   */
+  function insert(snippet: Snippet): void {
     if (!view) return;
     const { from, to } = view.state.selection.main;
+    const doc = view.state.doc;
+    let text = snippet.text;
+
+    if (!snippet.inline) {
+      const before = doc.sliceString(Math.max(0, from - 2), from);
+      const after = doc.sliceString(to, Math.min(doc.length, to + 2));
+      const lead = from === 0 ? "" : before.endsWith("\n\n") ? "" : before.endsWith("\n") ? "\n" : "\n\n";
+      const tail = after.startsWith("\n\n") ? "" : after.startsWith("\n") ? "\n" : "\n\n";
+      text = `${lead}${text}${tail}`;
+    }
+
     view.dispatch({
       changes: { from, to, insert: text },
       selection: { anchor: from + text.length },
@@ -315,12 +352,22 @@ async function main(): Promise<void> {
     view.focus();
   }
 
-  for (const snippet of SNIPPETS) {
-    const button = el("button", { class: "btn btn--sm", type: "button", title: snippet.title }, [
-      snippet.label,
-    ]);
-    button.onclick = () => insert(snippet.text);
-    insertBar.append(button);
+  for (const { group, items } of SNIPPETS) {
+    insertBar.append(el("span", { class: "chrome ins-group" }, [group]));
+    for (const snippet of items) {
+      const button = el("button", { class: "btn btn--sm", type: "button", title: snippet.title }, [
+        snippet.label,
+      ]);
+      // Обложка — не заготовка на строку, а весь титульный лист: у неё уже
+      // есть заполнитель, и незачем держать его в двух местах.
+      button.onclick = () =>
+        insert(
+          snippet.label === "обложка"
+            ? { ...snippet, text: COVER_TEMPLATE(current?.name ?? "Раздел").trimEnd() }
+            : snippet,
+        );
+      insertBar.append(button);
+    }
   }
   insertBar.hidden = true;
 
@@ -621,6 +668,34 @@ async function main(): Promise<void> {
       };
       tags.onblur = () => void applyTags();
       propsHost.append(propBlock("Метки", [tags], "Метка живёт поперёк дерева: по ней собирается своя страница."));
+
+      /* событие летописи */
+      const at = el("input", { type: "date", value: node.eventAt ?? "" });
+      const epoch = el("input", {
+        type: "text",
+        value: node.eventEpoch ?? "",
+        placeholder: "эпоха — можно оставить пустой",
+      });
+      const applyEvent = async () => {
+        if ((at.value || "") === (node.eventAt ?? "") && epoch.value === (node.eventEpoch ?? "")) return;
+        if (await guard(() => api.update(node.id, { eventAt: at.value, eventEpoch: epoch.value }))) {
+          await refreshTree();
+          refreshSelected();
+        }
+      };
+      at.onchange = () => void applyEvent();
+      epoch.onkeydown = (event) => {
+        if (event.key === "Enter") void applyEvent();
+      };
+      epoch.onblur = () => void applyEvent();
+      propsHost.append(
+        propBlock(
+          "Событие",
+          [at, epoch],
+          "С датой запись встаёт в хронологию. Пустая дата снимает её оттуда; " +
+            "пустая эпоха значит «до первой эпохи» и своей плашки не заводит.",
+        ),
+      );
     }
 
     /* допуск */

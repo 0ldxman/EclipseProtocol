@@ -216,6 +216,24 @@
       #insert-bar .chrome {
         margin-right: 4px;
       }
+      /* Подпись группы отбивает набор виджетов от соседнего: полоса длинная,
+         и без разделителя это одна каша из тридцати кнопок. */
+      .ins-group {
+        margin-left: 8px;
+        padding-left: 10px;
+        border-left: 1px solid var(--rule);
+        color: var(--dimmer);
+      }
+      .ins-group:first-child {
+        margin-left: 0;
+        padding-left: 0;
+        border-left: 0;
+      }
+      /* Полоса не прокручивается и ничего не прячет: половина языка разметки
+         была не видна именно потому, что кнопок «не хватало» на экране. */
+      #insert-bar {
+        row-gap: 4px;
+      }
       /* [hidden] — стиль браузера, а он слабее авторского display:flex */
       #insert-bar[hidden],
       #preview-sheet[hidden] {
@@ -366,6 +384,16 @@
         margin-top: 7px;
         font: 10px/1.5 var(--mono);
         color: var(--dimmer);
+      }
+      .prop input[type="date"] {
+        height: 26px;
+        padding: 0 8px;
+        border: 1px solid var(--rule);
+        background: var(--ink-2);
+        color: var(--fg);
+        font: 11px/1 var(--mono);
+        outline: none;
+        color-scheme: dark;
       }
       .prop input[type="text"] {
         flex: 1;

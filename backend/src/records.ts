@@ -110,6 +110,8 @@ export async function registerRecords(
       name?: string;
       slug?: string;
       tags?: string[];
+      eventAt?: string;
+      eventEpoch?: string;
       parentId?: string | null;
       order?: number;
       accessLevel?: number;
@@ -122,6 +124,9 @@ export async function registerRecords(
       if (body.tags !== undefined) {
         if (!Array.isArray(body.tags)) return reply.code(400).send({ error: "tags must be an array" });
         node = await tree.setTags(id, body.tags.map(String));
+      }
+      if (body.eventAt !== undefined) {
+        node = await tree.setEvent(id, body.eventAt, body.eventEpoch ?? node.eventEpoch ?? "");
       }
       if (body.accessLevel !== undefined) node = await tree.setAccess(id, body.accessLevel);
       if (body.parentId !== undefined) node = await tree.move(id, body.parentId, body.order);

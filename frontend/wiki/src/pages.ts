@@ -113,7 +113,6 @@ function belongBand(belongs: Belongs): HTMLElement {
       belongs.logo ? el("img", { src: belongs.logo, alt: "" }) : el("span", {}, [belongs.mark || "◆"]),
     ]),
     el("span", {}, [el("b", {}, [belongs.name])]),
-    el("span", { class: "sp chrome" }, ["титульный лист ↗"]),
   );
   return band;
 }
@@ -274,16 +273,14 @@ export async function renderRecord(view: HTMLElement, slug: string): Promise<voi
 
   const article = paper(page);
   const aside = recordAside(page);
-  // Полоса принадлежности, лист и переходы стоят одной стопкой: у них общая
-  // ширина, и документ читается как страница с началом и концом.
-  const middle = el("div", { class: "paper-stack" }, [
+  // Полоса принадлежности, лист, переходы и досье — прямые ячейки сетки, а не
+  // вложенная стопка: только так досье встаёт вровень с верхом документа, а не
+  // с верхом полосы над ним.
+  const row = el("div", { class: `body__in${aside ? "" : " body__in--bare"}` }, [
+    el("nav", { class: "toc-slot" }),
     page.belongs ? belongBand(page.belongs) : null,
     article,
     recordEnds(page),
-  ]);
-  const row = el("div", { class: `body__in${aside ? "" : " body__in--bare"}` }, [
-    el("nav", { class: "toc-slot" }),
-    middle,
     aside,
   ]);
 

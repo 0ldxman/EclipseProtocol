@@ -1,10 +1,10 @@
 /**
- * The two widgets that cannot be finished on the server.
+ * Виджеты, которые нельзя дорисовать на сервере.
  *
- * A countdown depends on the moment it is read, and a timestamp should be shown
- * in the reader's own locale - both are wrong the second the HTML is cached.
- * Everything else about a record is rendered once, server-side, and arrives
- * done.
+ * Обратный отсчёт зависит от минуты, в которую его читают, метку времени надо
+ * показать в часовом поясе читателя, а спойлер открывается по щелчку — всё это
+ * неверно ровно в тот момент, когда html попал в кеш. Остальное запись
+ * получает готовым.
  */
 
 const FORMAT = new Intl.DateTimeFormat("ru-RU", {
@@ -32,6 +32,27 @@ function remaining(target: Date): string {
 let ticking: number | undefined;
 
 export function hydrateWidgets(root: ParentNode): void {
+  /* Спойлер: щелчок или Enter открывает и больше не закрывает. Закрывать
+     обратно незачем — прочитанное не развидеть, а мигающий текст мешает. */
+  for (const node of root.querySelectorAll<HTMLElement>(".w-spoiler")) {
+    if (node.dataset.bound === "1") continue;
+    node.dataset.bound = "1";
+    node.setAttribute("role", "button");
+    node.setAttribute("aria-label", "Показать скрытое");
+    const open = () => {
+      node.classList.add("open");
+      node.removeAttribute("role");
+      node.removeAttribute("aria-label");
+    };
+    node.addEventListener("click", open);
+    node.addEventListener("keydown", (event) => {
+      if (event.key === "Enter" || event.key === " ") {
+        event.preventDefault();
+        open();
+      }
+    });
+  }
+
   for (const node of root.querySelectorAll<HTMLTimeElement>("time.w-timestamp[datetime]")) {
     const at = new Date(node.dateTime);
     if (!Number.isNaN(at.getTime()) && node.textContent === node.dateTime) {

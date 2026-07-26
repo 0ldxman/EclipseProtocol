@@ -18,7 +18,6 @@ import { readFile, readdir, stat } from "node:fs/promises";
 import path from "node:path";
 import {
   coverAttributes,
-  eventOf,
   firstImageOf,
   renderMarkup,
   wikiLinkTargets,
@@ -117,7 +116,9 @@ class RecordIndex {
           updatedAt: node.updatedAt,
           parentId: node.parentId,
           image: firstImageOf(text),
-          event: eventOf(text),
+          // Событие берётся из свойств записи, а не из её текста: правка
+          // абзаца не должна снимать запись с летописи.
+          event: node.eventAt ? { at: node.eventAt, epoch: node.eventEpoch ?? "" } : null,
         } satisfies IndexEntry;
       }),
     );
@@ -290,7 +291,9 @@ export async function registerWiki(app: FastifyInstance, options: WikiOptions): 
           slug: entry.slug,
           title: entry.title,
           at: entry.event!.at,
-          epoch: entry.event!.epoch || "без эпохи",
+          // Пустая эпоха так и остаётся пустой: у событий, что идут до первой
+          // названной эпохи, эпохи нет, и придумывать её летописи незачем.
+          epoch: entry.event!.epoch,
           access: entry.access,
           restricted,
           // Тело закрытой записи не покидает сервер и здесь тоже — ни текстом,
@@ -302,8 +305,11 @@ export async function registerWiki(app: FastifyInstance, options: WikiOptions): 
       .sort((a, b) => a.at.localeCompare(b.at));
 
     // Эпохи в порядке первого события: летопись читается сверху вниз.
+    // Безымянная эпоха не заводится: события до первой названной просто идут
+    // от начала ленты.
     const epochs: { name: string; from: string; to: string; count: number }[] = [];
     for (const event of events) {
+      if (!event.epoch) continue;
       const last = epochs.at(-1);
       if (last && last.name === event.epoch) {
         last.to = event.at;

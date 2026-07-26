@@ -401,15 +401,35 @@ export const DIRECTIVES: Record<string, DirectiveSpec> = {
    * событие живёт в той же записи, что и рассказ о нём, и не может
    * разойтись с ней.
    */
+  /**
+   * Отметка о времени со ссылкой в летопись.
+   *
+   * Раньше именно она заводила запись в хронологию, и дата жила в теле текста
+   * — то есть в том месте, которое правят чаще всего. Теперь дата события
+   * лежит в свойствах записи, а эта отметка только показывает её в тексте и
+   * ведёт на общую ленту. Разошлись они уже не могут: показывать нечего,
+   * кроме того, что автор здесь и написал.
+   */
   event: {
     kinds: ["leafDirective", "textDirective"],
     render: (c) => {
       const at = attr(c, "at");
       const epoch = attr(c, "epoch");
-      return el("div", { className: ["w-event"], dataAt: at, dataEpoch: epoch }, [
-        el("time", { className: ["w-event__at"], dateTime: at }, [text(at)]),
-        el("span", { className: ["w-event__epoch"] }, [text(epoch)]),
-      ]);
+      const base = c.env.linkBase ?? "/wiki/";
+      return el(
+        "a",
+        {
+          className: ["w-event"],
+          href: base.replace(/wiki\/?$/, "timeline"),
+          dataAt: at,
+          dataEpoch: epoch,
+        },
+        [
+          el("time", { className: ["w-event__at"], dateTime: at }, [text(at)]),
+          el("span", { className: ["w-event__epoch"] }, [text(epoch)]),
+          el("span", { className: ["w-event__go"] }, [text("в хронологию ↗")]),
+        ],
+      );
     },
   },
 

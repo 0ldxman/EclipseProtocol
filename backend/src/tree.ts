@@ -36,6 +36,16 @@ export interface TreeNode {
   /** Records only: the flat identity used by links and URLs. */
   slug?: string;
   tags?: string[];
+  /**
+   * Записи только: место в летописи.
+   *
+   * Дата события — свойство записи, а не строчка в её теле. Раньше она жила
+   * директивой внутри текста, и любая правка абзаца могла незаметно вынести
+   * запись из хронологии. Эпоха может быть пустой: события до первой
+   * названной эпохи в летописи есть, а эпохи у них нет.
+   */
+  eventAt?: string;
+  eventEpoch?: string;
   /** Folders only: minimum access level required, inherited downwards. */
   accessLevel?: number;
   createdAt: string;
@@ -232,6 +242,28 @@ export class TreeStore {
       .filter((tag) => tag.length > 0 && tag.length <= 48)
       .filter((tag) => (seen.has(tag) ? false : (seen.add(tag), true)))
       .slice(0, 24);
+    node.updatedAt = new Date().toISOString();
+    await this.persist();
+    return node;
+  }
+
+  /**
+   * Место записи в летописи. Пустая дата снимает запись с хронологии.
+   */
+  async setEvent(id: string, at: string, epoch: string): Promise<TreeNode> {
+    const node = this.nodes.get(id);
+    if (!node || node.kind !== "record") throw new TreeError("record not found", 404);
+    const day = at.trim();
+    if (day && !/^\d{4}-\d{2}-\d{2}$/.test(day)) {
+      throw new TreeError("event date must be YYYY-MM-DD", 400);
+    }
+    if (day) {
+      node.eventAt = day;
+      node.eventEpoch = epoch.trim();
+    } else {
+      delete node.eventAt;
+      delete node.eventEpoch;
+    }
     node.updatedAt = new Date().toISOString();
     await this.persist();
     return node;

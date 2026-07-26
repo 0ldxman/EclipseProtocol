@@ -22,6 +22,7 @@ import { unified } from "unified";
 import type { Element, Root as HastRoot } from "hast";
 import { DIRECTIVES, KNOWN_DIRECTIVES, type RecordFacts } from "./directives.js";
 import { directiveHandlers, remarkUnknownDirectives, type WidgetReport } from "./widgets.js";
+import { remarkSoftBreaks, remarkUnderline } from "./text.js";
 import { remarkWikiLinks, type LinkReport } from "./wikilinks.js";
 import { collectHeadings, excerptOf, firstImage, type Heading } from "./derive.js";
 
@@ -94,6 +95,9 @@ const schema = {
     "div",
     "article",
     "cite",
+    // `__текст__` — подчёркивание; в наборе документов это отдельное
+    // начертание, а не синоним полужирного.
+    "u",
     "dl",
     "dt",
     "dd",
@@ -114,6 +118,7 @@ const schema = {
       "dataLat",
       "dataZoom",
       "dataAt",
+      "dataEpoch",
       "dataUntil",
       "dataCountry",
       "dataBroken",
@@ -178,6 +183,10 @@ export function renderMarkup(source: string, options: RenderOptions = {}): Rende
       base: options.linkBase ?? "/wiki/",
     })
     .use(remarkUnknownDirectives, { directives: DIRECTIVES, report: widgets })
+    // После директив и ссылок: обе разбирают текст сами, и разрезать его
+    // на строки до них значило бы разрезать `[[ссылку]]` пополам.
+    .use(remarkUnderline)
+    .use(remarkSoftBreaks)
     .use(remarkRehype, {
       allowDangerousHtml: false,
       handlers: directiveHandlers(DIRECTIVES, {
