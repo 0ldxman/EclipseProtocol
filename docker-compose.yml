@@ -34,6 +34,9 @@ services:
       DATA_DIR: /data
       # The baked province topology, part of the image.
       GEO_DIR: /app/geo
+      # The fine levels of detail. Not under GEO_DIR, which is served as static
+      # files: these are read a few arcs at a time through /geo/arcs.
+      GEO_DETAIL_DIR: /app/geo-detail
       LOG_LEVEL: ${AETHER_LOG_LEVEL:-info}
     # Uncomment to reach the wiki directly, bypassing the proxy - useful while
     # the DNS record does not exist yet. Not needed once the proxy host is set

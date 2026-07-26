@@ -13,6 +13,10 @@
  *      provinces never conflicts.
  *   3. Geometry is editable without rebuilding the baked base: tracing a
  *      missing island or removing a bad province is a small delta on top.
+ *   4. Detail follows the zoom. The base bundle is the coarse level, because
+ *      that is what can arrive before the map does; finer geometry replaces it
+ *      underneath, either as a whole-world tier or as the arcs the viewport can
+ *      actually see. See `lod.ts`.
  */
 
 import "@aether/theme/theme.css";
@@ -22,7 +26,8 @@ import maplibregl from "maplibre-gl";
 import * as Y from "yjs";
 import { serverBase } from "./base-path";
 import { CollabClient, collabUrl, type ConnectionState } from "./collab";
-import { EffectiveGeo, hashId, ringArea, type DrawnProvince, type ProvId } from "./geo-delta";
+import { EffectiveGeo, hashId, isDrawn, ringArea, type DrawnProvince, type ProvId } from "./geo-delta";
+import { LodController } from "./lod";
 import { Topology } from "./topology";
 import {
   UnderlayLayers,
@@ -40,6 +45,9 @@ const UNOWNED = "#31333a";
 const PROVINCE_HAIRLINE = "#17181b";
 const BORDER_LINE = "#f2f1ee";
 const COAST_LINE = "#63676e";
+// The shore of land nobody holds. Dim enough to stay scenery, present enough
+// that the coast reads as a drawn line rather than as where a fill stops.
+const COAST_UNOWNED = "#4a4e57";
 const MIN_RING_AREA = 1e-7; // squared degrees; below this a "shape" is a misclick
 
 type Tool = "paint" | "draw" | "erase";
@@ -69,6 +77,7 @@ async function main(): Promise<void> {
   const timing = document.getElementById("timing")!;
   const presence = document.getElementById("presence")!;
   const geoStats = document.getElementById("geo-stats")!;
+  const lodStatus = document.getElementById("lod")!;
   const underlayList = document.getElementById("underlays")!;
   const hint = document.getElementById("hint")!;
 
@@ -106,11 +115,19 @@ async function main(): Promise<void> {
 
   await map.once("load");
 
+  const EMPTY: GeoJSON.FeatureCollection = { type: "FeatureCollection", features: [] };
+
   map.addSource("provinces", {
     type: "geojson",
     data: topology.provincePolygons(),
     promoteId: "fid",
   });
+  // The same provinces, re-emitted from refined geometry. Kept in its own
+  // source because it is small and reset often: pushing a refinement through
+  // the whole-world source would re-tile 3409 features to change a dozen.
+  map.addSource("provinces-detail", { type: "geojson", data: EMPTY, promoteId: "fid" });
+  map.addSource("coast", { type: "geojson", data: EMPTY });
+  map.addSource("coast-detail", { type: "geojson", data: EMPTY });
   map.addSource("drawn", {
     type: "geojson",
     data: { type: "FeatureCollection", features: [] },
@@ -135,14 +152,59 @@ async function main(): Promise<void> {
     "fill-opacity": 0.85,
   });
 
+  const hairlinePaint = (): maplibregl.LineLayerSpecification["paint"] => ({
+    "line-color": PROVINCE_HAIRLINE,
+    "line-width": 0.4,
+    "line-opacity": 0.7,
+  });
+
+  // The shoreline is one line drawn twice: whole-world in `coast`, and again in
+  // `coast-detail` for the arcs a refinement replaced. Identical paint, because
+  // the seam between them must be invisible.
+  const coastPaint = (): maplibregl.LineLayerSpecification["paint"] => ({
+    "line-color": COAST_UNOWNED,
+    "line-width": 0.7,
+    "line-opacity": 0.8,
+  });
+  const coastLayout: maplibregl.LineLayerSpecification["layout"] = {
+    "line-join": "round",
+    "line-cap": "round",
+  };
+
   map.addLayer({ id: "province-fill", type: "fill", source: "provinces", paint: fillPaint() });
   map.addLayer({
     id: "province-hairline",
     type: "line",
     source: "provinces",
-    paint: { "line-color": PROVINCE_HAIRLINE, "line-width": 0.4, "line-opacity": 0.7 },
+    paint: hairlinePaint(),
+  });
+  map.addLayer({
+    id: "detail-fill",
+    type: "fill",
+    source: "provinces-detail",
+    paint: fillPaint(),
+  });
+  map.addLayer({
+    id: "detail-hairline",
+    type: "line",
+    source: "provinces-detail",
+    paint: hairlinePaint(),
   });
   map.addLayer({ id: "drawn-fill", type: "fill", source: "drawn", paint: fillPaint() });
+  map.addLayer({
+    id: "coast-line",
+    type: "line",
+    source: "coast",
+    layout: coastLayout,
+    paint: coastPaint(),
+  });
+  map.addLayer({
+    id: "coast-detail-line",
+    type: "line",
+    source: "coast-detail",
+    layout: coastLayout,
+    paint: coastPaint(),
+  });
   map.addLayer({
     id: "border-line",
     type: "line",
@@ -190,14 +252,43 @@ async function main(): Promise<void> {
     return country ? countries.get(country)?.color ?? null : null;
   }
 
-  function featureRef(id: ProvId): { source: string; id: number } {
-    return id.startsWith("c:")
-      ? { source: "drawn", id: hashId(id) }
-      : { source: "provinces", id: topology.provinces[Number(id)]!.fid };
+  /**
+   * Provinces currently drawn from refined geometry.
+   *
+   * A province lives in exactly one of the two sources at a time: the refined
+   * copy is drawn and the coarse original is filtered out from under it, so
+   * neither the coarse outline nor a doubled fill shows through.
+   */
+  let detailed: ReadonlySet<number> = new Set();
+  let refinedArcs: readonly number[] = [];
+  let baseSwapMs = 0;
+
+  /**
+   * Ownership colour lives in feature-state, and feature-state is per source -
+   * so a province that may move between the base and the detail source has its
+   * colour written to both. Writing state for a feature a source does not
+   * currently hold is harmless: MapLibre keeps it keyed by id and applies it if
+   * and when the feature appears.
+   */
+  function paintProvince(id: ProvId): void {
+    const color = colorFor(id);
+    if (isDrawn(id)) {
+      map.setFeatureState({ source: "drawn", id: hashId(id) }, { color });
+      return;
+    }
+    const fid = topology.provinces[Number(id)]!.fid;
+    map.setFeatureState({ source: "provinces", id: fid }, { color });
+    map.setFeatureState({ source: "provinces-detail", id: fid }, { color });
   }
 
-  function paintProvince(id: ProvId): void {
-    map.setFeatureState(featureRef(id), { color: colorFor(id) });
+  /** Base layers must not draw a province that the detail source is drawing. */
+  function applyBaseFilter(hidden: number[]): void {
+    const excluded = detailed.size ? [...hidden, ...detailed] : hidden;
+    const filter: maplibregl.FilterSpecification | null = excluded.length
+      ? ["!", ["in", ["get", "prov"], ["literal", excluded]]]
+      : null;
+    map.setFilter("province-fill", filter);
+    map.setFilter("province-hairline", filter);
   }
 
   let frame: number | null = null;
@@ -214,16 +305,7 @@ async function main(): Promise<void> {
 
       (map.getSource("borders") as maplibregl.GeoJSONSource).setData(borders);
       (map.getSource("drawn") as maplibregl.GeoJSONSource).setData(geo.drawnFeatures());
-
-      const hidden = geo.hiddenBaseIndices();
-      map.setFilter(
-        "province-fill",
-        hidden.length ? ["!", ["in", ["get", "prov"], ["literal", hidden]]] : null,
-      );
-      map.setFilter(
-        "province-hairline",
-        hidden.length ? ["!", ["in", ["get", "prov"], ["literal", hidden]]] : null,
-      );
+      applyBaseFilter(geo.hiddenBaseIndices());
 
       for (const id of drawn.keys()) paintProvince(id);
 
@@ -231,6 +313,47 @@ async function main(): Promise<void> {
       timing.textContent = `границы: ${borders.features.length} дуг за ${elapsed.toFixed(1)} мс`;
       geoStats.textContent = `база ${s.base} · нарисовано ${s.drawn} · скрыто ${s.hidden}`;
     });
+  }
+
+  /**
+   * The whole world's shoreline. Twenty-odd thousand arcs, so this is only
+   * rebuilt when the shapes themselves change - a base LOD swap, an erased
+   * province, a traced island - and never on a paint stroke or a pan.
+   */
+  function refreshCoast(): void {
+    const geo = effective();
+    (map.getSource("coast") as maplibregl.GeoJSONSource).setData(geo.coastLines());
+  }
+
+  /**
+   * Re-derive the geometry that a refinement changed.
+   *
+   * Everything here is viewport-sized. The whole-world sources are left alone
+   * and simply told not to draw what the detail sources are drawing, which is a
+   * filter change rather than a reupload - the difference between a pan costing
+   * a millisecond and costing a re-tile of the planet.
+   */
+  function refreshDetail(): void {
+    const geo = effective();
+    (map.getSource("provinces-detail") as maplibregl.GeoJSONSource).setData(
+      detailed.size ? topology.provincePolygons(detailed) : EMPTY,
+    );
+    (map.getSource("coast-detail") as maplibregl.GeoJSONSource).setData(
+      refinedArcs.length ? geo.coastLines(refinedArcs) : EMPTY,
+    );
+    map.setFilter(
+      "coast-line",
+      refinedArcs.length ? ["!", ["in", ["get", "arc"], ["literal", [...refinedArcs]]]] : null,
+    );
+    for (const prov of detailed) paintProvince(String(prov));
+    applyBaseFilter(geo.hiddenBaseIndices());
+    refresh();
+  }
+
+  /** Shapes changed for a reason that is not the LOD: redo both halves. */
+  function refreshGeometry(): void {
+    refreshCoast();
+    refreshDetail();
   }
 
   function repaintAll(): void {
@@ -247,8 +370,36 @@ async function main(): Promise<void> {
     repaintAll();
     renderCountryList();
   });
-  drawn.observe(() => refresh());
-  deleted.observe(() => refresh());
+  drawn.observe(() => refreshGeometry());
+  deleted.observe(() => refreshGeometry());
+
+  // ---- level of detail ----------------------------------------------------
+
+  const lod = new LodController(map, topology, BASE, {
+    onBase: (level) => {
+      // A finer base means every outline changed, so the whole-world source is
+      // reuploaded and the coastline re-derived. This is the one expensive
+      // moment in the whole scheme, which is why it is a one-way upgrade that
+      // happens at most once per level per session - zooming back out keeps
+      // the finer geometry rather than paying this again in reverse.
+      const started = performance.now();
+      (map.getSource("provinces") as maplibregl.GeoJSONSource).setData(
+        topology.provincePolygons(),
+      );
+      repaintAll();
+      refreshGeometry();
+      baseSwapMs = performance.now() - started;
+      console.info(`base LOD -> ${level} re-derived in ${baseSwapMs.toFixed(0)} ms`);
+    },
+    onRefined: (provinces, arcs) => {
+      detailed = provinces;
+      refinedArcs = arcs;
+      refreshDetail();
+    },
+    onStatus: (text) => {
+      lodStatus.textContent = text;
+    },
+  });
 
   // ---- reference underlays -----------------------------------------------
 
@@ -426,7 +577,7 @@ async function main(): Promise<void> {
 
   function provinceAt(event: maplibregl.MapMouseEvent): ProvId | null {
     const hits = map.queryRenderedFeatures(event.point, {
-      layers: ["drawn-fill", "province-fill"],
+      layers: ["drawn-fill", "detail-fill", "province-fill"],
     });
     const feature = hits[0];
     if (!feature) return null;
@@ -534,6 +685,14 @@ async function main(): Promise<void> {
   Object.assign(window as unknown as Record<string, unknown>, {
     __map: map,
     __setTool: setTool,
+    __lod: () => ({
+      base: topology.level,
+      target: lod.targetLevel(),
+      refinedArcs: topology.refinedCount,
+      vertices: topology.vertexCount(),
+      detailedProvinces: detailed.size,
+      baseSwapMs: Math.round(baseSwapMs),
+    }),
     __underlays: () => JSON.stringify([...underlays.entries()]),
     __reset: () =>
       collab.doc.transact(() => {
@@ -548,7 +707,9 @@ async function main(): Promise<void> {
   setTool("paint");
   syncUnderlays();
   repaintAll();
+  refreshGeometry();
   renderCountryList();
+  void lod.start();
 }
 
 void main();

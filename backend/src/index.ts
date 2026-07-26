@@ -21,6 +21,7 @@ import fastifyStatic from "@fastify/static";
 import websocket from "@fastify/websocket";
 import Fastify from "fastify";
 import { RoomRegistry } from "./collab.js";
+import { registerGeoDetail } from "./geo-detail.js";
 import { registerRecords } from "./records.js";
 import { TreeStore } from "./tree.js";
 import { registerWiki } from "./wiki.js";
@@ -39,6 +40,13 @@ const appRoot = path.resolve(here, "../..");
  */
 const GEO_DIR = process.env.GEO_DIR ?? path.join(appRoot, "data/runtime");
 const DATA_DIR = process.env.DATA_DIR ?? path.join(appRoot, "data");
+
+/**
+ * The fine levels of detail, deliberately *not* under `GEO_DIR`: they are read
+ * a slice at a time through `/geo/arcs` and would be a 27 MB download if the
+ * static handler could reach them.
+ */
+const GEO_DETAIL_DIR = process.env.GEO_DETAIL_DIR ?? path.join(appRoot, "data/geo-detail");
 
 const WIKI_DIR = path.join(appRoot, "frontend/wiki/dist");
 const MAP_DIR = path.join(appRoot, "frontend/map-proto/dist");
@@ -138,6 +146,7 @@ app.setNotFoundHandler(async (req, reply) => {
     .send(shell.replace("<head>", `<head><base href="${base}">`));
 });
 
+await registerGeoDetail(app, { detailDir: GEO_DETAIL_DIR });
 await registerRecords(app, { tree, rooms, markdownDir: MARKDOWN_DIR });
 await registerWiki(app, { tree, rooms, markdownDir: MARKDOWN_DIR });
 

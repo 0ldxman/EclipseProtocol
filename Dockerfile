@@ -50,6 +50,7 @@ WORKDIR /app
 ENV NODE_ENV=production \
     PORT=3010 \
     GEO_DIR=/app/geo \
+    GEO_DETAIL_DIR=/app/geo-detail \
     DATA_DIR=/data \
     LOG_LEVEL=info
 
@@ -65,6 +66,12 @@ COPY --from=build /app/frontend/map-proto/dist ./frontend/map-proto/dist
 
 # The baked province topology: a build artefact, not user data.
 COPY --from=build /app/data/runtime ./geo
+
+# The fine levels, read a slice at a time rather than served as files. Kept out
+# of ./geo on purpose: everything under it is statically downloadable, and these
+# are tens of megabytes each. Whichever levels the directory happens to hold are
+# the ones the server offers; a missing level just shortens the client's ladder.
+COPY --from=build /app/data/geo-detail ./geo-detail
 
 # /data is created here and owned by the unprivileged user, so a fresh named
 # volume inherits that ownership and the first write succeeds.

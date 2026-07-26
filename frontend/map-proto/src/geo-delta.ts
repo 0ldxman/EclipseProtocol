@@ -71,6 +71,46 @@ export class EffectiveGeo {
   }
 
   /**
+   * Where land meets sea, whoever holds it.
+   *
+   * This is geometry, not politics, so it is derived separately from
+   * `borderLines` and only when the shapes change - not on every paint stroke.
+   * Without it unowned land ends where its fill ends, and a fill edge is a hard
+   * aliased step: at any zoom past the overview the coast reads as the edge of
+   * a polygon rather than a shore, which is most of why a simplified map looks
+   * "angular" even once the simplification itself is fixed.
+   */
+  coastLines(arcs?: Iterable<number>): GeoJSON.FeatureCollection {
+    const features: GeoJSON.Feature[] = [];
+    const range = arcs ?? countUp(this.topology.arcCount);
+    for (const a of range) {
+      const left = this.side(this.topology.arcLeft[a]!);
+      const right = this.side(this.topology.arcRight[a]!);
+      // Exactly one live province: the other side is open sea, or a province
+      // somebody deleted, which the arc model treats as the same thing.
+      if ((left === null) === (right === null)) continue;
+      features.push({
+        type: "Feature",
+        // Carried so the whole-world layer can filter out the arcs a refined
+        // copy is drawing, instead of being rebuilt to leave them out.
+        properties: { arc: a },
+        geometry: { type: "LineString", coordinates: this.topology.arcCoords(a) },
+      });
+    }
+    if (!arcs) {
+      for (const [id, province] of this.drawn) {
+        if (this.deleted.has(id)) continue;
+        features.push({
+          type: "Feature",
+          properties: { arc: -1 },
+          geometry: { type: "LineString", coordinates: province.ring },
+        });
+      }
+    }
+    return { type: "FeatureCollection", features };
+  }
+
+  /**
    * Country outlines and coastlines for the current ownership.
    *
    * Base arcs are filtered exactly as before - only the resolution of each side
@@ -113,6 +153,10 @@ export class EffectiveGeo {
     for (const id of this.drawn.keys()) if (!this.deleted.has(id)) drawnAlive++;
     return { base: this.topology.provinces.length, hidden, drawn: drawnAlive };
   }
+}
+
+function* countUp(n: number): Generator<number> {
+  for (let i = 0; i < n; i++) yield i;
 }
 
 /** MapLibre feature ids must be numeric for feature-state; drawn ids are strings. */

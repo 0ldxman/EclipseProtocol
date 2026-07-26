@@ -94,7 +94,7 @@
       .underlay input[type="range"] { width: 100%; accent-color: var(--primary); }
 
       footer { padding: var(--step-2) var(--step-3); border-top: 1px solid var(--border); display: grid; gap: var(--step-1); }
-      #hover, #timing, #geo-stats, #presence { font-size: 11px; color: var(--muted-foreground); min-height: 15px; }
+      #hover, #timing, #geo-stats, #lod, #presence { font-size: 11px; color: var(--muted-foreground); min-height: 15px; }
 
       /* MapLibre positions a marker by writing `transform` onto its element, but
          supplies no styling of its own when the element is custom - without
@@ -154,6 +154,7 @@
         <div id="hover"></div>
         <div id="timing"></div>
         <div id="geo-stats"></div>
+        <div id="lod"></div>
         <div id="presence"></div>
       </footer>
     </div>

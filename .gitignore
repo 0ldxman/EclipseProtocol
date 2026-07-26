@@ -17,6 +17,14 @@ data/tree.json
 # the map serves, and rebuilding it needs Python, shapely and the 1 GB source
 # GeoJSON - not something a container build should be doing.
 
+# The same goes for data/geo-detail/detail-lod1.*, the fine level the server
+# slices arcs out of at high zoom. lod0 is the exception: 54 MB for the last
+# doubling of precision past z10, which nobody needs to paint provinces with.
+# Generate it locally with tools/geo/stage5_detail.py if you want it - the
+# server simply does not offer the level when the file is absent, and the
+# client's ladder stops one rung lower.
+data/geo-detail/detail-lod0.*
+
 .dev-screenshots/
 
 # the previous build, kept as reference. Its caches and the half-gigabyte

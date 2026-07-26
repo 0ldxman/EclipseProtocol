@@ -18,6 +18,7 @@ tools/geo
 # is what the map actually serves.
 data/*
 !data/runtime
+!data/geo-detail
 
 Dockerfile
 .dockerignore
