@@ -5,6 +5,21 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>AETHER — титульный лист категории</title>
 <link rel="stylesheet" href="lab.css">
+<style>
+  .grid9{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:20px}
+  .g9{display:flex;flex-direction:column}
+  .g9 .cover{flex:1}
+  .g9 figcaption{
+    display:flex;align-items:baseline;gap:10px;margin-top:9px;
+    font:10px/1.4 var(--mono);letter-spacing:.09em;text-transform:uppercase;color:var(--dim);
+  }
+  .g9 figcaption code{color:var(--amber);text-transform:none;letter-spacing:0}
+  .g9 figcaption s{text-decoration:none;margin-left:auto;color:var(--dimmer)}
+  .tree{font:12px/2 var(--mono);color:var(--dim);white-space:pre;overflow-x:auto}
+  .tree b{color:var(--fg);font-weight:400}
+  .tree em{font-style:normal;color:var(--amber)}
+  .tree s{text-decoration:none;color:var(--dimmer)}
+</style>
 </head>
 <body>
 <div class="wrap">
@@ -22,8 +37,7 @@
 <header class="lead">
   <h1>Титульный лист категории</h1>
   <p>У категории может быть своя первая страница — не список записей, а титул тома: герб,
-     название, эпиграф и выходные сведения. Открывается вместо обычного оглавления, список
-     записей идёт под ним.</p>
+     название, эпиграф и выходные сведения. Список записей идёт под ним.</p>
   <p>Технически это обычная запись с именем <code>_cover</code> внутри папки, поэтому её пишут
      и правят ровно так же, как всё остальное, и никакой второй сущности в дереве не заводится.</p>
 </header>
@@ -42,65 +56,63 @@
   </div>
 
   <div class="strip">
-    <span class="chrome">архив <s>/</s> <span class="chrome--on">операции</span></span>
-    <span class="chrome">том II</span>
-    <span class="chrome">9 записей</span>
-    <span class="chrome">2 под грифом</span>
+    <span class="chrome">архив <s>/</s> <span class="chrome--on">орден затмения</span></span>
+    <span class="chrome">том IV</span>
+    <span class="chrome">12 записей</span>
+    <span class="chrome">3 под грифом</span>
     <span class="chrome sp">титульный лист</span>
   </div>
 
   <div class="body">
     <div style="max-width:860px;margin:0 auto">
-      <article class="cover">
+      <article class="cover cover--black-red cover--pat-rays">
         <div class="cover__frame"></div>
         <div class="cover__in">
-          <div class="cover__mark">◆</div>
-          <div class="cover__org">Протокол AETHER · архивная служба</div>
+          <div class="cover__mark cover__mark--img">
+            <img alt="Герб Ордена Затмения" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 120'%3E%3Cg fill='none' stroke='%23d8443c' stroke-width='2.5'%3E%3Ccircle cx='60' cy='60' r='52'/%3E%3Ccircle cx='60' cy='60' r='41'/%3E%3C/g%3E%3Cpath d='M60 22a38 38 0 1 0 0 76 29 29 0 1 1 0-76z' fill='%23d8443c'/%3E%3Cpath d='M60 4v14M60 102v14M4 60h14M102 60h14' stroke='%23d8443c' stroke-width='2.5'/%3E%3C/svg%3E">
+          </div>
+          <div class="cover__org">Орден Затмения · внутреннее собрание</div>
 
-          <div class="cover__vol">том II · раздел операций</div>
-          <h1>Операции</h1>
+          <div class="cover__vol">том IV · отколовшиеся</div>
+          <h1>Орден Затмения</h1>
           <div class="cover__rule"></div>
 
           <blockquote class="cover__epi">
-            «Операция считается завершённой не тогда, когда достигнута цель,
-             а тогда, когда закрыт последний вопрос о ней. По этому счёту
-             ни одна операция протокола не завершена.»
-            <cite>из предисловия к первому изданию, 2033</cite>
+            «Мы не уходили из протокола. Протокол ушёл от того, ради чего был создан,
+             и мы остались стоять там, где стояли.»
+            <cite>из обращения совета, апрель 2020</cite>
           </blockquote>
         </div>
 
         <div class="cover__foot">
-          <p>Раздел собирает всё, что протокол проводил своими силами: полевые программы,
-             отдельные выходы и то, что впоследствии было признано ошибкой. Записи о людях
-             вынесены в первый том, о местах — в третий.</p>
+          <p>Раздел ведётся по материалам, переданным добровольно, и по перехватам. Сведения
+             из вторых рук помечены отдельно; там, где источник не назван, это сказано прямо.</p>
           <div class="cover__imprint">
             <dl>
-              <dt>записей</dt><dd>9</dd>
-              <dt>под грифом</dt><dd>2</dd>
-              <dt>охват</dt><dd>2019—2026</dd>
+              <dt>записей</dt><dd>12</dd>
+              <dt>под грифом</dt><dd>3</dd>
+              <dt>охват</dt><dd>2020—2026</dd>
               <dt>ведёт</dt><dd>@архивариус</dd>
               <dt>сведено</dt><dd>26.07.2026</dd>
             </dl>
-            <div class="cover__stamp">для служебного пользования</div>
+            <div class="cover__stamp">оспаривается стороной</div>
           </div>
         </div>
       </article>
 
-      <!-- список записей идёт под титулом -->
       <div style="display:flex;align-items:baseline;gap:14px;margin:44px 0 14px">
         <b style="font:500 13px/1 var(--display);letter-spacing:.12em;text-transform:uppercase;color:var(--fg)">Содержание</b>
-        <s style="text-decoration:none" class="chrome">9 записей</s>
+        <s style="text-decoration:none" class="chrome">12 записей</s>
         <span style="flex:1;height:1px;background:var(--rule)"></span>
       </div>
 
       <table class="table">
         <thead><tr><th style="width:44px">№</th><th>запись</th><th>годы</th><th class="num">ревизия</th></tr></thead>
         <tbody>
-          <tr><td style="color:var(--dimmer)">01</td><td>Протокол Аполлон</td><td>2029—2031</td><td class="num">31</td></tr>
-          <tr><td style="color:var(--dimmer)">02</td><td>Северный Ветер</td><td>2028</td><td class="num">12</td></tr>
-          <tr><td style="color:var(--dimmer)">03</td><td>Тихий Полдень <span class="pill pill--red" style="margin-left:6px">допуск 3</span></td><td>2031</td><td class="num">4</td></tr>
-          <tr><td style="color:var(--dimmer)">04</td><td>Меридианский пакт</td><td>2020</td><td class="num">9</td></tr>
-          <tr><td style="color:var(--dimmer)">05</td><td>Орбитальный исход</td><td>2019</td><td class="num">6</td></tr>
+          <tr><td style="color:var(--dimmer)">01</td><td>Рождение Ордена</td><td>2020</td><td class="num">14</td></tr>
+          <tr><td style="color:var(--dimmer)">02</td><td>Совет девяти</td><td>2020—2023</td><td class="num">7</td></tr>
+          <tr><td style="color:var(--dimmer)">03</td><td>Договор Затмения <span class="pill pill--red" style="margin-left:6px">допуск 2</span></td><td>2023</td><td class="num">5</td></tr>
+          <tr><td style="color:var(--dimmer)">04</td><td>Новый Эдем</td><td>2024—</td><td class="num">9</td></tr>
         </tbody>
       </table>
     </div>
@@ -113,41 +125,256 @@
   </div>
 </div>
 
-<p class="note"><b>Почему лист бумажный, а не тёмный.</b> Титул — авторский текст, как и запись,
-   поэтому материал тот же. Двойная рамка по краю — типографский приём с настоящих титульных
-   листов, а не рамка окна: внутренняя линия тоньше внешней, отступ пять пикселей.
-   Штамп повёрнут на три градуса — единственное место во всей системе, где что-то стоит не по сетке,
-   и именно поэтому он читается как оттиск, а не как элемент интерфейса.</p>
+<p class="note"><b>Герб — загруженная картинка.</b> По умолчанию на месте герба стоит знак
+   <code>◆</code>, но <code>logo=</code> подставляет файл из <code>uploads</code>: организациям
+   нужен собственный. Рамку вокруг картинки лист не рисует — у логотипа обычно есть своя,
+   и вторая превратила бы его в кнопку. Высота 78 пикселей, ширина по пропорции.</p>
+
+<!-- ═══ ШАБЛОНЫ ════════════════════════════════════════════════════════ -->
+<div class="sec"><span>02</span><b>Шаблоны</b></div>
+
+<p class="note" style="margin:0 0 24px"><b>Как это устроено.</b> Лист построен на трёх
+   переменных — <code>--cv-bg</code>, <code>--cv-ink</code>, <code>--cv-accent</code>; остальные
+   значения выводятся из них через <code>color-mix</code>. Поэтому шаблон — это три числа, а не
+   переписанные правила, и произвольная схема задаётся тем же способом, если готовых не хватит.</p>
+
+<div class="grid9">
+  <figure class="g9" style="margin:0">
+    <div class="cover cover--mini cover--pat-fiber">
+      <div class="cover__frame"></div>
+      <div class="cover__in"><div class="cover__mark">◆</div><div class="cover__org">архивная служба</div>
+        <div class="cover__vol">том II</div><h1>Операции</h1><div class="cover__rule"></div>
+        <blockquote class="cover__epi">Ни одна операция протокола не завершена.</blockquote></div>
+      <div class="cover__foot"><p>Полевые программы и отдельные выходы.</p>
+        <div class="cover__imprint"><dl><dt>записей</dt><dd>9</dd></dl>
+          <div class="cover__stamp">дсп</div></div></div>
+    </div>
+    <figcaption><code>бумага</code> по умолчанию <s>основной</s></figcaption>
+  </figure>
+
+  <figure class="g9" style="margin:0">
+    <div class="cover cover--mini cover--black-red cover--pat-rays">
+      <div class="cover__frame"></div>
+      <div class="cover__in"><div class="cover__mark">◆</div><div class="cover__org">внутреннее собрание</div>
+        <div class="cover__vol">том IV</div><h1>Затмение</h1><div class="cover__rule"></div>
+        <blockquote class="cover__epi">Мы остались стоять там, где стояли.</blockquote></div>
+      <div class="cover__foot"><p>Отколовшаяся часть протокола.</p>
+        <div class="cover__imprint"><dl><dt>записей</dt><dd>12</dd></dl>
+          <div class="cover__stamp">оспорено</div></div></div>
+    </div>
+    <figcaption><code>black-red</code> <s>чёрный + красный</s></figcaption>
+  </figure>
+
+  <figure class="g9" style="margin:0">
+    <div class="cover cover--mini cover--black-white cover--pat-grid">
+      <div class="cover__frame"></div>
+      <div class="cover__in"><div class="cover__mark">◆</div><div class="cover__org">архивная служба</div>
+        <div class="cover__vol">том I</div><h1>Персонажи</h1><div class="cover__rule"></div>
+        <blockquote class="cover__epi">Люди протокола и вокруг него.</blockquote></div>
+      <div class="cover__foot"><p>Оперативники, кураторы, ушедшие.</p>
+        <div class="cover__imprint"><dl><dt>записей</dt><dd>14</dd></dl>
+          <div class="cover__stamp">открыто</div></div></div>
+    </div>
+    <figcaption><code>black-white</code> <s>чёрный + белый</s></figcaption>
+  </figure>
+
+  <figure class="g9" style="margin:0">
+    <div class="cover cover--mini cover--black-blue cover--pat-grid">
+      <div class="cover__frame"></div>
+      <div class="cover__in"><div class="cover__mark">◆</div><div class="cover__org">картографическая часть</div>
+        <div class="cover__vol">том III</div><h1>Места</h1><div class="cover__rule"></div>
+        <blockquote class="cover__epi">Штаб оставляют один раз.</blockquote></div>
+      <div class="cover__foot"><p>Точки, за которые отвечал протокол.</p>
+        <div class="cover__imprint"><dl><dt>записей</dt><dd>7</dd></dl>
+          <div class="cover__stamp">на карте</div></div></div>
+    </div>
+    <figcaption><code>black-blue</code> <s>чёрный + синий</s></figcaption>
+  </figure>
+
+  <figure class="g9" style="margin:0">
+    <div class="cover cover--mini cover--red-black cover--pat-hatch">
+      <div class="cover__frame"></div>
+      <div class="cover__in"><div class="cover__mark">◆</div><div class="cover__org">особый отдел</div>
+        <div class="cover__vol">том V</div><h1>Приложения</h1><div class="cover__rule"></div>
+        <blockquote class="cover__epi">Читать по предъявлении допуска.</blockquote></div>
+      <div class="cover__foot"><p>Вложения и расшифровки к записям.</p>
+        <div class="cover__imprint"><dl><dt>записей</dt><dd>21</dd></dl>
+          <div class="cover__stamp">допуск 3</div></div></div>
+    </div>
+    <figcaption><code>red-black</code> <s>красный + чёрный</s></figcaption>
+  </figure>
+
+  <figure class="g9" style="margin:0">
+    <div class="cover cover--mini cover--red-white cover--pat-rays">
+      <div class="cover__frame"></div>
+      <div class="cover__in"><div class="cover__mark">◆</div><div class="cover__org">оперативная часть</div>
+        <div class="cover__vol">том VI</div><h1>Потери</h1><div class="cover__rule"></div>
+        <blockquote class="cover__epi">Поиски прекращены. Дело не закрыто.</blockquote></div>
+      <div class="cover__foot"><p>Те, чья судьба не подтверждена.</p>
+        <div class="cover__imprint"><dl><dt>записей</dt><dd>6</dd></dl>
+          <div class="cover__stamp">без вести</div></div></div>
+    </div>
+    <figcaption><code>red-white</code> <s>красный + белый</s></figcaption>
+  </figure>
+
+  <figure class="g9" style="margin:0">
+    <div class="cover cover--mini cover--blue-white cover--pat-grid">
+      <div class="cover__frame"></div>
+      <div class="cover__in"><div class="cover__mark">◆</div><div class="cover__org">орбитальная часть</div>
+        <div class="cover__vol">том VII</div><h1>Эфир</h1><div class="cover__rule"></div>
+        <blockquote class="cover__epi">Сорок одна секунда направленной передачи.</blockquote></div>
+      <div class="cover__foot"><p>Сигнал и всё, что из него выросло.</p>
+        <div class="cover__imprint"><dl><dt>записей</dt><dd>4</dd></dl>
+          <div class="cover__stamp">источник</div></div></div>
+    </div>
+    <figcaption><code>blue-white</code> <s>синий + белый</s></figcaption>
+  </figure>
+
+  <figure class="g9" style="margin:0">
+    <div class="cover cover--mini cover--blue-black cover--pat-hatch">
+      <div class="cover__frame"></div>
+      <div class="cover__in"><div class="cover__mark">◆</div><div class="cover__org">поселение</div>
+        <div class="cover__vol">том II · раздел</div><h1>Новый Эдем</h1><div class="cover__rule"></div>
+        <blockquote class="cover__epi">Построено на том, что осталось.</blockquote></div>
+      <div class="cover__foot"><p>Операции последнего периода.</p>
+        <div class="cover__imprint"><dl><dt>записей</dt><dd>5</dd></dl>
+          <div class="cover__stamp">действует</div></div></div>
+    </div>
+    <figcaption><code>blue-black</code> <s>синий + чёрный</s></figcaption>
+  </figure>
+
+  <figure class="g9" style="margin:0">
+    <div class="cover cover--mini cover--orange-white cover--pat-rays">
+      <div class="cover__frame"></div>
+      <div class="cover__in"><div class="cover__mark">◆</div><div class="cover__org">летопись</div>
+        <div class="cover__vol">том VIII</div><h1>Разлом</h1><div class="cover__rule"></div>
+        <blockquote class="cover__epi">Эпоха, которая ещё не кончилась.</blockquote></div>
+      <div class="cover__foot"><p>Третья эпоха и её события.</p>
+        <div class="cover__imprint"><dl><dt>событий</dt><dd>5</dd></dl>
+          <div class="cover__stamp">текущая</div></div></div>
+    </div>
+    <figcaption><code>orange-white</code> <s>оранжевый + белый</s></figcaption>
+  </figure>
+
+  <figure class="g9" style="margin:0">
+    <div class="cover cover--mini cover--orange-black cover--pat-fiber">
+      <div class="cover__frame"></div>
+      <div class="cover__in"><div class="cover__mark">◆</div><div class="cover__org">техническая часть</div>
+        <div class="cover__vol">том IX</div><h1>Техника</h1><div class="cover__rule"></div>
+        <blockquote class="cover__epi">Всё, что летало, ездило и слушало.</blockquote></div>
+      <div class="cover__foot"><p>Аппараты протокола и ордена.</p>
+        <div class="cover__imprint"><dl><dt>записей</dt><dd>6</dd></dl>
+          <div class="cover__stamp">открыто</div></div></div>
+    </div>
+    <figcaption><code>orange-black</code> <s>оранжевый + чёрный</s></figcaption>
+  </figure>
+</div>
+
+<p class="note"><b>Одно решение, которое я принял за вас.</b> На тёмных схемах второй цвет
+   работает акцентом — линией, рамкой герба, штампом, — а текст остаётся светлым. Набирать целую
+   титульную страницу красным по чёрному значит сделать её нечитаемой; на цветных схемах
+   (красный, синий, оранжевый фон) второй цвет и есть текст, там это работает.
+   Если нужен именно красный текст на чёрном — скажите, добавлю как отдельный шаблон
+   с оговоркой, что он для коротких титулов.</p>
+
+<p class="note"><b>Рисунок фона</b> задаётся отдельно от схемы: <code>pattern=fiber</code>
+   (волокно бумаги), <code>grid</code> (сетка), <code>hatch</code> (штриховка),
+   <code>rays</code> (лучи от нижнего края), <code>none</code>. Любой сочетается с любой схемой —
+   выше все четыре показаны вперемешку.</p>
+
+<!-- ═══ НАСЛЕДОВАНИЕ ═══════════════════════════════════════════════════ -->
+<div class="sec"><span>03</span><b>Вложенные папки</b></div>
+
+<p class="note" style="margin:0 0 22px"><b>Правило одно: ближайшая обложка вверх по дереву.</b>
+   Запись показывает обложку той папки, в которой лежит; если у неё обложки нет — обложку
+   родителя, и так до корня. Своя обложка у вложенной папки перекрывает родительскую целиком:
+   и схему, и герб, и название.</p>
+
+<div class="panel ticks" style="padding:24px 22px">
+  <span class="panel__tab">дерево</span>
+  <div class="tree">архив/
+├── <b>операции/</b>                   <em>_cover.md</em>  <s>«Операции», схема paper</s>
+│   ├── <b>новый-эдем/</b>             <em>_cover.md</em>  <s>«Новый Эдем», схема blue-black</s>
+│   │   ├── операция-1              <s>→ обложка «Новый Эдем»</s>
+│   │   └── операция-2              <s>→ обложка «Новый Эдем»</s>
+│   ├── <b>меридиан/</b>               <s>обложки нет</s>
+│   │   └── тихий-полдень           <s>→ обложка «Операции»</s>
+│   └── протокол-аполлон            <s>→ обложка «Операции»</s>
+└── персонажи/                  <em>_cover.md</em>  <s>«Персонажи», схема black-white</s>
+    └── кремень                     <s>→ обложка «Персонажи»</s></div>
+</div>
+
+<p class="note"><b>Как это видно на странице записи.</b> Над документом встаёт полоса
+   принадлежности с гербом и названием ближайшей обложки, окрашенная её акцентом. Она же ссылка
+   на титульный лист. Ниже — две записи из одного тома, но из разных папок.</p>
+
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(360px,1fr));gap:24px;margin-top:20px">
+  <div class="screen" style="padding:20px">
+    <div class="strip" style="border:0;padding:0 0 12px">
+      <span class="chrome">архив <s>/</s> операции <s>/</s> новый эдем <s>/</s> <span class="chrome--on">операция-1</span></span>
+    </div>
+    <div class="belong" style="--cv-accent:#3579ad">
+      <i>◆</i>
+      <span><b>Новый Эдем</b><br><s>том II · раздел · 5 записей</s></span>
+      <span class="sp chrome">титульный лист ↗</span>
+    </div>
+    <article class="paper"><div class="paper__in" style="padding:24px 26px 26px">
+      <h1 class="rec" style="font-size:26px">Операция 1</h1>
+      <div class="rec-rule"></div>
+      <p class="lede" style="font-size:14px">Вложенная папка перекрыла обложку родителя:
+         полоса взяла герб и синий акцент «Нового Эдема».</p>
+    </div></article>
+  </div>
+
+  <div class="screen" style="padding:20px">
+    <div class="strip" style="border:0;padding:0 0 12px">
+      <span class="chrome">архив <s>/</s> операции <s>/</s> меридиан <s>/</s> <span class="chrome--on">тихий полдень</span></span>
+    </div>
+    <div class="belong" style="--cv-accent:#8a8378">
+      <i>◆</i>
+      <span><b>Операции</b><br><s>том II · 9 записей</s></span>
+      <span class="sp chrome">титульный лист ↗</span>
+    </div>
+    <article class="paper"><div class="paper__in" style="padding:24px 26px 26px">
+      <h1 class="rec" style="font-size:26px">Тихий Полдень</h1>
+      <div class="rec-rule"></div>
+      <p class="lede" style="font-size:14px">У папки «меридиан» обложки нет, поэтому запись
+         поднялась на уровень выше и взяла обложку «Операций».</p>
+    </div></article>
+  </div>
+</div>
 
 <!-- ═══ ИСХОДНИК ═══════════════════════════════════════════════════════ -->
-<div class="sec"><span>02</span><b>Чем это пишется</b></div>
+<div class="sec"><span>04</span><b>Чем это пишется</b></div>
 
 <div class="pair">
-  <div class="pair__src"><pre><span class="c">data/records/operacii/_cover.md</span>
+  <div class="pair__src"><pre><span class="c">data/records/orden-zatmeniya/_cover.md</span>
 
-<span class="d">:::cover</span><span class="a">{volume="том II · раздел операций"
-        mark=◆ org="Протокол AETHER · архивная служба"}</span>
+<span class="d">:::cover</span><span class="a">{theme=black-red
+        pattern=rays
+        logo=/uploads/orden-emblem.svg
+        volume="том IV · отколовшиеся"
+        org="Орден Затмения · внутреннее собрание"}</span>
 
-<span class="c"># Операции</span>
+<span class="c"># Орден Затмения</span>
 
-<span class="d">:::epigraph</span><span class="a">{cite="из предисловия к первому изданию, 2033"}</span>
-Операция считается завершённой не тогда, когда
-достигнута цель, а тогда, когда закрыт последний
-вопрос о ней.
+<span class="d">:::epigraph</span><span class="a">{cite="из обращения совета, апрель 2020"}</span>
+Мы не уходили из протокола. Протокол ушёл от того,
+ради чего был создан.
 <span class="d">:::</span>
 
 <span class="d">:::columns</span>
-Раздел собирает всё, что протокол проводил своими
-силами: полевые программы и отдельные выходы.
+Раздел ведётся по материалам, переданным добровольно,
+и по перехватам.
 
 <span class="d">:::right</span>
 <span class="d">:::fields</span>
-записей :: 9
-под грифом :: 2
-охват :: 2019—2026
+записей :: 12
+под грифом :: 3
+охват :: 2020—2026
 ведёт :: @архивариус
 <span class="d">:::</span>
-<span class="d">::stamp</span><span class="a">[для служебного пользования]</span>
+<span class="d">::stamp</span><span class="a">[оспаривается стороной]</span>
 <span class="d">:::</span>
 <span class="d">:::</span>
 
@@ -156,7 +383,17 @@
 
   <div class="pair__out">
     <div style="padding:22px 24px">
-      <div class="chrome" style="margin-bottom:14px">что здесь новое</div>
+      <div class="chrome" style="margin-bottom:14px">свойства обложки</div>
+      <dl class="kv">
+        <dt>theme</dt><dd>одна из девяти + paper</dd>
+        <dt>pattern</dt><dd>fiber · grid · hatch · rays · none</dd>
+        <dt>logo</dt><dd>файл из uploads</dd>
+        <dt>volume</dt><dd>надпись над названием</dd>
+        <dt>org</dt><dd>надпись под гербом</dd>
+        <dt>layout</dt><dd>title · plate · index</dd>
+      </dl>
+
+      <div class="chrome" style="margin:24px 0 10px">новые директивы</div>
       <dl class="kv">
         <dt>:::cover</dt><dd>оболочка листа</dd>
         <dt>:::epigraph</dt><dd>эпиграф с подписью</dd>
@@ -165,61 +402,15 @@
         <dt>:::center</dt><dd>по центру</dd>
         <dt>::stamp</dt><dd>оттиск</dd>
       </dl>
-      <p class="note" style="margin-top:18px;max-width:none">Пять из шести — контейнерные
-        директивы, то есть тот же вид, что у <code>infobox</code> и <code>quote</code>:
-        разбор их уже умеет. <code>::stamp</code> — листовая, как <code>image</code>.</p>
-      <p class="note" style="max-width:none"><code>:::center</code> и <code>:::right</code>
-        пригодятся и в обычных записях — сейчас выровнять блок по центру нечем, а именно этого
-        не хватало картинкам и галереям.</p>
 
-      <div class="chrome" style="margin:26px 0 10px">заготовки листа</div>
-      <p class="note" style="max-width:none;margin:0">Оболочка <code>:::cover</code> принимает
-        <code>layout=</code>: <code>title</code> — как выше; <code>plate</code> — во всю ширину
-        с изображением под текстом; <code>index</code> — без эпиграфа, сразу с содержанием.
-        Разница только в раскладке, содержимое пишется одинаково.</p>
+      <p class="note" style="margin-top:18px;max-width:none">Пять из шести — контейнерные,
+        то есть того же вида, что <code>infobox</code>: разбор их уже умеет.
+        <code>::stamp</code> — листовая, как <code>image</code>.</p>
+      <p class="note" style="max-width:none">Своя схема без шаблона — те же три переменные:
+        <code>:::cover{bg=#123 ink=#eee accent=#f90}</code>. Остальные значения лист выведет сам.</p>
     </div>
   </div>
 </div>
-
-<!-- ═══ ВТОРАЯ ЗАГОТОВКА ═══════════════════════════════════════════════ -->
-<div class="sec"><span>03</span><b>Заготовка «plate»</b></div>
-
-<div style="max-width:860px;margin:0 auto">
-  <article class="cover" style="padding:0;background:var(--ink)">
-    <div style="position:relative;padding:70px 60px 54px;background:var(--ink-2);
-                background-image:linear-gradient(rgba(255,255,255,.035) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.035) 1px,transparent 1px);
-                background-size:38px 38px">
-      <div class="cover__frame" style="border-color:var(--rule-2)"></div>
-      <div class="cover__in" style="color:var(--fg)">
-        <div class="cover__mark" style="border-color:var(--amber);color:var(--amber)">◆</div>
-        <div class="cover__org" style="color:var(--dim)">Протокол AETHER · архивная служба</div>
-        <div class="cover__vol" style="color:var(--dimmer)">том III · раздел мест</div>
-        <h1 style="color:var(--fg)">Места</h1>
-        <div class="cover__rule" style="background:var(--amber)"></div>
-        <blockquote class="cover__epi" style="color:var(--dim)">
-          «Штаб оставляют один раз. Всё, что происходит потом, называется уже другими словами.»
-          <cite style="color:var(--dimmer)">Меридиан, июль 2022</cite>
-        </blockquote>
-      </div>
-      <div class="cover__foot" style="border-top-color:var(--rule-2)">
-        <p style="color:var(--dim);font:11px/1.8 var(--mono)">Семь мест, за которые протокол
-          отвечал или которые потерял. У четырёх есть привязка к карте, у двух — к хронологии.</p>
-        <div class="cover__imprint">
-          <dl>
-            <dt>записей</dt><dd style="color:var(--fg)">7</dd>
-            <dt>на карте</dt><dd style="color:var(--fg)">4</dd>
-            <dt>охват</dt><dd style="color:var(--fg)">2019—2026</dd>
-          </dl>
-          <div class="cover__stamp" style="border-color:rgba(232,161,60,.6);color:var(--amber)">открытый раздел</div>
-        </div>
-      </div>
-    </div>
-  </article>
-</div>
-
-<p class="note"><b>Та же разметка, другой материал.</b> Тёмная заготовка нужна разделам,
-   у которых титул важнее содержания — карта, хронология, приложения. Всё, что меняется, —
-   значение <code>layout</code>; текст листа автор не переписывает.</p>
 
 <p class="note" style="margin-top:38px"><b>Дальше.</b>
    <a href="lab-record.html">страница записи</a> ·

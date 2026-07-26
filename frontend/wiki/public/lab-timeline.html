@@ -63,7 +63,7 @@ a{color:inherit;text-decoration:none}
 .hero div{font:11px/1 var(--mono);letter-spacing:.36em;text-transform:uppercase;color:var(--dim)}
 
 /* ── лента ───────────────────────────────────────────────────────────── */
-.tl{position:relative;max-width:1040px;margin:0 auto;padding:20px 26px 300px}
+.tl{position:relative;max-width:1200px;margin:0 auto;padding:20px 26px 300px}
 .spine{
   position:absolute;left:50%;top:0;bottom:0;width:2px;transform:translateX(-50%);z-index:0;
   background:linear-gradient(180deg,transparent 0,rgba(232,161,60,.3) 3%,rgba(232,161,60,.22) 88%,rgba(210,86,63,.5) 97%,transparent 100%);
@@ -76,15 +76,15 @@ a{color:inherit;text-decoration:none}
 .epoch .sub{font:9px/1 var(--mono);letter-spacing:.12em;color:var(--dim)}
 
 /* событие: узел на оси, тяга к карточке, карточка у края */
-.ev{position:relative;height:112px}
+.ev{position:relative;height:150px}
 .ev .node{
-  position:absolute;left:50%;top:44px;width:13px;height:13px;z-index:3;
+  position:absolute;left:50%;top:66px;width:13px;height:13px;z-index:3;
   transform:translate(-50%,-50%) rotate(45deg);border:1.5px solid var(--amber);background:var(--ink);
   transition:.22s;cursor:pointer;
 }
-.ev .conn{position:absolute;top:44px;width:132px;height:1px;background:rgba(232,161,60,.35);z-index:1;transition:.22s}
+.ev .conn{position:absolute;top:66px;width:132px;height:1px;background:rgba(232,161,60,.35);z-index:1;transition:.22s}
 .ev .card{
-  position:absolute;top:24px;max-width:min(340px,calc(50% - 152px));z-index:2;cursor:pointer;
+  position:absolute;top:12px;max-width:min(440px,calc(50% - 152px));z-index:2;cursor:pointer;
   padding:10px 13px;border:1px solid transparent;transition:.22s;
 }
 .ev--l .conn{right:50%}
@@ -102,13 +102,13 @@ a{color:inherit;text-decoration:none}
 }
 /* миниатюра стоит с внешней стороны ленты, чтобы не разрывать связь
    карточки с осью: слева от левой карточки, справа от правой */
-.ev .card{display:flex;gap:13px;align-items:flex-start;justify-content:flex-end}
+.ev .card{display:flex;gap:15px;align-items:center;justify-content:flex-end}
 .ev--r .card{flex-direction:row-reverse;justify-content:flex-end}
-.ev .thumb{flex:none;width:86px;height:60px;overflow:hidden;box-shadow:inset 0 0 0 1px var(--rule-2);background:var(--ink-2)}
+.ev .thumb{flex:none;width:168px;height:112px;overflow:hidden;box-shadow:inset 0 0 0 1px var(--rule-2);background:var(--ink-2)}
 .ev .thumb img{width:100%;height:100%;object-fit:cover;display:block;opacity:.62;transition:.22s}
 .ev:hover .thumb img{opacity:1}
 .ev .txt{min-width:0;flex:0 1 auto}
-.ev .extra{max-width:236px}
+.ev .extra{max-width:250px}
 .ev:hover .extra,.ev:focus-within .extra{max-height:80px;opacity:1;margin-top:7px}
 .ev:hover .node{background:var(--amber);box-shadow:0 0 0 4px rgba(232,161,60,.14)}
 .ev:hover .conn{background:var(--amber)}
