@@ -14,6 +14,7 @@
   <a href="lab-record.html" class="on">запись</a>
   <a href="lab-widgets.html">виджеты</a>
   <a href="lab-nav.html">навигация</a>
+  <a href="lab-cover.html">титул</a>
   <a href="lab-timeline.html">хронология</a>
   <a class="sp" data-open-palette style="cursor:pointer">CTRL+K</a>
 </nav>
@@ -68,7 +69,7 @@
       <aside class="w-infobox" style="float:right;width:210px;margin:16px 0 14px 22px">
         <div class="w-infobox-title">Досье</div>
         <figure class="w-image">
-          <img alt="Последнее фото" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 300 400'%3E%3Crect width='300' height='400' fill='%23c9c4b8'/%3E%3Cpath d='M-100 400L400-100M-100 500L500-100' stroke='%23b3ada0' stroke-width='26'/%3E%3C/svg%3E">
+          <img alt="Последнее фото" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 300 400'%3E%3Crect width='300' height='400' fill='%231b1d20'/%3E%3Cpath d='M-100 400L400-100M-100 500L500-100' stroke='%23282b30' stroke-width='26'/%3E%3C/svg%3E">
           <figcaption>Последнее фото, 2031</figcaption>
         </figure>
         <dl class="w-fields">
@@ -179,7 +180,7 @@
       <div class="w-infobox">
         <div class="w-infobox-title">Досье</div>
         <figure class="w-image">
-          <img alt="Последнее фото" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 300 400'%3E%3Crect width='300' height='400' fill='%23c9c4b8'/%3E%3Cpath d='M-100 400L400-100M-100 500L500-100' stroke='%23b3ada0' stroke-width='26'/%3E%3C/svg%3E">
+          <img alt="Последнее фото" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 300 400'%3E%3Crect width='300' height='400' fill='%231b1d20'/%3E%3Cpath d='M-100 400L400-100M-100 500L500-100' stroke='%23282b30' stroke-width='26'/%3E%3C/svg%3E">
           <figcaption>Последнее фото, 2031</figcaption>
         </figure>
         <dl class="w-fields">
@@ -344,12 +345,15 @@
   <div class="pal__box">
     <i></i><i></i><i></i><i></i>
     <div class="pal__in"><b>aether@eclipse</b><s>:~$</s>
-      <input id="pal-q" placeholder="запись, категория, метка или команда…" autocomplete="off"><kbd class="kbd">ESC</kbd></div>
+      <input id="pal-q" placeholder="запись, категория, метка или команда…" autocomplete="off"><kbd>ESC</kbd></div>
     <div class="pal__scopes" id="pal-scopes">
       <span class="on">все</span><span>записи</span><span><b>/</b> категории</span><span><b>#</b> метки</span><span><b>@</b> события</span><span><b>&gt;</b> команды</span>
     </div>
-    <div class="pal__list" id="pal-list"></div>
-    <div class="pal__foot"><span>↑↓ выбор</span><span>↵ открыть</span><span>esc закрыть</span><span class="sp">CTRL+K</span></div>
+    <div class="pal__panes">
+      <div class="pal__list" id="pal-list"></div>
+      <div class="pal__prev" id="pal-prev"></div>
+    </div>
+    <div class="pal__foot"><span><em>↑↓</em> выбор</span><span><em>↵</em> открыть</span><span><em>⇥</em> область</span><span><em>esc</em> закрыть</span><span class="sp">CTRL+K</span></div>
   </div>
 </div>
 

@@ -44,6 +44,7 @@
   <a href="lab-record.html">запись</a>
   <a href="lab-widgets.html">виджеты</a>
   <a href="lab-nav.html" class="on">навигация</a>
+  <a href="lab-cover.html">титул</a>
   <a href="lab-timeline.html">хронология</a>
   <a class="sp" data-open-palette style="cursor:pointer">CTRL+K</a>
 </nav>
@@ -160,73 +161,98 @@
 <div class="sec"><span>02</span><b>Командная строка</b></div>
 
 <div class="demo">
-  <div class="pal__box" style="width:600px">
+  <div class="pal__box" style="width:780px;max-width:100%">
     <i></i><i></i><i></i><i></i>
-    <div class="pal__in"><b>aether@eclipse</b><s>:~$</s>
-      <input value="мер" readonly><kbd class="kbd">ESC</kbd></div>
+    <div class="pal__in"><b>aether@eclipse</b><s>:~$</s><input value="мер" readonly><kbd>ESC</kbd></div>
     <div class="pal__scopes">
       <span class="on">все</span><span>записи</span><span><b>/</b> категории</span><span><b>#</b> метки</span><span><b>@</b> события</span><span><b>&gt;</b> команды</span>
     </div>
-    <div class="pal__list">
-      <div class="pal__cap">запись</div>
-      <div class="pal__row on"><em>◆</em><b><mark>Мер</mark>идиан</b><q>первый штаб протокола</q><s>место</s></div>
-      <div class="pal__row"><em>◇</em><b>Тихий Полдень</b><q>вывод групп из района <mark>Мер</mark>идиан</q><s class="lock">закрыто</s></div>
-      <div class="pal__cap">событие</div>
-      <div class="pal__row"><em>▸</em><b>Падение <mark>Мер</mark>идиана</b><q>штаб оставлен за девять часов</q><s>2022</s></div>
-      <div class="pal__cap">метка</div>
-      <div class="pal__row"><em>#</em><b><mark>мер</mark>идиан</b><q>9 записей</q><s>метка</s></div>
+    <div class="pal__panes">
+      <div class="pal__list">
+        <div class="pal__cap">запись</div>
+        <div class="pal__row on"><em>◆</em><b><mark>Мер</mark>идиан</b><s>место</s></div>
+        <div class="pal__row"><em>◇</em><b>Тихий Полдень</b><s class="lock">закрыто</s></div>
+        <div class="pal__cap">событие</div>
+        <div class="pal__row"><em>▸</em><b>Падение <mark>Мер</mark>идиана</b><s>2022</s></div>
+        <div class="pal__cap">метка</div>
+        <div class="pal__row"><em>#</em><b><mark>мер</mark>идиан</b><s>9 записей</s></div>
+      </div>
+      <div class="pal__prev">
+        <div class="kind">запись</div>
+        <h4>Меридиан</h4>
+        <div class="path">архив / места</div>
+        <hr>
+        <div class="shot"></div>
+        <div class="txt">Первый штаб протокола. Оставлен 11 июля 2022 года за девять часов;
+          опись вывезенного расходится в трёх отчётах.</div>
+        <div class="meta"><dl class="kv">
+          <dt>шифр</dt><dd>AC/*0031</dd>
+          <dt>ревизия</dt><dd>7</dd>
+          <dt>на карте</dt><dd>да</dd>
+          <dt>допуск</dt><dd><span class="clr"><i class="on"></i><i></i><i></i><i></i><i></i></span></dd>
+        </dl></div>
+      </div>
     </div>
-    <div class="pal__foot"><span>↑↓ выбор</span><span>↵ открыть</span><span>esc закрыть</span><span class="sp">CTRL+K</span></div>
+    <div class="pal__foot"><span><em>↑↓</em> выбор</span><span><em>↵</em> открыть</span><span><em>⇥</em> область</span><span><em>esc</em> закрыть</span><span class="sp">CTRL+K</span></div>
   </div>
 </div>
 
-<p class="note"><b>Что здесь работает на читателя.</b> Совпадение подсвечено янтарным —
-   единственное состояние в списке. Результаты сгруппированы по виду, поэтому запись
-   не теряется среди меток. Вторая строка нашлась по телу, а не по названию, и показывает,
-   <b>где</b> нашлась. Закрытая запись видна: заголовки ищутся всегда, тела закрытых — никогда,
-   и приписка «закрыто» объясняет, почему нет отрывка.</p>
+<p class="note"><b>Зачем правая панель.</b> В вики половина попаданий приходится на однокоренные
+   названия: «Меридиан», «Меридианский пакт», «Падение Меридиана». Выбрать между ними по одной
+   строке нельзя, поэтому разворот показывает путь, отрывок и допуск <b>до</b> нажатия — и открывать
+   запись ради проверки не приходится. У записей с картой в развороте появляется миникарта.</p>
 
-<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(330px,1fr));gap:24px;margin-top:24px">
-  <div class="demo" style="padding:22px">
+<p class="note"><b>Остальное — из той же логики.</b> Совпадение подсвечено янтарным: это
+   единственное состояние в списке. Результаты сгруппированы по виду, поэтому запись не теряется
+   среди меток. Закрытая запись видна с припиской «закрыто» — заголовки ищутся всегда, тела
+   закрытых никогда. Области переключаются клавишей <span class="kbd">⇥</span>, а приставка
+   в начале строки делает это сама.</p>
+
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:24px;margin-top:24px">
+  <div class="demo" style="padding:20px">
     <div class="pal__box" style="width:100%">
       <i></i><i></i><i></i><i></i>
-      <div class="pal__in"><b>aether@eclipse</b><s>:~$</s><input value="#проп" readonly><kbd class="kbd">ESC</kbd></div>
+      <div class="pal__in"><b>aether@eclipse</b><s>:~$</s><input value="#проп" readonly><kbd>ESC</kbd></div>
       <div class="pal__scopes">
         <span>все</span><span>записи</span><span><b>/</b> кат.</span><span class="on"><b>#</b> метки</span><span><b>@</b> соб.</span><span><b>&gt;</b> ком.</span>
       </div>
-      <div class="pal__list">
-        <div class="pal__cap">метка</div>
-        <div class="pal__row on"><em>#</em><b><mark>проп</mark>авшие</b><q>6 записей</q><s>метка</s></div>
+      <div class="pal__panes" style="min-height:auto">
+        <div class="pal__list" style="border-right:0">
+          <div class="pal__cap">метка</div>
+          <div class="pal__row on"><em>#</em><b><mark>проп</mark>авшие</b><s>6 записей</s></div>
+        </div>
       </div>
-      <div class="pal__foot"><span>↑↓ выбор</span><span>↵ открыть</span><span class="sp">CTRL+K</span></div>
+      <div class="pal__foot"><span><em>↵</em> открыть</span><span class="sp">CTRL+K</span></div>
     </div>
   </div>
 
-  <div class="demo" style="padding:22px">
+  <div class="demo" style="padding:20px">
     <div class="pal__box" style="width:100%">
       <i></i><i></i><i></i><i></i>
-      <div class="pal__in"><b>aether@eclipse</b><s>:~$</s><input value="ызщдды" readonly><kbd class="kbd">ESC</kbd></div>
+      <div class="pal__in"><b>aether@eclipse</b><s>:~$</s><input value="ызщдды" readonly><kbd>ESC</kbd></div>
       <div class="pal__scopes">
         <span class="on">все</span><span>записи</span><span><b>/</b> кат.</span><span><b>#</b> метки</span><span><b>@</b> соб.</span><span><b>&gt;</b> ком.</span>
       </div>
-      <div class="pal__list">
-        <div class="empty"><b>ничего не найдено</b>
-          <span>Проверьте раскладку или сузьте запрос.<br>
-          <code>#</code> — метки, <code>/</code> — категории, <code>&gt;</code> — команды.</span></div>
+      <div class="pal__panes" style="min-height:auto">
+        <div class="pal__list" style="border-right:0">
+          <div class="empty"><b>ничего не найдено</b>
+            <span>Проверьте раскладку или сузьте запрос.<br>
+            <code>#</code> — метки, <code>/</code> — категории, <code>&gt;</code> — команды.</span></div>
+        </div>
       </div>
-      <div class="pal__foot"><span>esc закрыть</span><span class="sp">CTRL+K</span></div>
+      <div class="pal__foot"><span><em>esc</em> закрыть</span><span class="sp">CTRL+K</span></div>
     </div>
   </div>
 </div>
 
-<p class="note"><b>Приставка сама переключает область.</b> Набранный <code>#</code> в начале
-   строки подсвечивает вкладку «метки» — панель областей остаётся подсказкой, а не пультом,
-   по которому нужно щёлкать. Пустой результат не извиняется: он говорит, что проверить.
-   Раскладка в первой строке — самая частая причина, поэтому названа первой.</p>
+<p class="note"><b>Пустой результат не извиняется</b> — он говорит, что проверить. Раскладка
+   названа первой, потому что это самая частая причина: набранное латиницей русское слово
+   не находит ничего и выглядит как поломка поиска.</p>
 
 <p class="note" style="margin-top:38px"><b>Дальше.</b>
    <a href="lab-record.html">страница записи</a> ·
-   <a href="lab-timeline.html">хронология</a></p>
+   <a href="lab-cover.html">титул</a>
+  <a href="lab-timeline.html">хронология</a></p>
 
 </div>
 
@@ -234,12 +260,15 @@
   <div class="pal__box">
     <i></i><i></i><i></i><i></i>
     <div class="pal__in"><b>aether@eclipse</b><s>:~$</s>
-      <input id="pal-q" placeholder="запись, категория, метка или команда…" autocomplete="off"><kbd class="kbd">ESC</kbd></div>
+      <input id="pal-q" placeholder="запись, категория, метка или команда…" autocomplete="off"><kbd>ESC</kbd></div>
     <div class="pal__scopes" id="pal-scopes">
       <span class="on">все</span><span>записи</span><span><b>/</b> категории</span><span><b>#</b> метки</span><span><b>@</b> события</span><span><b>&gt;</b> команды</span>
     </div>
-    <div class="pal__list" id="pal-list"></div>
-    <div class="pal__foot"><span>↑↓ выбор</span><span>↵ открыть</span><span>esc закрыть</span><span class="sp">CTRL+K</span></div>
+    <div class="pal__panes">
+      <div class="pal__list" id="pal-list"></div>
+      <div class="pal__prev" id="pal-prev"></div>
+    </div>
+    <div class="pal__foot"><span><em>↑↓</em> выбор</span><span><em>↵</em> открыть</span><span><em>⇥</em> область</span><span><em>esc</em> закрыть</span><span class="sp">CTRL+K</span></div>
   </div>
 </div>
 

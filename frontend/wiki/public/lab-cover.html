@@ -1,0 +1,253 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AETHER — титульный лист категории</title>
+<link rel="stylesheet" href="lab.css">
+</head>
+<body>
+<div class="wrap">
+
+<nav class="labnav">
+  <a href="lab.html">система</a>
+  <a href="lab-record.html">запись</a>
+  <a href="lab-widgets.html">виджеты</a>
+  <a href="lab-nav.html">навигация</a>
+  <a href="lab-cover.html" class="on">титул</a>
+  <a href="lab-timeline.html">хронология</a>
+  <a class="sp" data-open-palette style="cursor:pointer">CTRL+K</a>
+</nav>
+
+<header class="lead">
+  <h1>Титульный лист категории</h1>
+  <p>У категории может быть своя первая страница — не список записей, а титул тома: герб,
+     название, эпиграф и выходные сведения. Открывается вместо обычного оглавления, список
+     записей идёт под ним.</p>
+  <p>Технически это обычная запись с именем <code>_cover</code> внутри папки, поэтому её пишут
+     и правят ровно так же, как всё остальное, и никакой второй сущности в дереве не заводится.</p>
+</header>
+
+<!-- ═══ ЛИСТ ═══════════════════════════════════════════════════════════ -->
+<div class="sec"><span>01</span><b>Лист целиком</b></div>
+
+<div class="screen">
+  <div class="rail">
+    <a class="mark" href="lab-nav.html"><i>◆</i><b>AETHER.WIKI</b></a>
+    <div class="cmd" data-open-palette>поиск или команда<kbd>CTRL K</kbd></div>
+    <div class="who">
+      <div><div class="chrome chrome--on">@гость</div><div class="chrome">допуск <span class="chrome--amber">0</span></div></div>
+      <span class="clr"><i class="on"></i><i></i><i></i><i></i><i></i></span>
+    </div>
+  </div>
+
+  <div class="strip">
+    <span class="chrome">архив <s>/</s> <span class="chrome--on">операции</span></span>
+    <span class="chrome">том II</span>
+    <span class="chrome">9 записей</span>
+    <span class="chrome">2 под грифом</span>
+    <span class="chrome sp">титульный лист</span>
+  </div>
+
+  <div class="body">
+    <div style="max-width:860px;margin:0 auto">
+      <article class="cover">
+        <div class="cover__frame"></div>
+        <div class="cover__in">
+          <div class="cover__mark">◆</div>
+          <div class="cover__org">Протокол AETHER · архивная служба</div>
+
+          <div class="cover__vol">том II · раздел операций</div>
+          <h1>Операции</h1>
+          <div class="cover__rule"></div>
+
+          <blockquote class="cover__epi">
+            «Операция считается завершённой не тогда, когда достигнута цель,
+             а тогда, когда закрыт последний вопрос о ней. По этому счёту
+             ни одна операция протокола не завершена.»
+            <cite>из предисловия к первому изданию, 2033</cite>
+          </blockquote>
+        </div>
+
+        <div class="cover__foot">
+          <p>Раздел собирает всё, что протокол проводил своими силами: полевые программы,
+             отдельные выходы и то, что впоследствии было признано ошибкой. Записи о людях
+             вынесены в первый том, о местах — в третий.</p>
+          <div class="cover__imprint">
+            <dl>
+              <dt>записей</dt><dd>9</dd>
+              <dt>под грифом</dt><dd>2</dd>
+              <dt>охват</dt><dd>2019—2026</dd>
+              <dt>ведёт</dt><dd>@архивариус</dd>
+              <dt>сведено</dt><dd>26.07.2026</dd>
+            </dl>
+            <div class="cover__stamp">для служебного пользования</div>
+          </div>
+        </div>
+      </article>
+
+      <!-- список записей идёт под титулом -->
+      <div style="display:flex;align-items:baseline;gap:14px;margin:44px 0 14px">
+        <b style="font:500 13px/1 var(--display);letter-spacing:.12em;text-transform:uppercase;color:var(--fg)">Содержание</b>
+        <s style="text-decoration:none" class="chrome">9 записей</s>
+        <span style="flex:1;height:1px;background:var(--rule)"></span>
+      </div>
+
+      <table class="table">
+        <thead><tr><th style="width:44px">№</th><th>запись</th><th>годы</th><th class="num">ревизия</th></tr></thead>
+        <tbody>
+          <tr><td style="color:var(--dimmer)">01</td><td>Протокол Аполлон</td><td>2029—2031</td><td class="num">31</td></tr>
+          <tr><td style="color:var(--dimmer)">02</td><td>Северный Ветер</td><td>2028</td><td class="num">12</td></tr>
+          <tr><td style="color:var(--dimmer)">03</td><td>Тихий Полдень <span class="pill pill--red" style="margin-left:6px">допуск 3</span></td><td>2031</td><td class="num">4</td></tr>
+          <tr><td style="color:var(--dimmer)">04</td><td>Меридианский пакт</td><td>2020</td><td class="num">9</td></tr>
+          <tr><td style="color:var(--dimmer)">05</td><td>Орбитальный исход</td><td>2019</td><td class="num">6</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="foot">
+    <span class="chrome"><span class="dot dot--live"></span>канал устойчив</span>
+    <span class="chrome">04:12:33 UTC</span>
+    <span class="chrome sp">ЭП — 2026</span>
+  </div>
+</div>
+
+<p class="note"><b>Почему лист бумажный, а не тёмный.</b> Титул — авторский текст, как и запись,
+   поэтому материал тот же. Двойная рамка по краю — типографский приём с настоящих титульных
+   листов, а не рамка окна: внутренняя линия тоньше внешней, отступ пять пикселей.
+   Штамп повёрнут на три градуса — единственное место во всей системе, где что-то стоит не по сетке,
+   и именно поэтому он читается как оттиск, а не как элемент интерфейса.</p>
+
+<!-- ═══ ИСХОДНИК ═══════════════════════════════════════════════════════ -->
+<div class="sec"><span>02</span><b>Чем это пишется</b></div>
+
+<div class="pair">
+  <div class="pair__src"><pre><span class="c">data/records/operacii/_cover.md</span>
+
+<span class="d">:::cover</span><span class="a">{volume="том II · раздел операций"
+        mark=◆ org="Протокол AETHER · архивная служба"}</span>
+
+<span class="c"># Операции</span>
+
+<span class="d">:::epigraph</span><span class="a">{cite="из предисловия к первому изданию, 2033"}</span>
+Операция считается завершённой не тогда, когда
+достигнута цель, а тогда, когда закрыт последний
+вопрос о ней.
+<span class="d">:::</span>
+
+<span class="d">:::columns</span>
+Раздел собирает всё, что протокол проводил своими
+силами: полевые программы и отдельные выходы.
+
+<span class="d">:::right</span>
+<span class="d">:::fields</span>
+записей :: 9
+под грифом :: 2
+охват :: 2019—2026
+ведёт :: @архивариус
+<span class="d">:::</span>
+<span class="d">::stamp</span><span class="a">[для служебного пользования]</span>
+<span class="d">:::</span>
+<span class="d">:::</span>
+
+<span class="d">:::</span>
+</pre></div>
+
+  <div class="pair__out">
+    <div style="padding:22px 24px">
+      <div class="chrome" style="margin-bottom:14px">что здесь новое</div>
+      <dl class="kv">
+        <dt>:::cover</dt><dd>оболочка листа</dd>
+        <dt>:::epigraph</dt><dd>эпиграф с подписью</dd>
+        <dt>:::columns</dt><dd>низ листа в две колонки</dd>
+        <dt>:::right</dt><dd>правая колонка</dd>
+        <dt>:::center</dt><dd>по центру</dd>
+        <dt>::stamp</dt><dd>оттиск</dd>
+      </dl>
+      <p class="note" style="margin-top:18px;max-width:none">Пять из шести — контейнерные
+        директивы, то есть тот же вид, что у <code>infobox</code> и <code>quote</code>:
+        разбор их уже умеет. <code>::stamp</code> — листовая, как <code>image</code>.</p>
+      <p class="note" style="max-width:none"><code>:::center</code> и <code>:::right</code>
+        пригодятся и в обычных записях — сейчас выровнять блок по центру нечем, а именно этого
+        не хватало картинкам и галереям.</p>
+
+      <div class="chrome" style="margin:26px 0 10px">заготовки листа</div>
+      <p class="note" style="max-width:none;margin:0">Оболочка <code>:::cover</code> принимает
+        <code>layout=</code>: <code>title</code> — как выше; <code>plate</code> — во всю ширину
+        с изображением под текстом; <code>index</code> — без эпиграфа, сразу с содержанием.
+        Разница только в раскладке, содержимое пишется одинаково.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ ВТОРАЯ ЗАГОТОВКА ═══════════════════════════════════════════════ -->
+<div class="sec"><span>03</span><b>Заготовка «plate»</b></div>
+
+<div style="max-width:860px;margin:0 auto">
+  <article class="cover" style="padding:0;background:var(--ink)">
+    <div style="position:relative;padding:70px 60px 54px;background:var(--ink-2);
+                background-image:linear-gradient(rgba(255,255,255,.035) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.035) 1px,transparent 1px);
+                background-size:38px 38px">
+      <div class="cover__frame" style="border-color:var(--rule-2)"></div>
+      <div class="cover__in" style="color:var(--fg)">
+        <div class="cover__mark" style="border-color:var(--amber);color:var(--amber)">◆</div>
+        <div class="cover__org" style="color:var(--dim)">Протокол AETHER · архивная служба</div>
+        <div class="cover__vol" style="color:var(--dimmer)">том III · раздел мест</div>
+        <h1 style="color:var(--fg)">Места</h1>
+        <div class="cover__rule" style="background:var(--amber)"></div>
+        <blockquote class="cover__epi" style="color:var(--dim)">
+          «Штаб оставляют один раз. Всё, что происходит потом, называется уже другими словами.»
+          <cite style="color:var(--dimmer)">Меридиан, июль 2022</cite>
+        </blockquote>
+      </div>
+      <div class="cover__foot" style="border-top-color:var(--rule-2)">
+        <p style="color:var(--dim);font:11px/1.8 var(--mono)">Семь мест, за которые протокол
+          отвечал или которые потерял. У четырёх есть привязка к карте, у двух — к хронологии.</p>
+        <div class="cover__imprint">
+          <dl>
+            <dt>записей</dt><dd style="color:var(--fg)">7</dd>
+            <dt>на карте</dt><dd style="color:var(--fg)">4</dd>
+            <dt>охват</dt><dd style="color:var(--fg)">2019—2026</dd>
+          </dl>
+          <div class="cover__stamp" style="border-color:rgba(232,161,60,.6);color:var(--amber)">открытый раздел</div>
+        </div>
+      </div>
+    </div>
+  </article>
+</div>
+
+<p class="note"><b>Та же разметка, другой материал.</b> Тёмная заготовка нужна разделам,
+   у которых титул важнее содержания — карта, хронология, приложения. Всё, что меняется, —
+   значение <code>layout</code>; текст листа автор не переписывает.</p>
+
+<p class="note" style="margin-top:38px"><b>Дальше.</b>
+   <a href="lab-record.html">страница записи</a> ·
+   <a href="lab-widgets.html">виджеты</a> ·
+   <a href="lab-timeline.html">хронология</a></p>
+
+</div>
+
+<div class="pal" id="pal">
+  <div class="pal__box">
+    <i></i><i></i><i></i><i></i>
+    <div class="pal__in"><b>aether@eclipse</b><s>:~$</s>
+      <input id="pal-q" placeholder="запись, категория, метка или команда…" autocomplete="off"><kbd>ESC</kbd></div>
+    <div class="pal__scopes" id="pal-scopes">
+      <span class="on">все</span><span>записи</span><span><b>/</b> категории</span><span><b>#</b> метки</span><span><b>@</b> события</span><span><b>&gt;</b> команды</span>
+    </div>
+    <div class="pal__panes">
+      <div class="pal__list" id="pal-list"></div>
+      <div class="pal__prev" id="pal-prev"></div>
+    </div>
+    <div class="pal__foot"><span><em>↑↓</em> выбор</span><span><em>↵</em> открыть</span><span><em>⇥</em> область</span><span><em>esc</em> закрыть</span><span class="sp">CTRL+K</span></div>
+  </div>
+</div>
+
+<script type="module">
+import { palette, spoilers } from "./lab.js";
+palette(document.getElementById("pal"));
+spoilers();
+</script>
+</body>
+</html>

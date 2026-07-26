@@ -24,6 +24,7 @@
   <a href="lab-record.html">запись</a>
   <a href="lab-widgets.html">виджеты</a>
   <a href="lab-nav.html">навигация</a>
+  <a href="lab-cover.html">титул</a>
   <a href="lab-timeline.html">хронология</a>
   <a class="sp" data-open-palette style="cursor:pointer">CTRL+K</a>
 </nav>
@@ -240,12 +241,15 @@
   <div class="pal__box">
     <i></i><i></i><i></i><i></i>
     <div class="pal__in"><b>aether@eclipse</b><s>:~$</s>
-      <input id="pal-q" placeholder="запись, категория, метка или команда…" autocomplete="off"><kbd class="kbd">ESC</kbd></div>
+      <input id="pal-q" placeholder="запись, категория, метка или команда…" autocomplete="off"><kbd>ESC</kbd></div>
     <div class="pal__scopes" id="pal-scopes">
       <span class="on">все</span><span>записи</span><span><b>/</b> категории</span><span><b>#</b> метки</span><span><b>@</b> события</span><span><b>&gt;</b> команды</span>
     </div>
-    <div class="pal__list" id="pal-list"></div>
-    <div class="pal__foot"><span>↑↓ выбор</span><span>↵ открыть</span><span>esc закрыть</span><span class="sp">CTRL+K</span></div>
+    <div class="pal__panes">
+      <div class="pal__list" id="pal-list"></div>
+      <div class="pal__prev" id="pal-prev"></div>
+    </div>
+    <div class="pal__foot"><span><em>↑↓</em> выбор</span><span><em>↵</em> открыть</span><span><em>⇥</em> область</span><span><em>esc</em> закрыть</span><span class="sp">CTRL+K</span></div>
   </div>
 </div>
 
