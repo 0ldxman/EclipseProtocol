@@ -58,20 +58,20 @@ function link(route: string, text: string, className?: string): HTMLAnchorElemen
 }
 
 /**
- * Волосяные вертикали кадра.
+ * Волосяные вертикали кадра — по полям окна, ровно там, где начинается и
+ * кончается содержимое указателя.
  *
- * Две всегда стоят по полям окна — это и есть корпус прибора. На странице
- * записи к ним добавляются границы дорожек: за рельсом якорей и перед
- * колонкой досье, чтобы было видно, что документ вставлен в раму, а не
- * положен на пустоту.
+ * На странице записи их нет. Там колонки стоят не по краям кадра, и линия,
+ * проведённая рядом с оглавлением, читалась не как поле, а как обрез: она
+ * сливалась с рельсом разделов и запирала документ в узкую рамку.
  */
-function grid(withTracks: boolean): HTMLElement {
-  const marks = ["var(--pad)", "calc(100% - var(--pad) - 1px)"];
-  if (withTracks) marks.push("calc(50% - 700px)", "calc(50% + 700px)");
+function grid(): HTMLElement {
   return el(
     "div",
     { class: "view__grid" },
-    marks.map((left) => el("i", { style: `left:${left}` })),
+    ["var(--pad)", "calc(100% - var(--pad) - 1px)"].map((left) =>
+      el("i", { style: `left:${left}` }),
+    ),
   );
 }
 
@@ -210,21 +210,6 @@ function recordAside(page: RecordPage): HTMLElement | null {
     );
   }
 
-  const { prev, next } = page.siblings ?? { prev: null, next: null };
-  if (prev || next) {
-    aside.append(
-      panel(
-        "Рядом в категории",
-        kv(
-          [
-            prev ? ([link(`/wiki/${prev.slug}`, `← ${prev.title}`), prev.slug] as const) : null,
-            next ? ([link(`/wiki/${next.slug}`, `${next.title} →`), next.slug] as const) : null,
-          ].filter(Boolean) as (readonly [Node, string])[],
-        ),
-      ),
-    );
-  }
-
   if (page.node.tags.length > 0) {
     aside.append(
       el("div", { class: "panel panel--flat" }, [
@@ -250,6 +235,34 @@ function recordAside(page: RecordPage): HTMLElement | null {
   return aside.childElementCount > 0 ? aside : null;
 }
 
+/**
+ * Конец документа: переходы к соседям по категории.
+ *
+ * Раньше это была панель в колонке досье, и запись просто обрывалась — лист
+ * кончался, а страница нет. Внизу же оно отвечает на вопрос, который у
+ * читателя возникает ровно здесь: что дальше.
+ */
+function recordEnds(page: RecordPage): HTMLElement | null {
+  const { prev, next } = page.siblings ?? { prev: null, next: null };
+  if (!prev && !next) return null;
+
+  const cell = (link_: { slug: string; title: string }, dir: "prev" | "next"): HTMLElement => {
+    const cell_ = link(`/wiki/${link_.slug}`, "", dir === "next" ? "to-next" : "");
+    cell_.append(
+      el("span", { class: "dir" }, [dir === "prev" ? "← предыдущая" : "следующая →"]),
+      el("b", {}, [link_.title]),
+      el("s", {}, [link_.slug]),
+    );
+    return cell_;
+  };
+
+  const ends = el("nav", { class: `ends${prev && next ? "" : " ends--one"}` }, [
+    prev ? cell(prev, "prev") : null,
+    next ? cell(next, "next") : null,
+  ]);
+  return ends;
+}
+
 export async function renderRecord(view: HTMLElement, slug: string): Promise<void> {
   let page: RecordPage;
   try {
@@ -261,16 +274,20 @@ export async function renderRecord(view: HTMLElement, slug: string): Promise<voi
 
   const article = paper(page);
   const aside = recordAside(page);
-  const middle = page.belongs
-    ? el("div", { class: "paper-stack" }, [belongBand(page.belongs), article])
-    : article;
+  // Полоса принадлежности, лист и переходы стоят одной стопкой: у них общая
+  // ширина, и документ читается как страница с началом и концом.
+  const middle = el("div", { class: "paper-stack" }, [
+    page.belongs ? belongBand(page.belongs) : null,
+    article,
+    recordEnds(page),
+  ]);
   const row = el("div", { class: `body__in${aside ? "" : " body__in--bare"}` }, [
     el("nav", { class: "toc-slot" }),
     middle,
     aside,
   ]);
 
-  view.replaceChildren(grid(aside !== null), contextStrip(page), el("div", { class: "body" }, [row]));
+  view.replaceChildren(contextStrip(page), el("div", { class: "body" }, [row]));
 
   // Рельс строится после того, как документ оказался в дереве: слежению за
   // прокруткой нужны настоящие заголовки с настоящими координатами.
@@ -290,7 +307,7 @@ export async function renderRecord(view: HTMLElement, slug: string): Promise<voi
 
 function renderMissing(view: HTMLElement, message: string): void {
   view.replaceChildren(
-    grid(false),
+    grid(),
     el("div", { class: "page" }, [
       el("div", { class: "empty" }, [
         el("b", {}, ["не найдено"]),
@@ -566,7 +583,7 @@ export async function renderFolder(view: HTMLElement, id: string): Promise<void>
 
   page.append(el("div", { class: "split" }, [main, rail]));
 
-  view.replaceChildren(grid(false), strip, page);
+  view.replaceChildren(grid(), strip, page);
   setFootCount(cover ? "титульный лист" : "");
   document.title = `${folder.name} — AETHER.WIKI`;
 }
@@ -630,7 +647,7 @@ export async function renderTag(view: HTMLElement, tag: string): Promise<void> {
     page.append(el("div", { class: "split" }, [main, rail]));
   }
 
-  view.replaceChildren(grid(false), strip, page);
+  view.replaceChildren(grid(), strip, page);
   setFootCount(plural(found.length, RECORDS));
   document.title = `#${tag} — AETHER.WIKI`;
 }
@@ -775,7 +792,7 @@ export async function renderHome(view: HTMLElement): Promise<void> {
     ]),
   );
 
-  view.replaceChildren(grid(false), strip, page);
+  view.replaceChildren(grid(), strip, page);
   setFootCount(plural(stats.records, RECORDS));
   document.title = "AETHER.WIKI";
 }

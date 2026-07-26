@@ -1,11 +1,11 @@
 /**
- * Рельс оглавления: волосяная линия слева от документа, ромб на каждый
- * заголовок и название текущего раздела, набранное вертикально.
+ * Оглавление записи: волосяная линия слева от документа, ромб на каждый
+ * заголовок и название раздела рядом с ромбом.
  *
- * Текста в самих ромбах нет — поэтому рельс занимает тридцать пикселей и не
- * отбирает ширину у документа. Название появляется один раз, для того раздела,
- * в котором читатель сейчас находится: длинная запись не превращает рельс
- * во второй документ.
+ * Названия здесь появились не для красоты. Рельс из одних ромбов занимал
+ * колонку слева от документа и не сообщал ничего: чтобы понять, куда ведёт
+ * ромб, приходилось в него целиться. Раздел, который читают сейчас, горит
+ * янтарём — это и есть указатель места.
  */
 
 import type { Heading } from "./api.js";
@@ -25,9 +25,11 @@ export function articleToc(items: Heading[], scroller: HTMLElement): HTMLElement
   if (items.length < 2) return null;
 
   const depthOf = depthScale(items);
-  const label = el("em", {}, [items[0]?.text ?? ""]);
-  const dots = items.map((heading) => {
-    const anchor = el("a", { href: `#${heading.id}`, title: heading.text });
+  const rows = items.map((heading) => {
+    const anchor = el("a", { href: `#${heading.id}` }, [
+      el("i"),
+      el("span", {}, [heading.text]),
+    ]);
     anchor.addEventListener("click", (event) => {
       event.preventDefault();
       document.getElementById(heading.id)?.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -36,15 +38,14 @@ export function articleToc(items: Heading[], scroller: HTMLElement): HTMLElement
   });
 
   const rail = el("nav", { class: "toc", "aria-label": "Разделы записи" }, [
-    el("ol", {}, dots),
-    label,
+    el("span", { class: "chrome" }, ["разделы"]),
+    el("ol", {}, rows),
   ]);
 
   const mark = (id: string): void => {
     const at = items.findIndex((heading) => heading.id === id);
     if (at < 0) return;
-    dots.forEach((dot, i) => dot.classList.toggle("on", i === at));
-    label.textContent = items[at]!.text;
+    rows.forEach((row, i) => row.classList.toggle("on", i === at));
   };
 
   /* Заголовок считается текущим, пока он в верхней трети окна: так активным

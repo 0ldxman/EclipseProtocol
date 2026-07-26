@@ -327,28 +327,47 @@ a{color:inherit}
    Рельс якорей прижат к левому полю, досье — к правому, документ стоит
    посередине оставшегося: прибор во всю ширину, бумага своей ширины. */
 .body{position:relative;z-index:1;padding:26px var(--pad) 34px}
+/* Три дорожки записи занимают кадр целиком и держатся на собственных краях.
+   Отдельных вертикалей здесь нет намеренно: линия, проведённая рядом с
+   рельсом якорей, сливалась с ним и превращала поля в обрез страницы.
+   Границу теперь показывает само содержимое — оглавление слева, досье
+   справа, документ между ними. */
 .body__in{
-  max-width:1400px;margin:0 auto;
-  display:grid;grid-template-columns:30px minmax(0,1fr) 320px;gap:0 40px;align-items:start;
+  max-width:var(--wide);margin:0 auto;
+  display:grid;grid-template-columns:206px minmax(0,1fr) 340px;gap:0 48px;align-items:start;
 }
-.body__in--bare{grid-template-columns:30px minmax(0,1fr)}
+/* Без досье третья дорожка остаётся пустой, но остаётся: иначе документ
+   уезжает вправо от середины кадра. */
+.body__in--bare{grid-template-columns:206px minmax(0,1fr) 206px}
 
-/* рельс оглавления */
-.toc{position:sticky;top:22px;flex:none;width:30px;padding-top:52px;display:flex;gap:10px}
-.toc ol{margin:0;padding:0;list-style:none;position:relative;flex:none;width:11px}
-.toc ol::before{content:"";position:absolute;top:5px;bottom:5px;left:5px;width:1px;background:var(--rule)}
-.toc li{position:relative;height:34px}
-.toc a{position:absolute;left:0;top:0;width:11px;height:11px;transform:rotate(45deg) scale(.6);border:1px solid var(--dimmer);background:var(--ink)}
-.toc a:hover{border-color:var(--fg)}
-.toc li.on a{border-color:var(--amber);background:var(--amber)}
-.toc li.sub a{transform:rotate(45deg) scale(.38)}
-.toc em{writing-mode:vertical-rl;font-style:normal;align-self:start;margin-top:2px;font:10px/1 var(--mono);letter-spacing:.16em;text-transform:uppercase;color:var(--dimmer)}
+/* ── оглавление записи ──────────────────────────────────────────────
+   Рельс несёт названия разделов, а не одни ромбы: тридцать пикселей
+   диаграммы слева от документа занимали место, но ничего не сообщали. */
+.toc{position:sticky;top:22px;padding-top:52px}
+.toc>.chrome{display:block;margin-bottom:11px;color:var(--dimmer)}
+.toc ol{margin:0;padding:0;list-style:none;position:relative}
+.toc ol::before{content:"";position:absolute;top:10px;bottom:10px;left:5px;width:1px;background:var(--rule)}
+.toc li{position:relative}
+.toc a{
+  display:grid;grid-template-columns:11px 1fr;align-items:start;gap:11px;padding:5px 0;
+  text-decoration:none;font:10px/1.5 var(--mono);letter-spacing:.07em;text-transform:uppercase;color:var(--dim);
+}
+.toc i{
+  width:11px;height:11px;margin-top:2px;
+  transform:rotate(45deg) scale(.6);border:1px solid var(--dimmer);background:var(--ink);
+}
+.toc a:hover{color:var(--fg)}
+.toc a:hover i{border-color:var(--fg)}
+.toc li.on a{color:var(--amber)}
+.toc li.on i{border-color:var(--amber);background:var(--amber)}
+.toc li.sub span{padding-left:13px;color:inherit;opacity:.85}
+.toc li.sub i{transform:rotate(45deg) scale(.4)}
 
-.aside{flex:none;display:flex;flex-direction:column;gap:22px;padding-top:30px}
+.aside{display:flex;flex-direction:column;gap:22px;padding-top:30px}
 
 /* ═══ ДОКУМЕНТ ════════════════════════════════════════════════════════ */
 .paper{
-  position:relative;justify-self:center;width:100%;min-width:0;max-width:880px;
+  position:relative;justify-self:center;width:100%;min-width:0;max-width:880px;min-height:min(40vh,440px);
   background:var(--paper);color:var(--paper-ink);
   box-shadow:0 0 0 1px rgba(0,0,0,.6),0 18px 50px -20px rgba(0,0,0,.9);
 }
@@ -904,9 +923,10 @@ div.w-classified{display:block;padding:2px 0}
 .gate a:hover em{transform:translate(2px,-2px)}
 
 /* якорь оглавления: под курсором раскрывается до полного размера */
-.toc a{transition:transform .18s var(--ease),border-color .15s,background .15s}
-.toc a:hover{transform:rotate(45deg) scale(.85)}
-.toc li.on a{transform:rotate(45deg) scale(.78)}
+.toc a{transition:color .15s}
+.toc i{transition:transform .18s var(--ease),border-color .15s,background .15s}
+.toc a:hover i{transform:rotate(45deg) scale(.85)}
+.toc li.on i{transform:rotate(45deg) scale(.78)}
 
 /* метка */
 .chip{transition:.15s var(--ease)}
@@ -917,4 +937,16 @@ div.w-classified{display:block;padding:2px 0}
 
 @media (prefers-reduced-motion:reduce){
   .dot--live,.skel{animation:none}
+}
+
+/* ── узкий кадр: дорожки записи складываются по одной ────────────────
+   Первым уходит оглавление: оно вспомогательное, а досье — часть записи. */
+@media (max-width:1180px){
+  .body__in,.body__in--bare{grid-template-columns:minmax(0,1fr) 320px;gap:0 32px}
+  .toc{display:none}
+}
+@media (max-width:900px){
+  .body__in,.body__in--bare{grid-template-columns:minmax(0,1fr)}
+  .aside{padding-top:22px}
+  .paper{min-height:0}
 }

@@ -276,10 +276,10 @@ await site.screenshot({ path: path.join(SHOTS, "public-03-record.png") });
 const tall = site.viewportSize();
 await site.setViewportSize({ width: tall.width, height: 380 });
 await site.waitForTimeout(200);
-const firstLabel = await site.textContent(".toc em");
+const firstLabel = await site.textContent(".toc li.on span");
 await site.evaluate(() => document.getElementById("статус")?.scrollIntoView());
 await site.waitForTimeout(700);
-const movedLabel = await site.textContent(".toc em");
+const movedLabel = await site.textContent(".toc li.on span");
 await site.setViewportSize(tall);
 ok("scroll-spy follows the reading position", movedLabel !== firstLabel, `${firstLabel} -> ${movedLabel}`);
 
