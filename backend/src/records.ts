@@ -109,6 +109,7 @@ export async function registerRecords(
     const body = req.body as {
       name?: string;
       slug?: string;
+      tags?: string[];
       parentId?: string | null;
       order?: number;
       accessLevel?: number;
@@ -118,6 +119,10 @@ export async function registerRecords(
       if (!node) return reply.code(404).send({ error: "not found" });
       if (body.name !== undefined) node = await tree.rename(id, body.name);
       if (body.slug !== undefined) node = await tree.setSlug(id, body.slug);
+      if (body.tags !== undefined) {
+        if (!Array.isArray(body.tags)) return reply.code(400).send({ error: "tags must be an array" });
+        node = await tree.setTags(id, body.tags.map(String));
+      }
       if (body.accessLevel !== undefined) node = await tree.setAccess(id, body.accessLevel);
       if (body.parentId !== undefined) node = await tree.move(id, body.parentId, body.order);
       return node;

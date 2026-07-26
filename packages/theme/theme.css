@@ -51,7 +51,17 @@
   --display:Tektur,"JetBrains Mono",monospace;
   --serif:"Plex Serif",Georgia,serif;
 
-  --col:1128px;             /* колонка контента */
+  /* Кадр прибора — это окно, а не полоса посередине окна. Поле держится
+     постоянным, пока экран не станет шире --wide; дальше содержимое
+     перестаёт растягиваться, чтобы строки не превращались в километры. */
+  --frame:clamp(16px,2.4vw,44px);
+  --wide:1760px;
+  --pad:max(var(--frame),calc(50% - var(--wide)/2));
+
+  --col:1128px;             /* мера чтения: ширина бумаги и её рельсов */
+
+  /* движение: один разгон на всё приложение */
+  --ease:cubic-bezier(.2,.7,.2,1);
 }
 
 
@@ -281,7 +291,7 @@ a{color:inherit}
 
 .rail{
   position:relative;z-index:4;height:46px;display:flex;align-items:center;gap:20px;
-  padding-inline:max(18px,calc(50% - var(--col)/2));
+  padding-inline:var(--pad);
   border-bottom:1px solid var(--rule);background:var(--ink);
 }
 .mark{display:flex;align-items:center;gap:9px;flex:none;text-decoration:none}
@@ -300,7 +310,7 @@ a{color:inherit}
 
 .strip{
   position:relative;z-index:4;min-height:26px;display:flex;align-items:center;gap:14px;flex-wrap:wrap;
-  padding-block:5px;padding-inline:max(18px,calc(50% - var(--col)/2));
+  padding-block:5px;padding-inline:var(--pad);
   border-bottom:1px solid var(--rule);background:var(--ink);
 }
 .strip s{text-decoration:none;color:var(--dimmer)}
@@ -308,16 +318,23 @@ a{color:inherit}
 
 .foot{
   position:relative;z-index:4;height:26px;display:flex;align-items:center;gap:16px;
-  padding-inline:max(18px,calc(50% - var(--col)/2));
+  padding-inline:var(--pad);
   border-top:1px solid var(--rule);background:var(--ink);
 }
 .foot .sp{margin-left:auto}
 
-.body{position:relative;z-index:1;padding:26px 18px 34px}
-.body__in{max-width:var(--col);margin:0 auto;display:flex;gap:28px}
+/* Кадр занимает окно целиком; мера чтения задаётся бумаге, а не кадру.
+   Рельс якорей прижат к левому полю, досье — к правому, документ стоит
+   посередине оставшегося: прибор во всю ширину, бумага своей ширины. */
+.body{position:relative;z-index:1;padding:26px var(--pad) 34px}
+.body__in{
+  max-width:1400px;margin:0 auto;
+  display:grid;grid-template-columns:30px minmax(0,1fr) 320px;gap:0 40px;align-items:start;
+}
+.body__in--bare{grid-template-columns:30px minmax(0,1fr)}
 
 /* рельс оглавления */
-.toc{flex:none;width:30px;padding-top:52px;display:flex;gap:10px}
+.toc{position:sticky;top:22px;flex:none;width:30px;padding-top:52px;display:flex;gap:10px}
 .toc ol{margin:0;padding:0;list-style:none;position:relative;flex:none;width:11px}
 .toc ol::before{content:"";position:absolute;top:5px;bottom:5px;left:5px;width:1px;background:var(--rule)}
 .toc li{position:relative;height:34px}
@@ -327,11 +344,11 @@ a{color:inherit}
 .toc li.sub a{transform:rotate(45deg) scale(.38)}
 .toc em{writing-mode:vertical-rl;font-style:normal;align-self:start;margin-top:2px;font:10px/1 var(--mono);letter-spacing:.16em;text-transform:uppercase;color:var(--dimmer)}
 
-.aside{flex:none;width:284px;display:flex;flex-direction:column;gap:22px;padding-top:30px}
+.aside{flex:none;display:flex;flex-direction:column;gap:22px;padding-top:30px}
 
 /* ═══ ДОКУМЕНТ ════════════════════════════════════════════════════════ */
 .paper{
-  position:relative;flex:1;min-width:0;max-width:760px;
+  position:relative;justify-self:center;width:100%;min-width:0;max-width:880px;
   background:var(--paper);color:var(--paper-ink);
   box-shadow:0 0 0 1px rgba(0,0,0,.6),0 18px 50px -20px rgba(0,0,0,.9);
 }
@@ -581,7 +598,9 @@ div.w-classified{display:block;padding:2px 0}
 
 /* ═══ картотека ═══════════════════════════════════════════════════════
    Папка рисуется вкладкой сверху слева — из Rowden. */
-.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(212px,1fr));gap:14px}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(232px,1fr));gap:14px}
+/* подразделы — не главные входы: карточки держат размер, а не растягиваются */
+.cards--tight{grid-template-columns:repeat(auto-fill,minmax(248px,1fr))}
 .folder{
   position:relative;display:block;padding:22px 15px 15px;margin-top:9px;text-decoration:none;
   border:1px solid var(--rule-2);background:var(--ink-2);transition:.15s;
@@ -695,7 +714,7 @@ div.w-classified{display:block;padding:2px 0}
 
   position:relative;background:var(--cv-bg);color:var(--cv-ink);
   box-shadow:0 0 0 1px rgba(0,0,0,.6),0 24px 70px -26px rgba(0,0,0,.9);
-  padding:66px 64px 40px;overflow:hidden;
+  padding:clamp(50px,4.4vw,88px) clamp(26px,3.4vw,64px) 44px;overflow:hidden;
 }
 
 /* ── готовые схемы: фон + второй цвет ────────────────────────────────
@@ -731,7 +750,7 @@ div.w-classified{display:block;padding:2px 0}
 /* двойная рамка листа — типографский приём, а не рамка окна */
 .cover__frame{position:absolute;inset:16px;border:1px solid var(--cv-rule);pointer-events:none}
 .cover__frame::after{content:"";position:absolute;inset:5px;border:1px solid var(--cv-rule-2)}
-.cover__in{position:relative;z-index:1;text-align:center}
+.cover__in{position:relative;z-index:1;max-width:1040px;margin:0 auto;text-align:center}
 
 /* герб: знак по умолчанию, картинка — если её загрузили */
 .cover__mark{
@@ -744,7 +763,7 @@ div.w-classified{display:block;padding:2px 0}
 
 .cover__org{margin-top:14px;font:10px/1.6 var(--mono);letter-spacing:.34em;text-transform:uppercase;color:var(--cv-dim)}
 .cover__vol{margin-top:34px;font:10px/1 var(--mono);letter-spacing:.3em;text-transform:uppercase;color:var(--cv-dim)}
-.cover h1{margin:16px 0 0;font:700 62px/.98 var(--display);letter-spacing:.05em;text-transform:uppercase;color:var(--cv-ink)}
+.cover h1{margin:16px 0 0;font:700 clamp(46px,5.2vw,96px)/.96 var(--display);letter-spacing:.05em;text-transform:uppercase;color:var(--cv-ink)}
 .cover__rule{width:150px;height:2px;background:var(--cv-accent);margin:24px auto 0}
 .cover__epi{margin:24px auto 0;max-width:52ch;font:italic 400 17px/1.62 var(--serif);color:color-mix(in srgb,var(--cv-ink) 85%,var(--cv-bg))}
 .cover__epi cite{display:block;margin-top:11px;font:normal 10px/1.6 var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--cv-dim)}
@@ -752,7 +771,7 @@ div.w-classified{display:block;padding:2px 0}
 /* низ листа: слева свободный текст, справа выходные сведения */
 .cover__foot{
   position:relative;z-index:1;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:56px;
-  margin-top:56px;padding-top:22px;border-top:1px solid var(--cv-rule);text-align:left;
+  max-width:1040px;margin:56px auto 0;padding-top:22px;border-top:1px solid var(--cv-rule);text-align:left;
 }
 .cover__foot p{margin:0;font:400 14.5px/1.65 var(--serif);color:color-mix(in srgb,var(--cv-ink) 82%,var(--cv-bg));max-width:46ch}
 .cover__imprint{text-align:right}
@@ -790,3 +809,108 @@ div.w-classified{display:block;padding:2px 0}
   .cover__imprint,.cover__imprint dl{text-align:left;justify-content:start}
 }
 
+
+/* ═══ ДВИЖЕНИЕ ════════════════════════════════════════════════════════
+   Одно событие на экран: прибор выводит страницу. Сначала прочерчиваются
+   поперечины кадра, следом короткой очередью встают панели, и последней
+   протягивается бумага — сверху вниз, как лист в протяжном механизме.
+   Дальше движение только отвечает на действие человека: наведение,
+   раскрытие, выбор. Никаких самопроизвольных петель, кроме живого
+   индикатора связи и огня в хронологии.
+
+   Всё описано внутри `no-preference`: при выключенной анимации остаётся
+   ровно та же вёрстка, просто сразу и целиком. */
+
+@keyframes ae-rise{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+@keyframes ae-fade{from{opacity:0}to{opacity:1}}
+@keyframes ae-draw-x{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+@keyframes ae-draw-y{from{transform:scaleY(0)}to{transform:scaleY(1)}}
+/* протяжка листа: снизу вверх открывается, чуть подрагивая по яркости */
+@keyframes ae-feed{
+  from{clip-path:inset(0 0 100% 0);opacity:.4}
+  60%{opacity:1}
+  to{clip-path:inset(0 0 0 0);opacity:1}
+}
+/* наведение резкости: заголовок собирается из разрядки */
+@keyframes ae-focus{
+  from{opacity:0;letter-spacing:.42em;filter:blur(3px)}
+  to{opacity:1;letter-spacing:inherit;filter:none}
+}
+
+@media (prefers-reduced-motion:no-preference){
+
+  /* поперечины кадра */
+  .rail,.strip,.foot{animation:ae-fade .3s var(--ease) backwards}
+  .strip{animation-delay:.04s}
+  .view__grid i{transform-origin:top;animation:ae-draw-y .5s var(--ease) backwards}
+
+  /* очередь панелей: восьми хватает, дальше глаз всё равно не считает */
+  .page>*,.aside>*{animation:ae-rise .34s var(--ease) backwards}
+  .page>*:nth-child(1),.aside>*:nth-child(1){animation-delay:.03s}
+  .page>*:nth-child(2),.aside>*:nth-child(2){animation-delay:.07s}
+  .page>*:nth-child(3),.aside>*:nth-child(3){animation-delay:.11s}
+  .page>*:nth-child(4),.aside>*:nth-child(4){animation-delay:.15s}
+  .page>*:nth-child(5),.aside>*:nth-child(5){animation-delay:.19s}
+  .page>*:nth-child(6),.aside>*:nth-child(6){animation-delay:.23s}
+  .page>*:nth-child(n+7),.aside>*:nth-child(n+7){animation-delay:.26s}
+
+  .cards>*{animation:ae-rise .3s var(--ease) backwards}
+  .cards>*:nth-child(1){animation-delay:.06s}
+  .cards>*:nth-child(2){animation-delay:.1s}
+  .cards>*:nth-child(3){animation-delay:.14s}
+  .cards>*:nth-child(4){animation-delay:.18s}
+  .cards>*:nth-child(5){animation-delay:.22s}
+  .cards>*:nth-child(n+6){animation-delay:.25s}
+
+  /* документ */
+  .paper{animation:ae-feed .52s var(--ease) .05s backwards}
+  .toc{animation:ae-fade .4s var(--ease) .3s backwards}
+
+  /* титульный лист: рамка, затем название, затем акцентная черта */
+  .cover__frame{animation:ae-fade .5s var(--ease) .16s backwards}
+  .cover h1{animation:ae-focus .55s var(--ease) .1s backwards}
+  .cover__rule{transform-origin:center;animation:ae-draw-x .5s var(--ease) .42s backwards}
+  .cover__epi,.cover__foot{animation:ae-rise .4s var(--ease) .48s backwards}
+  .cover__stamp{animation:ae-fade .3s steps(2) .74s backwards}
+}
+
+/* ── отклик на действие ──────────────────────────────────────────────
+   Работает и при выключенной анимации: это не украшение, а обратная
+   связь — без неё непонятно, что элемент вообще нажимается. */
+
+/* скобки кнопки раздвигаются под курсором */
+.btn::before,.btn::after{display:inline-block;transition:transform .16s var(--ease)}
+.btn:hover:not(:disabled)::before{transform:translateX(-2px)}
+.btn:hover:not(:disabled)::after{transform:translateX(2px)}
+.btn:active:not(:disabled){transform:translateY(1px)}
+
+/* ярлык папки: язычок вытягивается, название чуть расходится */
+.folder{transition:background .15s,border-color .15s}
+.folder b{transition:letter-spacing .18s var(--ease)}
+.folder:hover b{letter-spacing:.1em}
+.folder:hover::after{height:26px}
+
+/* строка ленты и указателя: время загорается, название подаётся вправо */
+.feed b,.feed time{transition:.16s var(--ease)}
+.feed a:hover time{color:var(--amber)}
+.feed a:hover b{transform:translateX(4px)}
+
+/* вход-плитка: стрелка уходит по диагонали */
+.gate em{transition:transform .18s var(--ease)}
+.gate a:hover em{transform:translate(2px,-2px)}
+
+/* якорь оглавления: под курсором раскрывается до полного размера */
+.toc a{transition:transform .18s var(--ease),border-color .15s,background .15s}
+.toc a:hover{transform:rotate(45deg) scale(.85)}
+.toc li.on a{transform:rotate(45deg) scale(.78)}
+
+/* метка */
+.chip{transition:.15s var(--ease)}
+.chip:hover{transform:translateY(-1px)}
+
+/* ссылка внутри документа: подсветка наливается, а не появляется */
+.prose a{transition:background .15s,text-decoration-color .15s}
+
+@media (prefers-reduced-motion:reduce){
+  .dot--live,.skel{animation:none}
+}

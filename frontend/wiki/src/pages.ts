@@ -12,7 +12,17 @@
  */
 
 import { href, navigate } from "./app-root.js";
-import { folder as folderPage, nav, overview, record, type Belongs, type NavNode, type RecordPage } from "./api.js";
+import {
+  folder as folderPage,
+  nav,
+  overview,
+  record,
+  timeline,
+  type Belongs,
+  type NavNode,
+  type RecordPage,
+  type TimelineEvent,
+} from "./api.js";
 import { classifiedBody } from "./classified.js";
 import { el } from "./dom.js";
 import { setFootCount } from "./header.js";
@@ -47,11 +57,17 @@ function link(route: string, text: string, className?: string): HTMLAnchorElemen
   return anchor;
 }
 
-/** Волосяные вертикали кадра: края колонки и граница боковой панели. */
-function grid(withAside: boolean): HTMLElement {
-  const marks = withAside
-    ? ["calc(50% - 564px)", "calc(50% + 264px)", "calc(50% + 564px)"]
-    : ["calc(50% - 564px)", "calc(50% + 564px)"];
+/**
+ * Волосяные вертикали кадра.
+ *
+ * Две всегда стоят по полям окна — это и есть корпус прибора. На странице
+ * записи к ним добавляются границы дорожек: за рельсом якорей и перед
+ * колонкой досье, чтобы было видно, что документ вставлен в раму, а не
+ * положен на пустоту.
+ */
+function grid(withTracks: boolean): HTMLElement {
+  const marks = ["var(--pad)", "calc(100% - var(--pad) - 1px)"];
+  if (withTracks) marks.push("calc(50% - 700px)", "calc(50% + 700px)");
   return el(
     "div",
     { class: "view__grid" },
@@ -248,7 +264,11 @@ export async function renderRecord(view: HTMLElement, slug: string): Promise<voi
   const middle = page.belongs
     ? el("div", { class: "paper-stack" }, [belongBand(page.belongs), article])
     : article;
-  const row = el("div", { class: "body__in" }, [el("nav", { class: "toc-slot" }), middle, aside]);
+  const row = el("div", { class: `body__in${aside ? "" : " body__in--bare"}` }, [
+    el("nav", { class: "toc-slot" }),
+    middle,
+    aside,
+  ]);
 
   view.replaceChildren(grid(aside !== null), contextStrip(page), el("div", { class: "body" }, [row]));
 
@@ -295,7 +315,7 @@ function sectionHead(title: string, note?: string): HTMLElement {
   ]);
 }
 
-function folderCards(nodes: NavNode[], parentId: string | null): HTMLElement | null {
+function folderCards(nodes: NavNode[], parentId: string | null, tight = false): HTMLElement | null {
   const folders = nodes
     .filter((node) => node.parentId === parentId && node.kind === "folder")
     .sort((a, b) => a.order - b.order || a.name.localeCompare(b.name, "ru"));
@@ -303,7 +323,7 @@ function folderCards(nodes: NavNode[], parentId: string | null): HTMLElement | n
 
   return el(
     "div",
-    { class: "cards" },
+    { class: `cards${tight ? " cards--tight" : ""}` },
     folders.map((folder) => {
       const inside = nodes.filter((node) => node.parentId === folder.id);
       const sealed = folder.access > 0;
@@ -320,31 +340,109 @@ function folderCards(nodes: NavNode[], parentId: string | null): HTMLElement | n
   );
 }
 
-function recordTable(nodes: NavNode[], parentId: string | null): HTMLElement | null {
-  const records = nodes
+/**
+ * Указатель записей.
+ *
+ * На широком кадре список из одних названий выглядит обрезанным не потому,
+ * что он узкий, а потому, что в нём нечего читать справа. Поэтому строка
+ * несёт всё, что о записи известно указателю: номер, название, метки, откуда
+ * она (когда список собран поперёк дерева) и когда её трогали последний раз.
+ */
+function recordIndex(
+  records: NavNode[],
+  options: { origin?: (node: NavNode) => string } = {},
+): HTMLElement {
+  const rows = records.map((node, i) => {
+    const tags = node.tags.slice(0, 3);
+    return el("tr", {}, [
+      el("td", { class: "no" }, [String(i + 1).padStart(2, "0")]),
+      el("td", { class: "nm" }, [
+        link(`/wiki/${node.slug}`, node.name),
+        node.access > 0
+          ? el("span", { class: "pill pill--red", style: "margin-left:9px" }, [
+              `допуск ${node.access}`,
+            ])
+          : null,
+      ]),
+      el(
+        "td",
+        { class: "tg" },
+        tags.length > 0
+          ? [
+              ...tags.map((tag) => link(`/tag/${encodeURIComponent(tag)}`, tag, "chip chip--sm")),
+              node.tags.length > tags.length
+                ? el("span", { class: "more" }, [`+${node.tags.length - tags.length}`])
+                : null,
+            ]
+          : [el("span", { class: "more" }, ["—"])],
+      ),
+      options.origin ? el("td", { class: "og" }, [options.origin(node)]) : null,
+      el("td", { class: "at" }, [when(node.updatedAt)]),
+    ]);
+  });
+
+  return el("table", { class: "entries" }, [el("tbody", {}, rows)]);
+}
+
+function childRecords(nodes: NavNode[], parentId: string | null): NavNode[] {
+  return nodes
     .filter((node) => node.parentId === parentId && node.kind === "record" && node.slug)
     .sort((a, b) => a.order - b.order || a.name.localeCompare(b.name, "ru"));
-  if (records.length === 0) return null;
+}
 
-  const body = el(
-    "tbody",
-    {},
-    records.map((node, i) =>
-      el("tr", {}, [
-        el("td", { class: "no" }, [String(i + 1).padStart(2, "0")]),
-        el("td", { class: "nm" }, [
-          link(`/wiki/${node.slug}`, node.name),
-          node.access > 0
-            ? el("span", { class: "pill pill--red", style: "margin-left:8px" }, [
-                `допуск ${node.access}`,
-              ])
-            : null,
-        ]),
-        el("td", { class: "at" }, [when(node.updatedAt)]),
-      ]),
-    ),
+/** Идентификаторы всей ветки, включая саму папку. */
+function subtree(nodes: NavNode[], rootId: string): Set<string> {
+  const ids = new Set<string>([rootId]);
+  let grew = true;
+  while (grew) {
+    grew = false;
+    for (const node of nodes) {
+      if (node.parentId && ids.has(node.parentId) && !ids.has(node.id)) {
+        ids.add(node.id);
+        grew = true;
+      }
+    }
+  }
+  return ids;
+}
+
+/** Короткая лента событий для боковой колонки. */
+function eventList(events: TimelineEvent[]): HTMLElement {
+  return el(
+    "div",
+    { class: "mini" },
+    events.map((event) => {
+      const row = event.restricted
+        ? el("div", { class: "mini__row mini__row--sealed" })
+        : link(`/wiki/${event.slug}`, "", "mini__row");
+      row.append(
+        el("time", {}, [event.at.slice(0, 4)]),
+        el("b", {}, [event.title]),
+        el("s", {}, [event.restricted ? "гриф" : event.epoch]),
+      );
+      return row;
+    }),
   );
-  return el("table", { class: "entries" }, [body]);
+}
+
+function chipRow(entries: [string, number][]): HTMLElement {
+  return el(
+    "div",
+    { class: "chips" },
+    entries.map(([tag, count]) => {
+      const chip = link(`/tag/${encodeURIComponent(tag)}`, tag, "chip");
+      chip.append(el("b", {}, [String(count)]));
+      return chip;
+    }),
+  );
+}
+
+function countTags(records: NavNode[]): [string, number][] {
+  const tally = new Map<string, number>();
+  for (const node of records) {
+    for (const tag of node.tags) tally.set(tag, (tally.get(tag) ?? 0) + 1);
+  }
+  return [...tally.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], "ru"));
 }
 
 export async function renderFolder(view: HTMLElement, id: string): Promise<void> {
@@ -360,6 +458,9 @@ export async function renderFolder(view: HTMLElement, id: string): Promise<void>
   const cover = await folderPage(id)
     .then((data) => data.cover)
     .catch(() => "");
+  // Хронология нужна только боковой колонке; без неё страница обязана
+  // собраться, поэтому отказ не поднимается выше.
+  const chronology = await timeline().catch(() => ({ epochs: [], events: [] }));
 
   const trail: { id: string; name: string }[] = [];
   let cursor: NavNode | undefined = folder;
@@ -389,22 +490,82 @@ export async function renderFolder(view: HTMLElement, id: string): Promise<void>
   if (cover) {
     page.append(el("div", { class: "cover-slot", html: cover }));
   } else {
-    page.append(el("div", { class: "hero" }, [el("h1", {}, [folder.name])]));
+    page.append(el("div", { class: "hero hero--cat" }, [el("h1", {}, [folder.name])]));
   }
 
-  const cards = folderCards(nodes, folder.id);
-  if (cards) page.append(sectionHead("Подразделы"), cards);
+  /* ── левая половина: что лежит в категории ── */
+  const main = el("div", { class: "col" });
+  const cards = folderCards(nodes, folder.id, true);
+  if (cards) main.append(sectionHead("Подразделы"), cards);
 
-  const table = recordTable(nodes, folder.id);
-  if (table) page.append(sectionHead("Содержание", plural(inside.length, RECORDS)), table);
-  if (!cards && !table) {
-    page.append(
+  const records = childRecords(nodes, folder.id);
+  if (records.length > 0) {
+    main.append(sectionHead("Содержание", plural(records.length, RECORDS)), recordIndex(records));
+  }
+  if (!cards && records.length === 0) {
+    main.append(
       el("div", { class: "empty" }, [
         el("b", {}, ["категория пуста"]),
         el("span", {}, ["Первая запись появится здесь, как только её создадут."]),
       ]),
     );
   }
+
+  /* ── правая половина: что о категории вывел прибор ── */
+  const branch = subtree(nodes, folder.id);
+  const inBranch = nodes.filter((node) => node.id !== folder.id && branch.has(node.id));
+  const branchRecords = inBranch.filter((node) => node.kind === "record" && node.slug);
+  const events = chronology.events
+    .filter((event) => branchRecords.some((node) => node.slug === event.slug))
+    .slice(0, 6);
+  const tags = countTags(branchRecords).slice(0, 14);
+  const sealed = branchRecords.filter((node) => node.access > 0).length;
+  const touched = branchRecords
+    .map((node) => node.updatedAt)
+    .sort()
+    .at(-1);
+
+  const rail = el("aside", { class: "rail-col" }, [
+    panel(
+      "Сводка",
+      kv([
+        ["записей", String(branchRecords.length)],
+        ["подразделов", String(inBranch.filter((node) => node.kind === "folder").length)],
+        ...(sealed > 0
+          ? ([["под грифом", el("span", { style: "color:var(--red)" }, [String(sealed)])]] as const)
+          : []),
+        ...(events.length > 0
+          ? ([["события", `${events[0]!.at.slice(0, 4)}—${events.at(-1)!.at.slice(0, 4)}`]] as const)
+          : []),
+        ["обновлено", touched ? when(touched) : "—"],
+      ]),
+    ),
+  ]);
+
+  if (events.length > 0) rail.append(panel("События раздела", eventList(events)));
+  if (tags.length > 0) rail.append(panel("Метки раздела", chipRow(tags)));
+
+  const neighbours = nodes
+    .filter((node) => node.kind === "folder" && node.parentId === folder.parentId && node.id !== folder.id)
+    .sort((a, b) => a.order - b.order);
+  if (neighbours.length > 0) {
+    rail.append(
+      panel(
+        folder.parentId ? "Рядом в разделе" : "Другие категории",
+        kv(
+          neighbours.map(
+            (node) =>
+              [
+                link(`/folder/${node.id}`, node.name),
+                String(nodes.filter((child) => child.parentId === node.id).length),
+              ] as const,
+          ),
+        ),
+      ),
+    );
+  }
+
+  page.append(el("div", { class: "split" }, [main, rail]));
 
   view.replaceChildren(grid(false), strip, page);
   setFootCount(cover ? "титульный лист" : "");
@@ -431,7 +592,7 @@ export async function renderTag(view: HTMLElement, tag: string): Promise<void> {
   ]);
 
   const page = el("div", { class: "page" }, [
-    el("div", { class: "hero" }, [el("h1", {}, [`#${tag}`])]),
+    el("div", { class: "hero hero--cat" }, [el("h1", {}, [`#${tag}`])]),
   ]);
 
   if (found.length === 0) {
@@ -442,26 +603,32 @@ export async function renderTag(view: HTMLElement, tag: string): Promise<void> {
       ]),
     );
   } else {
-    const body = el(
-      "tbody",
-      {},
-      found.map((node, i) => {
-        const parent = nodes.find((n) => n.id === node.parentId);
-        return el("tr", {}, [
-          el("td", { class: "no" }, [String(i + 1).padStart(2, "0")]),
-          el("td", { class: "nm" }, [
-            link(`/wiki/${node.slug}`, node.name),
-            node.access > 0
-              ? el("span", { class: "pill pill--red", style: "margin-left:8px" }, [
-                  `допуск ${node.access}`,
-                ])
-              : null,
-          ]),
-          el("td", { class: "at" }, [parent?.name ?? "вне категорий"]),
-        ]);
+    const byId = new Map(nodes.map((node) => [node.id, node]));
+    const main = el("div", { class: "col" }, [
+      sectionHead("Записи", plural(found.length, RECORDS)),
+      recordIndex(found, {
+        origin: (node) => byId.get(node.parentId ?? "")?.name ?? "вне категорий",
       }),
-    );
-    page.append(sectionHead("Записи", plural(found.length, RECORDS)), el("table", { class: "entries" }, [body]));
+    ]);
+
+    // Метка живёт поперёк дерева, поэтому справа — не «что рядом», а «где
+    // встречается» и «с чем ходит вместе».
+    const places = new Map<string, number>();
+    for (const node of found) {
+      const where = byId.get(node.parentId ?? "")?.name ?? "вне категорий";
+      places.set(where, (places.get(where) ?? 0) + 1);
+    }
+    const near = countTags(found).filter(([name]) => name !== tag).slice(0, 12);
+
+    const rail = el("aside", { class: "rail-col" }, [
+      panel(
+        "Где встречается",
+        kv([...places.entries()].sort((a, b) => b[1] - a[1]).map(([name, n]) => [name, String(n)] as const)),
+      ),
+    ]);
+    if (near.length > 0) rail.append(panel("Смежные метки", chipRow(near)));
+
+    page.append(el("div", { class: "split" }, [main, rail]));
   }
 
   view.replaceChildren(grid(false), strip, page);
@@ -472,12 +639,14 @@ export async function renderTag(view: HTMLElement, tag: string): Promise<void> {
 /* ── главная ───────────────────────────────────────────────────────────── */
 
 export async function renderHome(view: HTMLElement): Promise<void> {
-  const [{ nodes }, stats] = await Promise.all([nav(true), overview()]);
+  const [{ nodes }, stats, chronology] = await Promise.all([
+    nav(true),
+    overview(),
+    timeline().catch(() => ({ epochs: [], events: [] })),
+  ]);
 
-  const tags = new Map<string, number>();
-  for (const node of nodes) {
-    for (const tag of node.tags) tags.set(tag, (tags.get(tag) ?? 0) + 1);
-  }
+  const records = nodes.filter((node) => node.kind === "record" && node.slug);
+  const tags = countTags(records);
 
   const strip = el("div", { class: "strip" }, [
     el("span", { class: "chrome" }, ["архив «Eclipse Protocol»"]),
@@ -497,6 +666,24 @@ export async function renderHome(view: HTMLElement): Promise<void> {
   ]);
   search.addEventListener("click", () => openSearch());
 
+  // Счётчики стоят полосой во всю ширину кадра: это приборная шкала архива,
+  // а не украшение под заголовком.
+  const gauge = (label: string, value: string, note: string, amber = false): HTMLElement =>
+    el("div", { class: "gauge__cell" }, [
+      el("span", { class: "chrome" }, [label]),
+      el("b", { class: amber ? "is-amber" : "" }, [value]),
+      el("s", {}, [note]),
+    ]);
+
+  const epochs = chronology.epochs.length;
+  const gauges = el("div", { class: "gauge" }, [
+    gauge("записей", String(stats.records), "в открытой части"),
+    gauge("категорий", String(stats.folders), "включая вложенные"),
+    gauge("под грифом", String(stats.restricted), "требуют допуска", stats.restricted > 0),
+    gauge("событий", String(chronology.events.length), epochs > 0 ? plural(epochs, ["эпоха", "эпохи", "эпох"]) : "хронология пуста"),
+    gauge("меток", String(tags.length), "поперёк дерева"),
+  ]);
+
   const page = el("div", { class: "page" }, [
     el("div", { class: "hero" }, [
       el("h1", {}, ["ECLIPSE ", el("em", {}, ["PROTOCOL"])]),
@@ -505,39 +692,28 @@ export async function renderHome(view: HTMLElement): Promise<void> {
       ]),
       search,
     ]),
+    gauges,
   ]);
 
   const cards = folderCards(nodes, null);
   if (cards) page.append(sectionHead("Категории", `${stats.folders}`), cards);
 
-  const loose = recordTable(nodes, null);
-  if (loose) page.append(sectionHead("Вне категорий"), loose);
+  const loose = childRecords(nodes, null);
+  if (loose.length > 0) page.append(sectionHead("Вне категорий"), recordIndex(loose));
 
-  if (tags.size > 0) {
-    page.append(
-      sectionHead("Метки", String(tags.size)),
-      el(
-        "div",
-        { style: "display:flex;gap:7px;flex-wrap:wrap" },
-        [...tags.entries()]
-          .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], "ru"))
-          .map(([tag, count]) => {
-            const chip = link(`/tag/${encodeURIComponent(tag)}`, tag, "chip");
-            chip.append(el("b", {}, [String(count)]));
-            return chip;
-          }),
-      ),
-    );
-  }
-
+  const bySlug = new Map(records.map((node) => [node.slug!, node]));
+  const byId = new Map(nodes.map((node) => [node.id, node]));
   const feed = el(
     "div",
     { class: "feed" },
     stats.recent.map((entry) => {
+      const node = bySlug.get(entry.slug);
+      const where = node ? byId.get(node.parentId ?? "")?.name : undefined;
       const row = link(`/wiki/${entry.slug}`, "");
       row.append(
         el("time", {}, [when(entry.updatedAt)]),
         el("b", {}, [entry.title]),
+        el("span", { class: "og" }, [where ?? "вне категорий"]),
         el("s", { class: entry.restricted ? "chrome--red" : "" }, [
           entry.restricted ? "под грифом" : "",
         ]),
@@ -567,6 +743,23 @@ export async function renderHome(view: HTMLElement): Promise<void> {
     ]),
   ]);
 
+  const middle = el("div", {}, [sectionHead("Метки", String(tags.length))]);
+  middle.append(
+    tags.length > 0
+      ? chipRow(tags.slice(0, 40))
+      : el("div", { class: "empty" }, [
+          el("b", {}, ["меток нет"]),
+          el("span", {}, ["Метки проставляются записи в админке."]),
+        ]),
+  );
+  if (chronology.events.length > 0) {
+    // Хронология отдана по возрастанию; на главной интересен её конец.
+    middle.append(
+      sectionHead("Последние события"),
+      eventList(chronology.events.slice(-5).reverse()),
+    );
+  }
+
   page.append(
     el("div", { class: "home-split" }, [
       el("div", {}, [
@@ -578,6 +771,7 @@ export async function renderHome(view: HTMLElement): Promise<void> {
               el("span", {}, ["Первая запись появится здесь, как только её создадут."]),
             ]),
       ]),
+      middle,
       el("div", {}, [sectionHead("Другие входы"), gates]),
     ]),
   );

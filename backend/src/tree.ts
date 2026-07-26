@@ -218,6 +218,25 @@ export class TreeStore {
     return node;
   }
 
+  /**
+   * Метки записи. Живут поперёк дерева, поэтому здесь только нормализация:
+   * пустые отбрасываются, регистр приводится к нижнему, повторы схлопываются —
+   * иначе «Разлом» и «разлом» станут двумя разными страницами меток.
+   */
+  async setTags(id: string, tags: string[]): Promise<TreeNode> {
+    const node = this.nodes.get(id);
+    if (!node || node.kind !== "record") throw new TreeError("record not found", 404);
+    const seen = new Set<string>();
+    node.tags = tags
+      .map((tag) => tag.trim().toLocaleLowerCase("ru"))
+      .filter((tag) => tag.length > 0 && tag.length <= 48)
+      .filter((tag) => (seen.has(tag) ? false : (seen.add(tag), true)))
+      .slice(0, 24);
+    node.updatedAt = new Date().toISOString();
+    await this.persist();
+    return node;
+  }
+
   async setAccess(id: string, level: number): Promise<TreeNode> {
     const node = this.nodes.get(id);
     if (!node) throw new TreeError("not found", 404);

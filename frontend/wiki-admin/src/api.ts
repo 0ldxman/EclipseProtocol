@@ -70,12 +70,16 @@ export class Api {
 
   update(
     id: string,
-    patch: Partial<Pick<TreeNode, "name" | "slug" | "parentId" | "order" | "accessLevel">>,
+    patch: Partial<Pick<TreeNode, "name" | "slug" | "tags" | "parentId" | "order" | "accessLevel">>,
   ): Promise<TreeNode> {
     return request(this.base, `/api/tree/nodes/${id}`, {
       method: "PATCH",
       body: JSON.stringify(patch),
     });
+  }
+
+  rename(id: string, name: string): Promise<TreeNode> {
+    return this.update(id, { name });
   }
 
   remove(id: string): Promise<{ removed: string[] }> {

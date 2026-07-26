@@ -62,20 +62,49 @@ body {
   padding: 0 5px;
 }
 
-/* ── общие страницы: главная, категория, ненайденное ─────────────────── */
+/* ── общие страницы: главная, категория, ненайденное ───────────────────
+   Указатель — часть прибора, а не документ: он занимает кадр целиком и
+   упирается в те же волосяные вертикали, что и рельс со строкой статуса.
+   Меру чтения держит только бумага. */
 .page {
   position: relative;
   z-index: 1;
-  max-width: var(--col);
-  margin: 0 auto;
-  padding: 30px 18px 56px;
+  padding: 30px var(--pad) 56px;
+}
+
+/* Указатель и приборная колонка рядом: слева содержимое категории,
+   справа — то, что о ней вывела система. */
+.split {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 300px;
+  gap: 34px;
+  align-items: start;
+  margin-top: 30px;
+}
+.col {
+  min-width: 0;
+}
+.rail-col {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  position: sticky;
+  top: 22px;
+}
+.rail-col .chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
 }
 
 .page__head {
   display: flex;
   align-items: baseline;
   gap: 14px;
-  margin: 0 0 16px;
+  margin: 26px 0 16px;
+}
+.page__head:first-child {
+  margin-top: 0;
 }
 .page__head h2 {
   margin: 0;
@@ -102,8 +131,8 @@ body {
 }
 .hero h1 {
   margin: 0;
-  font: 700 40px/1 var(--display);
-  letter-spacing: 0.07em;
+  font: 700 clamp(38px, 4.6vw, 82px) / 0.98 var(--display);
+  letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--fg);
 }
@@ -112,15 +141,27 @@ body {
   color: var(--amber);
 }
 .hero p {
-  margin: 14px auto 0;
-  max-width: 56ch;
-  font: 400 15px/1.6 var(--serif);
+  margin: 18px auto 0;
+  max-width: 60ch;
+  font: 400 16px/1.65 var(--serif);
   color: var(--dim);
 }
 .hero .cmd {
-  max-width: 520px;
-  margin: 26px auto 0;
-  height: 34px;
+  max-width: 560px;
+  margin: 30px auto 0;
+  height: 36px;
+}
+
+/* Заголовок категории без титульного листа: не герой во весь экран, а шапка
+   раздела — иначе пустая категория выглядит важнее полной. Правило стоит
+   после .hero h1 намеренно: специфичность у них одинаковая, решает порядок. */
+.hero--cat {
+  padding: 30px 0 22px;
+  text-align: left;
+  border-bottom: 1px solid var(--rule);
+}
+.hero--cat h1 {
+  font-size: clamp(30px, 3vw, 54px);
 }
 
 /* лента изменений */
@@ -152,6 +193,13 @@ body {
   font: 400 14px/1.5 var(--serif);
   font-weight: 400;
   color: var(--fg);
+}
+.feed .og {
+  flex: none;
+  font: 10px/1.6 var(--mono);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--dimmer);
 }
 .feed s {
   text-decoration: none;
@@ -200,51 +248,188 @@ body {
   color: var(--dimmer);
 }
 
-.home-split {
+/* приборная шкала архива: пять ячеек во всю ширину кадра */
+.gauge {
   display: grid;
-  grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
-  gap: 34px;
-  margin-top: 38px;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 1px;
+  margin: 6px 0 34px;
+  background: var(--rule);
+  border-block: 1px solid var(--rule);
+}
+.gauge__cell {
+  background: var(--ink);
+  padding: 15px 16px 14px;
+}
+.gauge__cell b {
+  display: block;
+  margin-top: 8px;
+  font: 700 26px/1 var(--display);
+  letter-spacing: 0.03em;
+  color: var(--fg);
+}
+.gauge__cell b.is-amber {
+  color: var(--amber);
+}
+.gauge__cell s {
+  display: block;
+  margin-top: 6px;
+  text-decoration: none;
+  font: 10px/1.5 var(--mono);
+  color: var(--dimmer);
 }
 
-/* список записей внутри категории */
+.home-split {
+  display: grid;
+  grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr) 300px;
+  gap: 34px;
+  margin-top: 38px;
+  align-items: start;
+}
+.home-split .chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+/* короткая лента событий в боковой колонке */
+.mini {
+  display: grid;
+  gap: 1px;
+  background: var(--rule);
+}
+.mini__row {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  padding: 7px 10px;
+  background: var(--ink-2);
+  text-decoration: none;
+}
+.mini__row time {
+  flex: none;
+  font: 10px/1.6 var(--mono);
+  color: var(--amber);
+}
+.mini__row b {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font: 400 12px/1.5 var(--mono);
+  color: var(--fg);
+}
+.mini__row s {
+  flex: none;
+  text-decoration: none;
+  font: 9px/1.6 var(--mono);
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--dimmer);
+}
+.mini__row--sealed time {
+  color: var(--ember);
+}
+.mini__row--sealed b {
+  color: var(--dim);
+}
+a.mini__row:hover {
+  background: var(--ink-3);
+}
+a.mini__row:hover b {
+  color: var(--amber);
+}
+
+/* указатель записей */
 .entries {
   width: 100%;
   border-collapse: collapse;
   font: 11px/1.6 var(--mono);
 }
 .entries td {
-  padding: 8px 10px;
-  border-bottom: 1px solid transparent;
-  transition: 0.15s;
+  padding: 9px 10px;
+  border-bottom: 1px solid var(--rule);
+  transition: 0.15s var(--ease);
 }
 .entries tr:hover td {
-  border-bottom-color: var(--rule);
-  background: rgba(255, 255, 255, 0.02);
+  background: rgba(255, 255, 255, 0.022);
 }
 .entries .no {
-  width: 42px;
+  width: 46px;
   color: var(--dimmer);
 }
-.entries .nm a {
-  font: 400 14px/1.5 var(--serif);
-  color: var(--fg);
-  text-decoration: none;
-}
-.entries .nm a:hover {
+.entries tr:hover .no {
   color: var(--amber);
 }
+.entries .nm {
+  width: 38%;
+  min-width: 0;
+}
+.entries .nm a {
+  display: inline-block;
+  font: 400 15px/1.45 var(--serif);
+  color: var(--fg);
+  text-decoration: none;
+  transition: transform 0.16s var(--ease), color 0.15s;
+}
+.entries tr:hover .nm > a {
+  transform: translateX(4px);
+  color: var(--amber);
+}
+.entries .tg {
+  width: 34%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.entries .tg .chip {
+  margin-right: 5px;
+}
+.entries .tg .more {
+  color: var(--dimmer);
+}
+.entries .og {
+  width: 15%;
+  color: var(--dim);
+  white-space: nowrap;
+}
 .entries .at {
+  width: 92px;
   text-align: right;
   color: var(--dim);
   white-space: nowrap;
 }
 
-@media (max-width: 900px) {
+.chip--sm {
+  height: 17px;
+  padding: 0 6px;
+  font-size: 9px;
+}
+
+/* Титульный лист — разворот: он занимает кадр целиком. */
+.cover-slot {
+  margin: 0 0 4px;
+}
+
+@media (max-width: 1280px) {
+  .split,
   .home-split {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
     gap: 26px;
   }
+  .rail-col {
+    position: static;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  }
+  .entries .tg,
+  .entries .og {
+    display: none;
+  }
+}
+
+@media (max-width: 900px) {
   .hero h1 {
     font-size: 28px;
   }
@@ -540,16 +725,11 @@ body {
 
 /* Полоса принадлежности стоит над документом и делит с ним колонку. */
 .paper-stack {
-  flex: 1;
+  justify-self: center;
+  width: 100%;
   min-width: 0;
-  max-width: 760px;
+  max-width: 880px;
 }
 .paper-stack .paper {
   max-width: none;
-}
-
-/* Титульный лист категории занимает колонку целиком. */
-.cover-slot {
-  max-width: 860px;
-  margin: 0 auto 20px;
 }
