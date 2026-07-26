@@ -30,3 +30,5 @@ old/**/*.geojson
 # the whole point of the arc topology is that none of this is needed again
 old/**/*.pmtiles
 old/**/*_cache.json
+
+.claude/

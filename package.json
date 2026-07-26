@@ -17,5 +17,9 @@
     "test": "npm run test -w @aether/markup",
     "dev:server": "npm run dev --workspace backend",
     "dev:map": "npm run dev --workspace @aether/map-proto"
+  },
+  "devDependencies": {
+    "@fontsource/ibm-plex-serif": "^5.3.0",
+    "@fontsource/tektur": "^5.3.0"
   }
 }

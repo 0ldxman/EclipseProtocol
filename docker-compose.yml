@@ -6,8 +6,12 @@
 # database, no cache, no worker. The wiki keeps its state as files.
 #
 #   AETHER_IMAGE   ghcr.io/<owner>/<repo>:latest   image built by the workflow
-#   AETHER_PORT    3010                            host port to publish on
-#   AETHER_DOMAIN  wiki.example.com                only for the `proxy` profile
+#   AETHER_NETWORK web_network                     network nginx proxy manager is on
+#
+# TLS and routing are nginx proxy manager's job. In its UI add a proxy host:
+# forward to host `aether`, port `3010`, and **turn Websockets Support on** -
+# without it the map and the collaborative editor connect and immediately drop,
+# because /collab/ is a websocket upgrade.
 #
 # A named volume is used deliberately rather than a host path: the container
 # runs as an unprivileged user, and Docker gives a fresh named volume the
@@ -19,6 +23,10 @@ services:
     image: ${AETHER_IMAGE:-ghcr.io/OWNER/aether:latest}
     container_name: aether
     restart: unless-stopped
+    networks:
+      # The same network as the proxy, so it can reach this container by name.
+      # Nothing is published to the host: the only way in is through the proxy.
+      - web
     environment:
       PORT: 3010
       # Records, rooms, uploads and the folder tree. Everything that must
@@ -27,8 +35,11 @@ services:
       # The baked province topology, part of the image.
       GEO_DIR: /app/geo
       LOG_LEVEL: ${AETHER_LOG_LEVEL:-info}
-    ports:
-      - "${AETHER_PORT:-3010}:3010"
+    # Uncomment to reach the wiki directly, bypassing the proxy - useful while
+    # the DNS record does not exist yet. Not needed once the proxy host is set
+    # up, and better left closed on a machine facing the internet.
+    # ports:
+    #   - "${AETHER_PORT:-3010}:3010"
     volumes:
       - aether-data:/data
     healthcheck:
@@ -42,27 +53,14 @@ services:
     # small, so this cap is about catching a leak, not about sizing.
     mem_limit: ${AETHER_MEM_LIMIT:-1g}
 
-  # Optional: a TLS-terminating reverse proxy, for when this is reachable from
-  # outside. Start it with `--profile proxy` (in Portainer: add `proxy` to the
-  # stack's COMPOSE_PROFILES variable). Caddy gets a certificate on its own and
-  # forwards websocket upgrades without extra configuration, so no config file
-  # is needed here.
-  proxy:
-    image: caddy:2-alpine
-    container_name: aether-proxy
-    profiles: ["proxy"]
-    restart: unless-stopped
-    depends_on:
-      - aether
-    command: caddy reverse-proxy --from ${AETHER_DOMAIN:-localhost} --to aether:3010
-    ports:
-      - "80:80"
-      - "443:443"
-    volumes:
-      - caddy-data:/data
-      - caddy-config:/config
+networks:
+  web:
+    # Created by the proxy's own stack, not by this one. `external` means
+    # compose joins it and never tries to create or remove it - if the name is
+    # wrong the stack fails to start rather than quietly ending up on an island
+    # of its own where the proxy cannot see it.
+    external: true
+    name: ${AETHER_NETWORK:-web_network}
 
 volumes:
   aether-data:
-  caddy-data:
-  caddy-config:
