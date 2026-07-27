@@ -973,18 +973,10 @@ div.w-classified{display:block;padding:2px 0}
   .page>*:nth-child(6),.aside>*:nth-child(6){animation-delay:.23s}
   .page>*:nth-child(n+7),.aside>*:nth-child(n+7){animation-delay:.26s}
 
-  .cards>*{animation:ae-rise .3s var(--ease) backwards}
-  .cards>*:nth-child(1){animation-delay:.06s}
-  .cards>*:nth-child(2){animation-delay:.1s}
-  .cards>*:nth-child(3){animation-delay:.14s}
-  .cards>*:nth-child(4){animation-delay:.18s}
-  .cards>*:nth-child(5){animation-delay:.22s}
-  .cards>*:nth-child(n+6){animation-delay:.25s}
-
   /* документ: лист протягивается медленнее прочего — на нём и держится вся
      дальнейшая работа, и торопить его незачем */
-  .paper{animation:ae-feed 1.05s var(--ease) .05s backwards}
-  .toc{animation:ae-fade .4s var(--ease) .5s backwards}
+  .paper{animation:ae-feed 1.7s var(--ease) .05s backwards}
+  .toc{animation:ae-fade .7s var(--ease) .9s backwards}
 
   /* титульный лист: рамка, затем название, затем акцентная черта */
   .cover__frame{animation:ae-fade .5s var(--ease) .16s backwards}
@@ -1009,7 +1001,7 @@ div.w-classified{display:block;padding:2px 0}
    раньше, чем эти слова появятся, значило бы врать о том, что закрыто. */
 .w-spoiler,.w-classified{
   background-repeat:no-repeat;background-position:left center;
-  transition:background-size .38s var(--ease);
+  transition:background-size .7s var(--ease);
 }
 .ae-reveal .w-spoiler{background-size:0 100%}
 .ae-reveal .w-classified{
@@ -1028,38 +1020,38 @@ div.w-classified{display:block;padding:2px 0}
 .ae-reveal .w-note,.ae-reveal .w-quote,.ae-reveal .w-table-wrap,
 .ae-reveal .w-record,.ae-reveal .w-file,.ae-reveal .w-event,
 .ae-reveal .w-map,.ae-reveal .w-country-stats,.ae-reveal .w-infobox{
-  opacity:0;transform:translateY(6px);
-  transition:opacity .42s var(--ease),transform .42s var(--ease);
+  opacity:0;transform:translateY(8px);
+  transition:opacity .7s var(--ease),transform .7s var(--ease);
 }
 .ae-reveal .is-in{opacity:1;transform:none}
 
 /* шкала наливается из нуля — и только после того, как встала сама полоса */
-.ae-reveal .w-bar-fill{transform:scaleX(0);transform-origin:left;transition:transform .85s var(--ease) .12s}
+.ae-reveal .w-bar-fill{transform:scaleX(0);transform-origin:left;transition:transform 1.5s var(--ease) .25s}
 .ae-reveal .w-bar.is-in .w-bar-fill{transform:scaleX(1)}
 
 /* точки зажигаются по одной: шкала дискретная, и наливаться ей нечем */
-.ae-reveal .w-dot{transform:scale(.15);opacity:.35;transition:transform .3s var(--ease),opacity .3s var(--ease)}
+.ae-reveal .w-dot{transform:scale(.15);opacity:.35;transition:transform .42s var(--ease),opacity .42s var(--ease)}
 .ae-reveal .w-dotbar.is-in .w-dot{transform:none;opacity:1}
-.ae-reveal .w-dotbar.is-in .w-dot:nth-child(1){transition-delay:.14s}
-.ae-reveal .w-dotbar.is-in .w-dot:nth-child(2){transition-delay:.2s}
-.ae-reveal .w-dotbar.is-in .w-dot:nth-child(3){transition-delay:.26s}
-.ae-reveal .w-dotbar.is-in .w-dot:nth-child(4){transition-delay:.32s}
-.ae-reveal .w-dotbar.is-in .w-dot:nth-child(5){transition-delay:.38s}
-.ae-reveal .w-dotbar.is-in .w-dot:nth-child(n+6){transition-delay:.44s}
+.ae-reveal .w-dotbar.is-in .w-dot:nth-child(1){transition-delay:.24s}
+.ae-reveal .w-dotbar.is-in .w-dot:nth-child(2){transition-delay:.36s}
+.ae-reveal .w-dotbar.is-in .w-dot:nth-child(3){transition-delay:.48s}
+.ae-reveal .w-dotbar.is-in .w-dot:nth-child(4){transition-delay:.6s}
+.ae-reveal .w-dotbar.is-in .w-dot:nth-child(5){transition-delay:.72s}
+.ae-reveal .w-dotbar.is-in .w-dot:nth-child(n+6){transition-delay:.84s}
 
 /* поля досье: строка за строкой, как их и заполняли */
 .ae-reveal .w-fields dt,.ae-reveal .w-fields dd{
-  opacity:0;transition:opacity .34s var(--ease);
+  opacity:0;transition:opacity .5s var(--ease);
 }
 .ae-reveal .w-fields.is-in dt,.ae-reveal .w-fields.is-in dd{opacity:1}
-.ae-reveal .w-fields.is-in dt:nth-child(1),.ae-reveal .w-fields.is-in dd:nth-child(2){transition-delay:.1s}
-.ae-reveal .w-fields.is-in dt:nth-child(3),.ae-reveal .w-fields.is-in dd:nth-child(4){transition-delay:.16s}
-.ae-reveal .w-fields.is-in dt:nth-child(5),.ae-reveal .w-fields.is-in dd:nth-child(6){transition-delay:.22s}
-.ae-reveal .w-fields.is-in dt:nth-child(7),.ae-reveal .w-fields.is-in dd:nth-child(8){transition-delay:.28s}
-.ae-reveal .w-fields.is-in dt:nth-child(n+9),.ae-reveal .w-fields.is-in dd:nth-child(n+10){transition-delay:.34s}
+.ae-reveal .w-fields.is-in dt:nth-child(1),.ae-reveal .w-fields.is-in dd:nth-child(2){transition-delay:.18s}
+.ae-reveal .w-fields.is-in dt:nth-child(3),.ae-reveal .w-fields.is-in dd:nth-child(4){transition-delay:.3s}
+.ae-reveal .w-fields.is-in dt:nth-child(5),.ae-reveal .w-fields.is-in dd:nth-child(6){transition-delay:.42s}
+.ae-reveal .w-fields.is-in dt:nth-child(7),.ae-reveal .w-fields.is-in dd:nth-child(8){transition-delay:.54s}
+.ae-reveal .w-fields.is-in dt:nth-child(n+9),.ae-reveal .w-fields.is-in dd:nth-child(n+10){transition-delay:.66s}
 
 /* выноска и цитата: сперва прочерчивается кант, потом приходит текст */
-.ae-reveal .w-note,.ae-reveal .w-quote{border-left-color:transparent;transition:opacity .42s var(--ease),transform .42s var(--ease),border-left-color .3s var(--ease) .2s}
+.ae-reveal .w-note,.ae-reveal .w-quote{border-left-color:transparent;transition:opacity .7s var(--ease),transform .7s var(--ease),border-left-color .5s var(--ease) .38s}
 .ae-reveal .w-note.is-in,.ae-reveal .w-quote.is-in{border-left-color:var(--paper-ink)}
 .ae-reveal .w-note.is-info.is-in{border-left-color:#2d5a7d}
 .ae-reveal .w-note.is-warn.is-in{border-left-color:#8a5b0a}
@@ -1068,28 +1060,29 @@ div.w-classified{display:block;padding:2px 0}
 
 /* таблица: строка за строкой сверху вниз */
 .ae-reveal .w-table-wrap tbody tr,.ae-reveal .prose table tbody tr{
-  opacity:0;transition:opacity .3s var(--ease);
+  opacity:0;transition:opacity .45s var(--ease);
 }
 .ae-reveal .w-table-wrap.is-in tbody tr,.ae-reveal .prose table.is-in tbody tr{opacity:1}
-.ae-reveal .w-table-wrap.is-in tbody tr:nth-child(1),.ae-reveal .prose table.is-in tbody tr:nth-child(1){transition-delay:.1s}
-.ae-reveal .w-table-wrap.is-in tbody tr:nth-child(2),.ae-reveal .prose table.is-in tbody tr:nth-child(2){transition-delay:.16s}
-.ae-reveal .w-table-wrap.is-in tbody tr:nth-child(3),.ae-reveal .prose table.is-in tbody tr:nth-child(3){transition-delay:.22s}
-.ae-reveal .w-table-wrap.is-in tbody tr:nth-child(n+4),.ae-reveal .prose table.is-in tbody tr:nth-child(n+4){transition-delay:.28s}
+.ae-reveal .w-table-wrap.is-in tbody tr:nth-child(1),.ae-reveal .prose table.is-in tbody tr:nth-child(1){transition-delay:.2s}
+.ae-reveal .w-table-wrap.is-in tbody tr:nth-child(2),.ae-reveal .prose table.is-in tbody tr:nth-child(2){transition-delay:.34s}
+.ae-reveal .w-table-wrap.is-in tbody tr:nth-child(3),.ae-reveal .prose table.is-in tbody tr:nth-child(3){transition-delay:.48s}
+.ae-reveal .w-table-wrap.is-in tbody tr:nth-child(4),.ae-reveal .prose table.is-in tbody tr:nth-child(4){transition-delay:.62s}
+.ae-reveal .w-table-wrap.is-in tbody tr:nth-child(n+5),.ae-reveal .prose table.is-in tbody tr:nth-child(n+5){transition-delay:.76s}
 
 /* снимок проявляется; оттиск падает сверху */
 .ae-reveal .w-image,.ae-reveal .w-gallery,.ae-reveal .w-video{opacity:0}
 .ae-reveal .w-image.is-in,.ae-reveal .w-gallery.is-in,.ae-reveal .w-video.is-in{
-  animation:ae-develop .95s var(--ease) forwards;
+  animation:ae-develop 1.8s var(--ease) forwards;
 }
 .ae-reveal .w-stamp{opacity:0}
-.ae-reveal .w-stamp.is-in{animation:ae-stamp .42s var(--ease) .1s forwards}
+.ae-reveal .w-stamp.is-in{animation:ae-stamp .7s var(--ease) .25s forwards}
 
 /* Стоит после виджетов намеренно: блок может быть и виджетом сразу (цитата,
    таблица), и пока он разбирается, приглушение должно брать верх над «встал
    на место». Специфичность у правил одна, решает порядок. */
 .ae-reveal .is-cipher{
-  opacity:.4;filter:blur(.3px);
-  transition:opacity .5s var(--ease),filter .5s var(--ease);
+  opacity:.34;filter:blur(.35px);
+  transition:opacity .9s var(--ease),filter .9s var(--ease);
 }
 .ae-reveal .is-read{opacity:1;filter:none}
 

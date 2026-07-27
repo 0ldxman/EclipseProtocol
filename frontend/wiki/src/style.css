@@ -797,6 +797,306 @@ a.mini__row:hover b {
   color: var(--dim);
 }
 
+/* ── вывод картотеки ───────────────────────────────────────────────────
+   Указатель — это ящик с папками, и выводится он как ящик. Ярлык вытягивают
+   за язычок: сперва прочерчивается сам язычок, потом папка поднимается из-за
+   переднего края (нижний срез, а не сдвиг: она выходит ИЗ ящика, а не едет по
+   столу), потом название собирается из разрядки, и последним ложится
+   описание. Строка указателя печатается вместе со своей чертой. Приборная
+   панель заполняется по строке, и точечный поводок тянется вместе с ключом —
+   он и есть та черта, по которой глаз идёт от названия к значению.
+
+   Спрятанное состояние приходит классом `is-staged`, который ставит тот же
+   код, что потом снимает: спрятать в стиле — значит спрятать навсегда всё, до
+   чего наблюдатель не дошёл. */
+@media (prefers-reduced-motion: no-preference) {
+  /* ярлык категории: язычок, потом папка из-за переднего края ящика */
+  .cards.is-staged .folder {
+    clip-path: inset(100% 0 0 0);
+    transition: clip-path 0.75s var(--ease) var(--card-in, 0ms);
+  }
+  .cards.is-staged .folder::before {
+    transform-origin: left;
+    scale: 0 1;
+    transition: scale 0.4s var(--ease) var(--card-in, 0ms);
+  }
+  .cards.is-staged .folder b {
+    opacity: 0;
+    letter-spacing: 0.36em;
+    transition:
+      opacity 0.55s var(--ease) calc(var(--card-in, 0ms) + 0.34s),
+      letter-spacing 0.55s var(--ease) calc(var(--card-in, 0ms) + 0.34s);
+  }
+  .cards.is-staged .folder p,
+  .cards.is-staged .folder s {
+    opacity: 0;
+    transition: opacity 0.6s var(--ease) calc(var(--card-in, 0ms) + 0.6s);
+  }
+  .cards.is-staged.is-in .folder {
+    clip-path: inset(0 0 0 0);
+  }
+  .cards.is-staged.is-in .folder::before {
+    scale: 1 1;
+  }
+  .cards.is-staged.is-in .folder b {
+    opacity: 1;
+    letter-spacing: 0.08em;
+  }
+  .cards.is-staged.is-in .folder p,
+  .cards.is-staged.is-in .folder s {
+    opacity: 1;
+  }
+  .cards .folder:nth-child(2) {
+    --card-in: 130ms;
+  }
+  .cards .folder:nth-child(3) {
+    --card-in: 260ms;
+  }
+  .cards .folder:nth-child(4) {
+    --card-in: 390ms;
+  }
+  .cards .folder:nth-child(5) {
+    --card-in: 520ms;
+  }
+  .cards .folder:nth-child(n + 6) {
+    --card-in: 650ms;
+  }
+
+  /* строка указателя: черта прочерчивается, название подаётся из-за неё */
+  .entries tr.is-staged td {
+    border-bottom-color: transparent;
+    background-image: linear-gradient(var(--rule), var(--rule));
+    background-repeat: no-repeat;
+    background-position: left bottom;
+    background-size: 0 1px;
+    transition:
+      background-size 0.6s var(--ease) var(--in-delay, 0ms),
+      background-color 0.15s var(--ease);
+  }
+  .entries tr.is-staged.is-in td {
+    background-size: 100% 1px;
+  }
+  .entries tr.is-staged > td > * {
+    opacity: 0;
+    translate: -6px 0;
+    transition:
+      opacity 0.5s var(--ease) calc(var(--in-delay, 0ms) + 0.14s),
+      translate 0.5s var(--ease) calc(var(--in-delay, 0ms) + 0.14s);
+  }
+  .entries tr.is-staged.is-in > td > * {
+    opacity: 1;
+    translate: 0 0;
+  }
+  /* Наведение красит фоном, а не картинкой: картинка занята чертой строки. */
+  .entries tr:hover td {
+    background-color: rgba(255, 255, 255, 0.022);
+  }
+
+  /* приборная панель: язычок, потом строки с поводками */
+  .panel.is-staged {
+    opacity: 0;
+    transition: opacity 0.5s var(--ease) var(--in-delay, 0ms);
+  }
+  .panel.is-staged.is-in {
+    opacity: 1;
+  }
+  .panel.is-staged .panel__tab {
+    transform-origin: left;
+    scale: 0 1;
+    transition: scale 0.42s var(--ease) var(--in-delay, 0ms);
+  }
+  .panel.is-staged.is-in .panel__tab {
+    scale: 1 1;
+  }
+  .panel.is-staged .kv dt {
+    clip-path: inset(0 100% 0 0);
+    transition: clip-path 0.7s var(--ease) calc(var(--in-delay, 0ms) + var(--row, 0ms) + 0.24s);
+  }
+  .panel.is-staged .kv dd {
+    opacity: 0;
+    transition: opacity 0.45s var(--ease) calc(var(--in-delay, 0ms) + var(--row, 0ms) + 0.62s);
+  }
+  .panel.is-staged.is-in .kv dt {
+    clip-path: inset(0 0 0 0);
+  }
+  .panel.is-staged.is-in .kv dd {
+    opacity: 1;
+  }
+  .kv dt:nth-of-type(2),
+  .kv dd:nth-of-type(2) {
+    --row: 90ms;
+  }
+  .kv dt:nth-of-type(3),
+  .kv dd:nth-of-type(3) {
+    --row: 180ms;
+  }
+  .kv dt:nth-of-type(4),
+  .kv dd:nth-of-type(4) {
+    --row: 270ms;
+  }
+  .kv dt:nth-of-type(n + 5),
+  .kv dd:nth-of-type(n + 5) {
+    --row: 360ms;
+  }
+
+  /* короткая лента и метки: то же появление, только быстрее — их много */
+  .mini__row.is-staged {
+    opacity: 0;
+    translate: -8px 0;
+    transition:
+      opacity 0.45s var(--ease) var(--in-delay, 0ms),
+      translate 0.45s var(--ease) var(--in-delay, 0ms);
+  }
+  .mini__row.is-staged.is-in {
+    opacity: 1;
+    translate: 0 0;
+  }
+  .chips .chip.is-staged {
+    opacity: 0;
+    scale: 0.9;
+    transition:
+      opacity 0.35s var(--ease) var(--in-delay, 0ms),
+      scale 0.35s var(--ease) var(--in-delay, 0ms);
+  }
+  .chips .chip.is-staged.is-in {
+    opacity: 1;
+    scale: 1;
+  }
+
+  /* шкала архива: ячейка встаёт, число снимается прибором */
+  .gauge__cell.is-staged {
+    opacity: 0;
+    transition: opacity 0.5s var(--ease) var(--in-delay, 0ms);
+  }
+  .gauge__cell.is-staged.is-in {
+    opacity: 1;
+  }
+}
+
+/* ── вывод ленты ───────────────────────────────────────────────────────
+   От оси наружу. Сперва прочерчивается сама ось — сверху вниз, как её и
+   читают, — потом на ней загорается ромб, от ромба вытягивается отвод, и
+   последней на конце отвода встаёт карточка. Порядок не декоративный: лента
+   устроена так, что ось есть, а события на ней отмечены, и обратная
+   последовательность рассказывала бы о ней неправду.
+
+   Всё внутри no-preference: при выключенной анимации остаётся та же лента,
+   просто целиком и сразу. */
+@media (prefers-reduced-motion: no-preference) {
+  .spine {
+    transform-origin: top;
+    animation: tl-spine 2.2s var(--ease) 0.1s backwards;
+  }
+  @keyframes tl-spine {
+    from {
+      scale: 1 0;
+    }
+    to {
+      scale: 1 1;
+    }
+  }
+  /* Огонь разгорается, а не включается: он и есть конец ленты. */
+  .firewrap {
+    animation: ae-fade 2.6s linear 0.3s backwards;
+  }
+
+  .ev.is-staged .node {
+    scale: 0;
+    transition: scale 0.5s var(--ease) var(--in-delay, 0ms), background 0.22s, box-shadow 0.22s;
+  }
+  .ev.is-staged .conn {
+    transform-origin: var(--conn-from, right);
+    scale: 0 1;
+    transition: scale 0.55s var(--ease) calc(var(--in-delay, 0ms) + 0.22s), background 0.22s;
+  }
+  .ev.is-staged .card {
+    opacity: 0;
+    translate: var(--card-from, 24px) 0;
+    transition:
+      opacity 0.6s var(--ease) calc(var(--in-delay, 0ms) + 0.5s),
+      translate 0.6s var(--ease) calc(var(--in-delay, 0ms) + 0.5s),
+      border-color 0.22s,
+      background 0.22s;
+  }
+  .ev--l .conn {
+    --conn-from: right;
+  }
+  .ev--r .conn {
+    --conn-from: left;
+  }
+  /* Карточка приходит со своей стороны: слева от оси — слева, справа — справа. */
+  .ev--l .card {
+    --card-from: -24px;
+  }
+  .ev--r .card {
+    --card-from: 24px;
+  }
+  .ev.is-in .node {
+    scale: 1;
+  }
+  .ev.is-in .conn {
+    scale: 1 1;
+  }
+  .ev.is-in .card {
+    opacity: 1;
+    translate: 0 0;
+  }
+
+  /* Плашка эпохи раскрывается от середины: она разрывает ось, и разрыв идёт
+     оттуда, где ось прервалась. Название следом собирается из разрядки. */
+  .epoch.is-staged > div {
+    clip-path: inset(0 50% 0 50%);
+    transition: clip-path 0.9s var(--ease);
+  }
+  .epoch.is-in > div {
+    clip-path: inset(0 0 0 0);
+  }
+  .epoch.is-staged .nm {
+    opacity: 0;
+    letter-spacing: 0.5em;
+    filter: blur(3px);
+    transition:
+      opacity 0.8s var(--ease) 0.35s,
+      letter-spacing 0.8s var(--ease) 0.35s,
+      filter 0.8s var(--ease) 0.35s;
+  }
+  .epoch.is-in .nm {
+    opacity: 1;
+    letter-spacing: 0.06em;
+    filter: none;
+  }
+  .epoch.is-staged .no,
+  .epoch.is-staged .sub {
+    opacity: 0;
+    transition: opacity 0.7s var(--ease) 0.75s;
+  }
+  .epoch.is-in .no,
+  .epoch.is-in .sub {
+    opacity: 1;
+  }
+
+  /* Конец ленты: ромб раздувается из точки и разом гаснет до своего зарева. */
+  .now.is-staged::before {
+    scale: 0;
+    transition: scale 0.7s var(--ease);
+  }
+  .now.is-in::before {
+    scale: 1;
+    animation: tl-ember 1.6s var(--ease) 0.5s;
+  }
+  @keyframes tl-ember {
+    0% {
+      box-shadow: 0 0 22px 4px rgba(232, 161, 60, 0.45);
+    }
+    35% {
+      box-shadow: 0 0 46px 12px rgba(232, 161, 60, 0.75);
+    }
+    100% {
+      box-shadow: 0 0 22px 4px rgba(232, 161, 60, 0.45);
+    }
+  }
+}
+
 /* Узкий экран: ось уходит к левому краю, и обе стороны становятся одной. */
 @media (max-width: 820px) {
   .ev {

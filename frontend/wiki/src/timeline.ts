@@ -16,6 +16,7 @@ import { href, navigate } from "./app-root.js";
 import { timeline, type Timeline, type TimelineEvent } from "./api.js";
 import { el } from "./dom.js";
 import { setFootCount } from "./header.js";
+import { decode, revealOnEnter } from "./reveal.js";
 
 const YEAR = (at: string): string => at.slice(0, 4);
 
@@ -152,7 +153,58 @@ export async function renderTimeline(view: HTMLElement): Promise<void> {
   setFootCount(`${plural(data.epochs.length, ["эпоха", "эпохи", "эпох"])} · ${plural(data.events.length, EVENTS)}`);
   document.title = "Хронология — AETHER.WIKI";
 
-  if (data.events.length > 0) startFire(page.querySelector<HTMLCanvasElement>("#tl-fire")!);
+  if (data.events.length > 0) {
+    startFire(page.querySelector<HTMLCanvasElement>("#tl-fire")!);
+    animate(page);
+  }
+}
+
+/**
+ * Оживление ленты.
+ *
+ * Лента строится не так, как страница: у неё есть ось, и всё на ней держится
+ * за эту ось. Поэтому и выводится она от оси наружу — сперва прочерчивается
+ * сама ось, потом на ней загорается ромб события, от ромба вытягивается отвод,
+ * и только на конце отвода встаёт карточка. Обратный порядок (карточка первой,
+ * линия потом) читался бы как «карточки приехали и нашли себе ось», а лента
+ * устроена наоборот: ось есть, события на ней отмечены.
+ *
+ * Плашка эпохи раскрывается от середины в обе стороны — она разрывает ось, и
+ * разрыв должен идти оттуда, где ось прервалась.
+ *
+ * Конец ленты — «сейчас» — расшифровывается тем же прибором, что и текст
+ * записи: год мира это такое же выведенное значение, и заводить ему отдельное
+ * движение значило бы говорить о том же двумя языками.
+ */
+function animate(page: HTMLElement): void {
+  const still = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  revealOnEnter(page.querySelectorAll<HTMLElement>(".ev"), { stagger: 130, cap: 6 });
+  revealOnEnter(page.querySelectorAll<HTMLElement>(".epoch"), { stagger: 0 });
+
+  const now = page.querySelector<HTMLElement>(".now");
+  if (!now) return;
+  if (still) {
+    now.classList.add("is-in");
+    return;
+  }
+  // Отметка конца ждёт, пока до неё дочитают: расшифровать год заранее — это
+  // показать конец летописи тому, кто ещё в её начале.
+  const watch = new IntersectionObserver(
+    (entries) => {
+      for (const entry of entries) {
+        if (!entry.isIntersecting) continue;
+        watch.disconnect();
+        now.classList.add("is-in");
+        const year = now.querySelector<HTMLElement>("b");
+        const note = now.querySelector<HTMLElement>("span");
+        if (year) decode(year, 260);
+        if (note) decode(note, 520);
+      }
+    },
+    { threshold: 0.6 },
+  );
+  watch.observe(now);
 }
 
 /* ── огонь ──────────────────────────────────────────────────────────────

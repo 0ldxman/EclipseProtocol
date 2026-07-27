@@ -77,13 +77,21 @@ const midway = await page.evaluate(() => {
     read: block.classList.contains("is-read"),
   };
 });
-await page.waitForTimeout(3200);
+await page.waitForTimeout(900);
+const late = await page.evaluate(() => {
+  const blocks = [...document.querySelectorAll(".prose .is-cipher")];
+  return { some: blocks.some((b) => !b.classList.contains("is-read")), of: blocks.length };
+});
+await page.waitForTimeout(3600);
 const settled = await page.evaluate(() => {
   const block = document.querySelector(".prose p");
   return { text: block.textContent, read: block.classList.contains("is-read") };
 });
 
 ok("текст приходит шумом", midway.cipher === true && midway.read === false);
+// Разбор должен длиться столько, чтобы его было видно: слишком быстрый вывод
+// читается как мигание при загрузке, а не как работа прибора.
+ok("разбор длится дольше секунды", late.some === true, JSON.stringify(late));
 ok("шум не тот же текст", midway.text !== settled.text, midway.text.slice(0, 40));
 // Подмена знак в знак: длина та же, поэтому вёрстка не двигается.
 ok("длина строки не меняется", midway.text.length === settled.text.length,
@@ -186,6 +194,97 @@ ok("оттиск повёрнут", stamp.rotate !== "none" && stamp.rotate !== 
 ok("краска легла неровно", stamp.mask === "url(\"" || stamp.mask.startsWith("url("), String(stamp.mask));
 ok("оттиск лежит на бумаге, а не поверх", stamp.blend === "multiply", String(stamp.blend));
 
+/* ── лента: от оси наружу ─────────────────────────────────────────────── */
+await page.goto(`${ROOT}/#/timeline`, { waitUntil: "domcontentloaded" });
+await page.waitForSelector(".tl .ev");
+await page.waitForTimeout(120);
+
+const railEarly = await page.evaluate(() => {
+  const ev = document.querySelector(".ev");
+  const style = (sel) => getComputedStyle(document.querySelector(sel));
+  const delay = (sel) => parseFloat(style(sel).transitionDelay);
+  return {
+    staged: ev.classList.contains("is-staged"),
+    spine: style(".spine").animationName,
+    // Порядок сверяется по задержкам, а не по снимку состояния: снимок
+    // зависит от того, насколько быстро браузер дошёл до этой строки.
+    order: [delay(".ev .node"), delay(".ev .conn"), delay(".ev .card")],
+  };
+});
+ok("ось прочерчивается", railEarly.spine === "tl-spine", String(railEarly.spine));
+ok("событие ждёт своей очереди", railEarly.staged === true);
+const [nodeAt, connAt, cardAt] = railEarly.order;
+ok("порядок: ромб, отвод, карточка", nodeAt < connAt && connAt < cardAt, railEarly.order.join(" < "));
+
+await page.waitForTimeout(2600);
+const railSettled = await page.evaluate(() => {
+  const style = (sel) => getComputedStyle(document.querySelector(sel));
+  return {
+    inCount: document.querySelectorAll(".ev.is-in").length,
+    node: style(".ev .node").scale,
+    card: style(".ev .card").opacity,
+    epoch: document.querySelector(".epoch")?.classList.contains("is-in") ?? null,
+    epochClip: style(".epoch > div").clipPath,
+  };
+});
+ok("события встали", railSettled.inCount >= 3 && railSettled.card === "1", JSON.stringify(railSettled));
+ok("ромб раскрылся", railSettled.node === "none" || railSettled.node === "1", String(railSettled.node));
+ok("плашка эпохи раскрылась от середины", railSettled.epoch === true && railSettled.epochClip.includes("0px"), String(railSettled.epochClip));
+
+// Конец ленты расшифровывается — тем же прибором, что и текст записи.
+await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
+await page.waitForTimeout(500);
+const nowEarly = await page.textContent(".now b");
+await page.waitForTimeout(3200);
+const nowLate = await page.textContent(".now b");
+ok("год в конце ленты снимается прибором", nowEarly !== nowLate, `${nowEarly} → ${nowLate}`);
+ok("год доходит до своего значения", /^сейчас · \d{4}$/.test(nowLate.trim()), nowLate);
+await page.screenshot({ path: path.join(SHOTS, "reader-05-timeline.png") });
+
+/* ── картотека: ярлык вытягивают из ящика ─────────────────────────────── */
+await page.goto(`${ROOT}/`, { waitUntil: "domcontentloaded" });
+await page.waitForSelector(".folder");
+await page.waitForTimeout(100);
+const drawerEarly = await page.evaluate(() => ({
+  staged: document.querySelector(".cards")?.classList.contains("is-staged") ?? null,
+  clip: getComputedStyle(document.querySelector(".folder")).clipPath,
+  tab: getComputedStyle(document.querySelector(".folder"), "::before").scale,
+}));
+ok("ящик закрыт до своей очереди", drawerEarly.staged === true);
+// Срез в этот момент может быть уже частичным — важно, что он есть и что он
+// не тот же самый, что в конце.
+ok("ярлык выходит из-под среза", drawerEarly.clip !== "none" && drawerEarly.clip.includes("inset"),
+  String(drawerEarly.clip));
+
+await page.waitForTimeout(2400);
+const drawerLate = await page.evaluate(() => ({
+  clip: getComputedStyle(document.querySelector(".folder")).clipPath,
+  name: getComputedStyle(document.querySelector(".folder b")).opacity,
+}));
+ok("ярлык вышел целиком", drawerLate.clip !== drawerEarly.clip && !drawerLate.clip.includes("100%"),
+  `${drawerEarly.clip} → ${drawerLate.clip}`);
+ok("название встало", drawerLate.name === "1", String(drawerLate.name));
+await page.screenshot({ path: path.join(SHOTS, "reader-06-catalogue.png"), fullPage: true });
+
+// Точечный поводок тянется вместе с ключом — это видно только в сводке
+// категории: на главной в приборной панели стоит лента правок, а не строки.
+if (stamped) {
+  await page.goto(`${ROOT}/#/folder/${stamped}`, { waitUntil: "domcontentloaded" });
+  await page.waitForSelector(".rail-col .kv dt");
+  await page.waitForTimeout(120);
+  const leaderEarly = await page.evaluate(
+    () => getComputedStyle(document.querySelector(".rail-col .kv dt")).clipPath,
+  );
+  await page.waitForTimeout(2600);
+  const leaderLate = await page.evaluate(() => ({
+    leader: getComputedStyle(document.querySelector(".rail-col .kv dt")).clipPath,
+    value: getComputedStyle(document.querySelector(".rail-col .kv dd")).opacity,
+  }));
+  ok("поводок тянется, а не стоит", leaderEarly !== leaderLate.leader, `${leaderEarly} → ${leaderLate.leader}`);
+  ok("поводок дотянулся до значения", !leaderLate.leader.includes("100%") && leaderLate.value === "1",
+    `${leaderLate.leader} / ${leaderLate.value}`);
+}
+
 /* ── выключенная анимация: та же страница, просто сразу ───────────────── */
 const still = await context.newPage();
 await still.emulateMedia({ reducedMotion: "reduce" });
@@ -200,6 +299,20 @@ const quiet = await still.evaluate(() => ({
 }));
 ok("без анимации текст стоит сразу", quiet.read === true && quiet.text === settled.text);
 ok("без анимации виджеты уже на месте", quiet.bar === true && quiet.spoiler === true);
+
+// Ничего не должно оставаться «спрятанным на будущее»: класс `is-staged` при
+// выключенной анимации не ставится вовсе, иначе половина картотеки исчезла бы.
+await still.goto(`${ROOT}/`, { waitUntil: "networkidle" });
+await still.waitForSelector(".folder");
+await still.waitForTimeout(300);
+const quietHome = await still.evaluate(() => ({
+  staged: document.querySelectorAll(".is-staged").length,
+  folder: getComputedStyle(document.querySelector(".folder")).clipPath,
+  gauge: document.querySelector(".gauge__cell b").textContent,
+}));
+ok("без анимации ничего не прячется", quietHome.staged === 0, `${quietHome.staged} спрятанных`);
+ok("без анимации ярлык не срезан", quietHome.folder === "none", String(quietHome.folder));
+ok("без анимации число стоит сразу", /^\d+$/.test(quietHome.gauge.trim()), quietHome.gauge);
 await still.close();
 
 if (errors.length) failures.push(`ошибки в консоли: ${errors.join(" | ")}`);

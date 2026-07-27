@@ -84,8 +84,27 @@ interface Job {
   done: boolean;
 }
 
-/** Ширина шумовой полосы перед фронтом, в знаках. */
-const BAND = 16;
+/**
+ * Ширина шумовой полосы перед фронтом, в знаках.
+ *
+ * Полоса — это и есть видимая часть работы: за ней текст уже свой, перед ней
+ * ещё шум, и разбирает документ именно она. Узкая полоса на быстром ходу
+ * читается как мигание, а не как разбор.
+ */
+const BAND = 24;
+
+/**
+ * Сколько времени разбирается блок.
+ *
+ * Растёт медленнее длины: иначе цитата в три строки успевает мигнуть, а
+ * раздел на двадцать стоит шумом полминуты. Числа подобраны на глаз — вывод
+ * должен читаться как работа прибора, а не как задержка загрузки.
+ */
+const pace = (length: number): number => Math.min(2600, 620 + Math.sqrt(length) * 95);
+
+/** Пауза между соседними блоками: страница выводится сверху вниз, а не разом. */
+const STAGGER = 150;
+const STAGGER_CAP = 10;
 
 const jobs: Job[] = [];
 let looping = false;
@@ -173,6 +192,22 @@ function loop(now: number): void {
   else jobs.length = 0;
 }
 
+/**
+ * Разобрать один блок.
+ *
+ * Открыто наружу, потому что расшифровка нужна не только телу записи: год в
+ * конце летописи и счётчики на главной — такие же выводимые прибором числа, и
+ * заводить им отдельное движение значило бы говорить о том же двумя языками.
+ */
+export function decode(block: HTMLElement, delay = 0): void {
+  if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    block.classList.add("is-read");
+    return;
+  }
+  block.classList.add("is-cipher");
+  start(block, delay);
+}
+
 function start(block: HTMLElement, delay: number): void {
   const { pieces, marks, total } = collect(block);
   if (total === 0) {
@@ -186,10 +221,7 @@ function start(block: HTMLElement, delay: number): void {
     pieces,
     marks,
     total,
-    // Длинный абзац разбирается дольше короткого, но не пропорционально:
-    // время растёт медленнее длины, иначе цитата в три строки читается
-    // мгновенно, а раздел на двадцать — стоит шумом полторы секунды.
-    duration: Math.min(1100, 260 + Math.sqrt(total) * 42),
+    duration: pace(total),
     startAt: performance.now() + delay,
     done: false,
   };
@@ -241,7 +273,7 @@ export function revealArticle(root: HTMLElement): void {
         // и figure, и абзац внутри. Без этого такой элемент разбирался бы, но
         // так и остался бы спрятанным.
         element.classList.add("is-in");
-        if (element.matches(BLOCKS)) start(element, Math.min(queued++, 7) * 70);
+        if (element.matches(BLOCKS)) start(element, Math.min(queued++, STAGGER_CAP) * STAGGER);
       }
       // Задержка копится только внутри одной пачки: следующий экран не должен
       // ждать столько же, сколько ждал последний абзац предыдущего.
@@ -251,4 +283,61 @@ export function revealArticle(root: HTMLElement): void {
   );
 
   for (const element of [...blocks, ...widgets]) observer.observe(element);
+}
+
+/**
+ * Показать по мере появления в кадре.
+ *
+ * Для всего, что не документ: ярлыков категорий, строк указателя, приборных
+ * панелей, событий летописи. Класс один и тот же — `is-in`, — а что именно
+ * происходит, решает стиль: у ярлыка вытягивается язычок, у события
+ * прочерчивается отвод, у панели проступают строки. Здесь только очередь.
+ *
+ * Исходное «спрятано» вешается отсюда же, классом `is-staged`, а не лежит в
+ * стиле само по себе. Разница принципиальная: спрятать в стиле — значит
+ * спрятать НАВСЕГДА всё, до чего наблюдатель почему-либо не дошёл, и такую
+ * потерю (строки таблицы, не попавшие в список виджетов) мы уже разбирали.
+ * Здесь прячет тот же код, который обязан и показать.
+ *
+ * Задержка копится внутри одной пачки: то, что видно сразу, выходит по
+ * очереди сверху вниз, а следующий экран не ждёт столько же, сколько ждал
+ * последний элемент предыдущего.
+ */
+export function revealOnEnter(
+  elements: Iterable<HTMLElement>,
+  options: { stagger?: number; cap?: number; margin?: string } = {},
+): void {
+  const list = [...elements];
+  if (list.length === 0) return;
+
+  const still = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  if (still) {
+    for (const element of list) element.classList.add("is-in");
+    return;
+  }
+  for (const element of list) element.classList.add("is-staged");
+
+  const stagger = options.stagger ?? 90;
+  const cap = options.cap ?? 8;
+  let queued = 0;
+
+  const observer = new IntersectionObserver(
+    (entries) => {
+      for (const entry of entries) {
+        if (!entry.isIntersecting) continue;
+        const element = entry.target as HTMLElement;
+        observer.unobserve(element);
+        element.style.setProperty("--in-delay", `${Math.min(queued++, cap) * stagger}ms`);
+        element.classList.add("is-in");
+      }
+      queued = 0;
+    },
+    // Кадр считается ниже, чем он есть: то, что стоит сразу под сгибом,
+    // выводится заранее. Иначе страница, снятая целиком или пролистанная
+    // рывком, показывает наполовину пустую панель — а пустая панель читается
+    // как поломка, а не как «ещё не дошло».
+    { rootMargin: options.margin ?? "0px 0px 14% 0px", threshold: 0.01 },
+  );
+
+  for (const element of list) observer.observe(element);
 }

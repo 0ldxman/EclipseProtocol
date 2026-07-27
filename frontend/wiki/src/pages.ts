@@ -27,7 +27,7 @@ import { classifiedBody } from "./classified.js";
 import { el } from "./dom.js";
 import { setFootCount } from "./header.js";
 import { hydrateWidgets } from "./hydrate.js";
-import { revealArticle } from "./reveal.js";
+import { decode, revealArticle, revealOnEnter } from "./reveal.js";
 import { openSearch } from "./search-palette.js";
 import { articleToc } from "./toc.js";
 
@@ -327,6 +327,34 @@ function renderMissing(view: HTMLElement, message: string): void {
 
 /* ── картотека: папки-вкладки и списки ─────────────────────────────────── */
 
+/**
+ * Вывод приборной части экрана.
+ *
+ * Одна очередь на все каталожные страницы — главную, категорию и метку: они
+ * собраны из одних и тех же частей, и три разных появления у одного ярлыка
+ * означали бы, что читатель заново узнаёт знакомую вещь на каждом экране.
+ *
+ * Числа шкалы расшифровываются тем же прибором, что и текст записи. Счётчик,
+ * который отсчитывает от нуля, показывал бы, как система считает; здесь она
+ * не считает, а снимает готовое значение — поэтому цифры не растут, а
+ * проступают.
+ */
+function animatePage(page: HTMLElement): void {
+  // Наблюдение за ящиком целиком, а не за каждым ярлыком: ярлык выходит
+  // из-под нижнего среза, а полностью срезанный элемент браузер считает
+  // невидимым и о появлении в кадре не сообщает — он так и остался бы
+  // спрятанным. Очередь внутри ящика задаёт стиль, по порядку ярлыков.
+  revealOnEnter(page.querySelectorAll<HTMLElement>(".cards"));
+  revealOnEnter(page.querySelectorAll<HTMLElement>(".entries tr"), { stagger: 70, cap: 14 });
+  revealOnEnter(page.querySelectorAll<HTMLElement>(".rail-col .panel"), { stagger: 140, cap: 4 });
+  revealOnEnter(page.querySelectorAll<HTMLElement>(".mini__row"), { stagger: 80, cap: 8 });
+  revealOnEnter(page.querySelectorAll<HTMLElement>(".chips .chip"), { stagger: 26, cap: 26 });
+  revealOnEnter(page.querySelectorAll<HTMLElement>(".gauge__cell"), { stagger: 110, cap: 5 });
+
+  const dials = [...page.querySelectorAll<HTMLElement>(".gauge__cell b")];
+  for (const [i, dial] of dials.entries()) decode(dial, 320 + i * 130);
+}
+
 function sectionHead(title: string, note?: string): HTMLElement {
   return el("div", { class: "page__head" }, [
     el("h2", {}, [title]),
@@ -607,6 +635,7 @@ export async function renderFolder(view: HTMLElement, id: string): Promise<void>
   // из шума, штамп падает сверху.
   const slot = page.querySelector<HTMLElement>(".cover-slot");
   if (slot) revealArticle(slot);
+  animatePage(page);
   setFootCount(cover ? "титульный лист" : "");
   document.title = `${folder.name} — AETHER.WIKI`;
 }
@@ -671,6 +700,7 @@ export async function renderTag(view: HTMLElement, tag: string): Promise<void> {
   }
 
   view.replaceChildren(grid(), strip, page);
+  animatePage(page);
   setFootCount(plural(found.length, RECORDS));
   document.title = `#${tag} — AETHER.WIKI`;
 }
@@ -796,6 +826,7 @@ export async function renderHome(view: HTMLElement): Promise<void> {
   page.append(el("div", { class: "home-split" }, [explore, rail]));
 
   view.replaceChildren(grid(), strip, page);
+  animatePage(page);
   setFootCount(plural(stats.records, RECORDS));
   document.title = "AETHER.WIKI";
 }
