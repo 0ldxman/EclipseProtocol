@@ -1077,17 +1077,18 @@ div.w-classified{display:block;padding:2px 0}
 .ae-reveal .w-stamp{opacity:0}
 .ae-reveal .w-stamp.is-in{animation:ae-stamp .7s var(--ease) .25s forwards}
 
-/* Стоит после виджетов намеренно: блок может быть и виджетом сразу (цитата,
-   таблица), и пока он разбирается, приглушение должно брать верх над «встал
-   на место». Специфичность у правил одна, решает порядок. */
-.ae-reveal .is-cipher{
-  opacity:.34;filter:blur(.35px);
-  transition:opacity .9s var(--ease),filter .9s var(--ease);
-}
-.ae-reveal .is-read{opacity:1;filter:none}
+/* Хвост, до которого фронт печати ещё не дошёл: настоящий текст, стоящий на
+   своих местах прозрачным. Не вырезан и не подменён — иначе строка меняла бы
+   длину и абзац прыгал бы под курсором на каждом кадре. Читать нечего, но
+   место занято, и переносы строк те же с первого кадра до последнего. */
+.ae-reveal .ae-rest{color:transparent}
+
+/* Подчёркивание принадлежит ссылке, а не знакам, и прочертилось бы во всю её
+   длину раньше самого текста. Пока блок разбирается, его нет; когда разобран —
+   наливается за те же .15s, что и подсветка под курсором. */
+.ae-reveal .is-cipher:not(.is-read) a{text-decoration-color:transparent}
 
 @media (prefers-reduced-motion:reduce){
-  .ae-reveal .is-cipher{opacity:1;filter:none}
   .ae-reveal .w-image.is-in,.ae-reveal .w-gallery.is-in,.ae-reveal .w-video.is-in,
   .ae-reveal .w-stamp.is-in{animation:none;opacity:1}
   .ae-reveal .w-stamp.is-in{opacity:.85}

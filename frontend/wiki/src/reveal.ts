@@ -1,17 +1,23 @@
 /**
  * Вывод документа: печать и расшифровка.
  *
- * Одно движение, а не два. Лист протягивается сверху вниз (это делает CSS),
- * а на протянутом абзац за абзацем проступает текст: сперва он стоит шумом,
- * потом слева направо, в порядке чтения, знаки становятся собой. Читателю
- * показывают не «появление блока», а работу прибора — он принимает документ и
- * разбирает его на глазах.
+ * Одно движение, а не два. Лист протягивается сверху вниз (это делает CSS), а
+ * на протянутом слева направо, в порядке чтения, идёт фронт печати. Устроен он
+ * в три полосы:
  *
- * Почему подстановка знака в знак, а не буквы-спаны с задержкой:
+ *   — впереди фронта пусто. Знака ещё нет — прибор до него не дошёл;
+ *   — под фронтом знак перебирается: он уже напечатан, но ещё не опознан, и
+ *     машина крутит его, пока не сойдётся;
+ *   — позади фронта знак свой и больше не меняется.
  *
- *   — вёрстка не двигается ни на пиксель. Шумовой знак занимает место
- *     настоящего, переносы строк те же самые с первого кадра, и абзац не
- *     перескакивает под курсором;
+ * Читателю показывают не «появление блока», а работу прибора: он принимает
+ * документ знак за знаком и разбирает каждый на глазах.
+ *
+ * Почему подстановка внутри текстовых узлов, а не буквы-спаны с задержкой:
+ *
+ *   — вёрстка не двигается ни на пиксель. Ненапечатанный хвост стоит на своих
+ *     местах прозрачным (`.ae-rest`), а не вырезается, поэтому переносы строк
+ *     те же самые с первого кадра и абзац не перескакивает под курсором;
  *   — разметка внутри абзаца цела. Ссылки остаются ссылками, спойлер —
  *     спойлером; расшифровка идёт по текстовым узлам и не знает, в какой
  *     элемент они вложены;
@@ -19,8 +25,8 @@
  *     и строка читается как шифровка, а не как каша.
  *
  * Плашки — спойлер и гриф — выезжают слева направо ровно тогда, когда до них
- * доходит фронт расшифровки: в документе они стоят на месте настоящего
- * текста, и появиться раньше него значило бы закрыть то, чего ещё нет.
+ * доходит фронт: в документе они стоят на месте настоящего текста, и появиться
+ * раньше него значило бы закрыть то, чего ещё нет.
  *
  * При выключенной анимации ничего этого не происходит: текст стоит на месте
  * сразу, а виджеты получают своё конечное состояние первым же кадром.
@@ -31,14 +37,43 @@ const CYRILLIC = "АБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭ
 const LATIN = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
 const DIGITS = "0123456789";
 
-function noiseFor(char: string): string {
-  if (char >= "А" && char <= "я") return CYRILLIC[(Math.random() * CYRILLIC.length) | 0]!;
-  if ((char >= "A" && char <= "Z") || (char >= "a" && char <= "z")) {
-    return LATIN[(Math.random() * LATIN.length) | 0]!;
-  }
-  if (char >= "0" && char <= "9") return DIGITS[(Math.random() * DIGITS.length) | 0]!;
-  return char; // пробел, тире, кавычка — остаются собой
+function setFor(char: string): string | null {
+  if ((char >= "А" && char <= "я") || char === "ё" || char === "Ё") return CYRILLIC;
+  if ((char >= "A" && char <= "Z") || (char >= "a" && char <= "z")) return LATIN;
+  if (char >= "0" && char <= "9") return DIGITS;
+  return null; // пробел, тире, кавычка — остаются собой
 }
+
+/** Разброс из числа: тот же довод даёт тот же знак, разный — разный. */
+function hash(seed: number): number {
+  let n = seed | 0;
+  n = Math.imul(n ^ (n >>> 15), 0x2c1b3c6d);
+  n ^= n >>> 12;
+  n = Math.imul(n, 0x297a2d39);
+  return (n ^ (n >>> 15)) >>> 0;
+}
+
+/**
+ * Как долго знак стоит одним и тем же перебором, мс.
+ *
+ * Раньше знак менялся каждый кадр — шестьдесят раз в секунду. С такой частотой
+ * перебора не видно вовсе: полоса просто мутнеет. Знак должен успеть
+ * прочитаться неверным, и только тогда смениться.
+ */
+const TICK = 70;
+
+/**
+ * Сколько времени знак проводит под фронтом, мс.
+ *
+ * Это и есть постоянная всего вывода: столько глаз смотрит на один знак, и
+ * ровно от неё считается ширина полосы перебора. Держать постоянной полосу, а
+ * не время, значило бы менять скорость разбора знака от длины абзаца.
+ */
+const DWELL = 260;
+
+/** Границы полосы: у строки в три слова она узкая, у раздела — широкая. */
+const BAND_MIN = 3;
+const BAND_MAX = 48;
 
 /** Виджеты, у которых есть собственный выход. Класс ставится, стиль делает CSS. */
 const WIDGETS =
@@ -61,9 +96,21 @@ const BLOCKS = "p,h1,h2,h3,h4,li,blockquote,figcaption,dt,dd,th,td,.w-bar-label,
  */
 const DECODE_IN = ".prose,.w-infobox,.cover";
 
+/**
+ * Один текстовый узел, разложенный на три полосы.
+ *
+ * Узел остаётся на своём месте и держит разобранное начало; следом за ним
+ * стоят два спана — перебор и ненапечатанный хвост. Так знак меняется
+ * подстановкой в строку, а видимость трёх состояний остаётся за стилем.
+ */
 interface Piece {
+  /** Исходный узел: в нём копится уже разобранное начало. */
   node: Text;
-  /** Исходная строка: подменяется каждый кадр, поэтому хранится отдельно. */
+  /** Знаки под фронтом — те, что сейчас перебираются. */
+  band: HTMLElement;
+  /** Хвост: настоящий текст, стоящий прозрачным до своей очереди. */
+  rest: HTMLElement;
+  /** Исходная строка: содержимое узлов меняется каждый кадр, она — нет. */
   text: string;
   /** Смещение начала узла в плоском тексте блока. */
   at: number;
@@ -79,19 +126,21 @@ interface Job {
   pieces: Piece[];
   marks: Mark[];
   total: number;
+  /** Ширина полосы перебора в знаках — считается из `DWELL` и скорости хода. */
+  band: number;
+  /**
+   * Своя соль на блок.
+   *
+   * Без неё перебор зависел бы только от места знака в строке, и три абзаца,
+   * пошедшие разом, начинались бы одними и теми же буквами — видно сразу и
+   * читается как повтор, а не как шифр.
+   */
+  salt: number;
   duration: number;
   startAt: number;
+  started: boolean;
   done: boolean;
 }
-
-/**
- * Ширина шумовой полосы перед фронтом, в знаках.
- *
- * Полоса — это и есть видимая часть работы: за ней текст уже свой, перед ней
- * ещё шум, и разбирает документ именно она. Узкая полоса на быстром ходу
- * читается как мигание, а не как разбор.
- */
-const BAND = 24;
 
 /**
  * Сколько времени разбирается блок.
@@ -100,17 +149,19 @@ const BAND = 24;
  * раздел на двадцать стоит шумом полминуты. Числа подобраны на глаз — вывод
  * должен читаться как работа прибора, а не как задержка загрузки.
  */
-const pace = (length: number): number => Math.min(2600, 620 + Math.sqrt(length) * 95);
+const pace = (length: number): number => Math.min(3400, 700 + Math.sqrt(length) * 110);
 
 /** Пауза между соседними блоками: страница выводится сверху вниз, а не разом. */
 const STAGGER = 150;
 const STAGGER_CAP = 10;
 
 const jobs: Job[] = [];
+/** Разложенные, но ещё не запущенные блоки — чтобы не разбирать один дважды. */
+const ready = new WeakMap<HTMLElement, Job>();
 let looping = false;
 
 function collect(block: HTMLElement): { pieces: Piece[]; marks: Mark[]; total: number } {
-  const pieces: Piece[] = [];
+  const found: { node: Text; text: string; at: number }[] = [];
   const marks: Mark[] = [];
   let at = 0;
 
@@ -119,7 +170,7 @@ function collect(block: HTMLElement): { pieces: Piece[]; marks: Mark[]; total: n
       if (child.nodeType === Node.TEXT_NODE) {
         const text = child.nodeValue ?? "";
         if (text.length > 0) {
-          pieces.push({ node: child as Text, text, at });
+          found.push({ node: child as Text, text, at });
           at += text.length;
         }
         continue;
@@ -135,28 +186,64 @@ function collect(block: HTMLElement): { pieces: Piece[]; marks: Mark[]; total: n
     }
   };
   walk(block);
+
+  // Спаны навешиваются вторым проходом: вставлять их во время обхода значило бы
+  // считать смещения по дереву, которое сам же и меняешь.
+  const pieces = found.map(({ node, text, at: offset }) => {
+    const band = document.createElement("span");
+    const rest = document.createElement("span");
+    band.className = "ae-band";
+    rest.className = "ae-rest";
+    node.after(band, rest);
+    return { node, band, rest, text, at: offset };
+  });
   return { pieces, marks, total: at };
 }
 
-function paint(job: Job, front: number): void {
+function paint(job: Job, front: number, now: number): void {
+  const band = job.band;
   for (const piece of job.pieces) {
-    const start = piece.at;
-    const end = start + piece.text.length;
+    const from = piece.at;
+    const to = from + piece.text.length;
+
     // Узел целиком позади фронта — он уже свой, трогать нечего.
-    if (end <= front - BAND) continue;
-    if (start >= front) {
-      // Целиком впереди: шум. Строка той же длины, поэтому перенос тот же.
-      let out = "";
-      for (const char of piece.text) out += noiseFor(char);
-      piece.node.nodeValue = out;
+    if (to <= front - band) {
+      if (piece.node.nodeValue !== piece.text) {
+        piece.node.nodeValue = piece.text;
+        piece.band.textContent = "";
+        piece.rest.textContent = "";
+      }
       continue;
     }
-    let out = "";
-    for (let i = 0; i < piece.text.length; i++) {
-      const global = start + i;
-      out += global < front - BAND ? piece.text[i]! : noiseFor(piece.text[i]!);
+    // Целиком впереди: знаков ещё нет, но место под них занято.
+    if (from >= front) {
+      if (piece.node.nodeValue !== "") {
+        piece.node.nodeValue = "";
+        piece.band.textContent = "";
+        piece.rest.textContent = piece.text;
+      }
+      continue;
     }
-    piece.node.nodeValue = out;
+
+    const settled = Math.max(0, Math.floor(front - band) - from);
+    const printed = Math.min(piece.text.length, Math.ceil(front) - from);
+    let out = "";
+    for (let i = settled; i < printed; i++) {
+      const char = piece.text[i]!;
+      const set = setFor(char);
+      if (set === null) {
+        out += char;
+        continue;
+      }
+      // Каждый знак крутится со своей фазой: в общий такт полоса мигала бы
+      // разом, а прибор перебирает знаки независимо друг от друга.
+      const index = Math.imul(from + i + job.salt, 0x9e3779b1);
+      const tick = ((now + (hash(index) % TICK)) / TICK) | 0;
+      out += set[hash(index ^ Math.imul(tick, 0x85ebca6b)) % set.length]!;
+    }
+    piece.node.nodeValue = piece.text.slice(0, settled);
+    piece.band.textContent = out;
+    piece.rest.textContent = piece.text.slice(printed);
   }
 
   for (const mark of job.marks) {
@@ -165,7 +252,13 @@ function paint(job: Job, front: number): void {
 }
 
 function settle(job: Job): void {
-  for (const piece of job.pieces) piece.node.nodeValue = piece.text;
+  // Спаны снимаются: разобранный документ должен остаться обычным текстом —
+  // его выделяют, копируют и ищут по нему.
+  for (const piece of job.pieces) {
+    piece.node.nodeValue = piece.text;
+    piece.band.remove();
+    piece.rest.remove();
+  }
   for (const mark of job.marks) mark.el.classList.add("is-in");
   job.block.classList.add("is-read");
   job.done = true;
@@ -185,7 +278,7 @@ function loop(now: number): void {
     if (part >= 1) settle(job);
     // Фронт уходит за конец на ширину полосы, иначе хвост не успевает стать
     // собой и последние знаки «дописываются» уже после остановки.
-    else paint(job, part * (job.total + BAND));
+    else paint(job, part * (job.total + job.band), now);
   }
   looping = alive;
   if (alive) requestAnimationFrame(loop);
@@ -205,28 +298,57 @@ export function decode(block: HTMLElement, delay = 0): void {
     return;
   }
   block.classList.add("is-cipher");
+  prepare(block);
   start(block, delay);
 }
 
-function start(block: HTMLElement, delay: number): void {
+/**
+ * Погасить блок и разложить его на полосы, не начиная разбора.
+ *
+ * Делается заранее, в тот же кадр, что и пометка блока к выводу. Иначе между
+ * пометкой и очередью — а очередь у нижних абзацев наступает через экран
+ * прокрутки — готовый текст успевал бы постоять на виду и погаснуть, и вывод
+ * читался бы как сбой, а не как печать.
+ */
+function prepare(block: HTMLElement): Job | null {
+  const known = ready.get(block);
+  if (known) return known;
+
   const { pieces, marks, total } = collect(block);
   if (total === 0) {
     block.classList.add("is-read");
     for (const mark of marks) mark.el.classList.add("is-in");
-    return;
+    return null;
   }
 
+  const duration = pace(total);
   const job: Job = {
     block,
     pieces,
     marks,
     total,
-    duration: pace(total),
-    startAt: performance.now() + delay,
+    // Полоса — производная: сколько знаков пройдёт под фронтом за `DWELL`.
+    // Короткая строка получает узкую полосу и печатается почти по знаку,
+    // длинный абзац — широкую, и по нему идёт волна разбора.
+    band: Math.min(BAND_MAX, Math.max(BAND_MIN, Math.round((DWELL * total) / duration))),
+    salt: (Math.random() * 0xffff) | 0,
+    duration,
+    startAt: 0,
+    started: false,
     done: false,
   };
+  ready.set(block, job);
+  paint(job, 0, performance.now());
+  return job;
+}
+
+function start(block: HTMLElement, delay: number): void {
+  const job = prepare(block);
+  if (job === null || job.started) return;
+
+  job.started = true;
+  job.startAt = performance.now() + delay;
   jobs.push(job);
-  paint(job, 0);
   if (!looping) {
     looping = true;
     requestAnimationFrame(loop);
@@ -258,7 +380,12 @@ export function revealArticle(root: HTMLElement): void {
     return;
   }
 
-  for (const block of blocks) block.classList.add("is-cipher");
+  // Гасится вся запись сразу, разбирается — по мере чтения. Порядок важен:
+  // блок, помеченный к выводу, но ещё не разложенный, стоит готовым текстом.
+  for (const block of blocks) {
+    block.classList.add("is-cipher");
+    prepare(block);
+  }
 
   // Очередь: то, что видно сразу, выводится строка за строкой сверху вниз.
   // Всё, до чего дочитали, выводится по мере появления в кадре.

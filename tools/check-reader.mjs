@@ -71,13 +71,50 @@ await page.waitForTimeout(320);
 
 const midway = await page.evaluate(() => {
   const block = document.querySelector(".prose p");
+  const band = [...block.querySelectorAll(".ae-band")].map((n) => n.textContent).join("");
+  const rest = [...block.querySelectorAll(".ae-rest")].map((n) => n.textContent).join("");
+  const restEl = block.querySelector(".ae-rest");
   return {
     text: block.textContent,
+    band,
+    rest,
+    restInk: restEl ? getComputedStyle(restEl).color : null,
     cipher: block.classList.contains("is-cipher"),
     read: block.classList.contains("is-read"),
   };
 });
-await page.waitForTimeout(900);
+
+// Знак под фронтом должен стоять дольше кадра: раньше он перебирался каждую
+// отрисовку — шестьдесят раз в секунду, — и полоса читалась не как перебор, а
+// как муть. Сравниваются два соседних кадра со сдвигом на то, что успело
+// разобраться: если знак живёт несколько кадров, большинство совпадёт.
+const churn = await page.evaluate(async () => {
+  const block = document.querySelector(".prose p");
+  const read = () => {
+    const band = [...block.querySelectorAll(".ae-band")].map((n) => n.textContent).join("");
+    const rest = [...block.querySelectorAll(".ae-rest")].map((n) => n.textContent).join("");
+    return { band, done: block.textContent.length - band.length - rest.length };
+  };
+  let same = 0;
+  let seen = 0;
+  let prev = read();
+  const until = performance.now() + 900;
+  while (performance.now() < until) {
+    await new Promise((r) => requestAnimationFrame(r));
+    const now = read();
+    const shift = now.done - prev.done;
+    const span = Math.min(now.band.length, prev.band.length - shift);
+    if (shift >= 0 && span > 6) {
+      for (let i = 0; i < span; i++) {
+        if (!/[\p{L}\p{N}]/u.test(now.band[i])) continue;
+        seen += 1;
+        if (now.band[i] === prev.band[i + shift]) same += 1;
+      }
+    }
+    prev = now;
+  }
+  return { same, seen };
+});
 const late = await page.evaluate(() => {
   const blocks = [...document.querySelectorAll(".prose .is-cipher")];
   return { some: blocks.some((b) => !b.classList.contains("is-read")), of: blocks.length };
@@ -85,10 +122,35 @@ const late = await page.evaluate(() => {
 await page.waitForTimeout(3600);
 const settled = await page.evaluate(() => {
   const block = document.querySelector(".prose p");
-  return { text: block.textContent, read: block.classList.contains("is-read") };
+  const link = document.querySelector(".prose p a") ?? document.querySelector(".prose a");
+  return {
+    text: block.textContent,
+    read: block.classList.contains("is-read"),
+    bands: block.querySelectorAll(".ae-band,.ae-rest").length,
+    linkRule: link ? getComputedStyle(link).textDecorationColor : null,
+  };
 });
 
 ok("текст приходит шумом", midway.cipher === true && midway.read === false);
+// Три полосы: разобранное начало, перебор под фронтом, непрозвучавший хвост.
+ok("под фронтом идёт перебор", midway.band.length > 0, `полоса ${midway.band.length}`);
+ok("впереди фронта ничего не напечатано", midway.rest.length > 0, `хвост ${midway.rest.length}`);
+// Хвост стоит на своих местах прозрачным — место занято, читать нечего.
+// Вырезать его значило бы двигать вёрстку на каждом кадре.
+ok("хвоста не видно", midway.restInk === "rgba(0, 0, 0, 0)", String(midway.restInk));
+ok("хвост — настоящий текст, а не шум", settled.text.endsWith(midway.rest), midway.rest.slice(0, 30));
+ok(
+  "знак стоит дольше кадра",
+  churn.seen > 40 && churn.same / churn.seen > 0.4,
+  `${churn.same} из ${churn.seen}`,
+);
+// Разобранный документ должен остаться обычным текстом: его выделяют и ищут.
+ok("после разбора служебных спанов не остаётся", settled.bands === 0, `${settled.bands}`);
+ok(
+  "подчёркивание ссылки возвращается",
+  settled.linkRule === null || settled.linkRule !== "rgba(0, 0, 0, 0)",
+  String(settled.linkRule),
+);
 // Разбор должен длиться столько, чтобы его было видно: слишком быстрый вывод
 // читается как мигание при загрузке, а не как работа прибора.
 ok("разбор длится дольше секунды", late.some === true, JSON.stringify(late));
@@ -105,7 +167,9 @@ ok("пробелы и препинание не подменяются", shape);
 
 /* ── плашки, виджеты, оттиск ──────────────────────────────────────────── */
 await page.evaluate(() => window.scrollTo(0, 520));
-await page.waitForTimeout(2600);
+// Плашка выезжает не по появлению блока, а когда до неё доходит фронт печати,
+// поэтому ждать надо разбор блока целиком плюс сам выезд.
+await page.waitForTimeout(4200);
 
 const widgets = await page.evaluate(() => {
   const at = (sel) => document.querySelector(sel);
