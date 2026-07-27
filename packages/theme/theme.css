@@ -626,9 +626,22 @@ div.w-classified{display:block;padding:2px 0}
 .w-infobox p{margin:12px 0 0;font:11px/1.7 var(--mono);color:var(--dim)}
 
 /* тёмные шкуры виджетов внутри инфобокса */
+/* Снимок в досье лежит от края до края — рамка у карточки уже есть, и вторая
+   рамка из полей вокруг картинки была бы рамкой в рамке. */
 .w-infobox .w-image{margin:15px 0 0;width:auto}
-.w-infobox .w-image img{width:100%;aspect-ratio:3/4;object-fit:cover;background:var(--ink-3)}
-.w-infobox .w-image figcaption{border-top-color:var(--rule);color:var(--dim);text-align:left}
+/* Ширина по карточке, высота по снимку.
+   Раньше здесь стояли `aspect-ratio:3/4` и `object-fit:cover` — досье всегда
+   получало вертикальный портрет, чем бы ни была картинка на самом деле, и
+   широкий кадр обрезался по бокам без ведома автора. Кадрировать снимок —
+   решение автора, а не карточки: она показывает то, что в неё положили. */
+.w-infobox .w-image img{width:100%;height:auto;background:var(--ink-3)}
+/* Подпись — единственное, что в снимке набрано словами, поэтому у неё поля
+   карточки, а не поля картинки: прижатая к самому краю, она читается обрывком
+   соседнего элемента. По центру — потому что она относится ко всему снимку. */
+.w-infobox .w-image figcaption{
+  margin:7px 0 0;padding:6px 15px 0;
+  border-top-color:var(--rule);color:var(--dim);text-align:center;
+}
 .w-infobox .w-fields dt,.w-infobox .w-fields dd{border-top-color:var(--rule)}
 .w-infobox .w-fields dt{color:var(--dim)}
 .w-infobox .w-fields dd{font:11px/1.7 var(--mono);color:var(--fg)}

@@ -45,18 +45,22 @@ ok("летопись и карта стоят в рельсе", (await page.loca
 ok("админка ушла в подвал", (await page.locator(".foot__link").count()) === 1);
 const described = await page.locator(".folder p").count();
 ok("категория объясняет себя строкой", described >= 1, `${described} с описанием`);
-ok("свежие правки — панель, а не лента", (await page.locator(".rail-col .mini--edits").count()) === 1);
-const editRows = await page.locator(".mini--edits .mini__row").count();
-ok("правок показано не больше пяти", editRows > 0 && editRows <= 5, `${editRows}`);
+// Список последних правок с главной убран целиком: он показывал работу над
+// архивом, а не сам архив. Ни ленты, ни панели, ни боковой колонки под неё.
+ok("свежих правок на главной нет", (await page.locator(".mini--edits").count()) === 0);
 ok("широкой ленты изменений на главной нет", (await page.locator(".feed").count()) === 0);
-// Строка не должна вылезать за панель: длинное название раздела ужимается.
-const fits = await page.evaluate(() => {
-  const panel = document.querySelector(".rail-col .panel");
-  const row = document.querySelector(".mini--edits .mini__row");
-  if (!panel || !row) return true;
-  return row.getBoundingClientRect().right <= panel.getBoundingClientRect().right + 1;
+ok("боковой колонки на главной нет", (await page.locator(".rail-col").count()) === 0);
+// Волосяные вертикали по полям кадра убраны: во весь рост они читались обрезом.
+ok("рамки по краям кадра нет", (await page.locator(".view__grid").count()) === 0);
+// Ни одна строка не должна вылезать за поле кадра.
+const overflow = await page.evaluate(() => {
+  const page_ = document.querySelector(".page");
+  const edge = page_.getBoundingClientRect().right;
+  return [...page_.querySelectorAll(".mini__row,.chip,.folder,.entries tr")].filter(
+    (node) => node.getBoundingClientRect().right > edge + 1,
+  ).length;
 });
-ok("строка правки держится внутри панели", fits);
+ok("ничего не вылезает за поле кадра", overflow === 0, `${overflow} вылезает`);
 await page.screenshot({ path: path.join(SHOTS, "reader-01-home.png"), fullPage: true });
 
 /* ── запись: печать и расшифровка ─────────────────────────────────────── */
@@ -331,7 +335,7 @@ ok("название встало", drawerLate.name === "1", String(drawerLate.n
 await page.screenshot({ path: path.join(SHOTS, "reader-06-catalogue.png"), fullPage: true });
 
 // Точечный поводок тянется вместе с ключом — это видно только в сводке
-// категории: на главной в приборной панели стоит лента правок, а не строки.
+// категории: боковой колонки на главной больше нет вовсе.
 if (stamped) {
   await page.goto(`${ROOT}/#/folder/${stamped}`, { waitUntil: "domcontentloaded" });
   await page.waitForSelector(".rail-col .kv dt");

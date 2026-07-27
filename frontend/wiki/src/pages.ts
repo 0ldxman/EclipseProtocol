@@ -58,23 +58,17 @@ function link(route: string, text: string, className?: string): HTMLAnchorElemen
   return anchor;
 }
 
-/**
- * Волосяные вертикали кадра — по полям окна, ровно там, где начинается и
- * кончается содержимое указателя.
+/*
+ * Волосяных вертикалей по полям кадра здесь больше нет.
  *
- * На странице записи их нет. Там колонки стоят не по краям кадра, и линия,
- * проведённая рядом с оглавлением, читалась не как поле, а как обрез: она
- * сливалась с рельсом разделов и запирала документ в узкую рамку.
+ * Они задумывались как поле — отметка того, где начинается и кончается
+ * содержимое, — но во весь рост экрана линия читается не как поле, а как
+ * обрез: страница оказывается запертой в рамку, а ярлыки и шапка — внутри
+ * коробки. На странице записи их не было с самого начала ровно по этой
+ * причине; теперь их нет нигде, потому что каталожные экраны — та же вики, и
+ * два разных кадра на один архив означали бы, что читатель переходит между
+ * разными сайтами.
  */
-function grid(): HTMLElement {
-  return el(
-    "div",
-    { class: "view__grid" },
-    ["var(--pad)", "calc(100% - var(--pad) - 1px)"].map((left) =>
-      el("i", { style: `left:${left}` }),
-    ),
-  );
-}
 
 function clearanceMeter(level: number, of = 5): HTMLElement {
   return el(
@@ -310,7 +304,6 @@ export async function renderRecord(view: HTMLElement, slug: string): Promise<voi
 
 function renderMissing(view: HTMLElement, message: string): void {
   view.replaceChildren(
-    grid(),
     el("div", { class: "page" }, [
       el("div", { class: "empty" }, [
         el("b", {}, ["не найдено"]),
@@ -630,7 +623,7 @@ export async function renderFolder(view: HTMLElement, id: string): Promise<void>
 
   page.append(el("div", { class: "split" }, [main, rail]));
 
-  view.replaceChildren(grid(), strip, page);
+  view.replaceChildren(strip, page);
   // Титульный лист — тот же документ, и разбирается так же: эпиграф проступает
   // из шума, штамп падает сверху.
   const slot = page.querySelector<HTMLElement>(".cover-slot");
@@ -699,7 +692,7 @@ export async function renderTag(view: HTMLElement, tag: string): Promise<void> {
     page.append(el("div", { class: "split" }, [main, rail]));
   }
 
-  view.replaceChildren(grid(), strip, page);
+  view.replaceChildren(strip, page);
   animatePage(page);
   setFootCount(plural(found.length, RECORDS));
   document.title = `#${tag} — AETHER.WIKI`;
@@ -770,34 +763,20 @@ export async function renderHome(view: HTMLElement): Promise<void> {
   const loose = childRecords(nodes, null);
   if (loose.length > 0) page.append(sectionHead("Вне категорий"), recordIndex(loose));
 
-  const bySlug = new Map(records.map((node) => [node.slug!, node]));
-  const byId = new Map(nodes.map((node) => [node.id, node]));
-
   /*
-   * Свежие правки.
+   * Ниже — то, чем архив ищут: метки поперёк дерева и конец хронологии.
    *
-   * Сдвинуты в боковую колонку и сжаты до пяти строк. Раньше это была самая
-   * широкая колонка главной, и архив открывался списком того, что трогали
-   * последним, — то есть журналом работы редактора, а не входом для читателя.
+   * «Свежих правок» здесь нет вовсе. Сначала это была самая широкая колонка
+   * главной, потом — панель на пять строк сбоку; ни в том, ни в другом виде
+   * список не отвечал на вопрос, с которым приходят на главную. Он показывает,
+   * что трогал редактор, — то есть журнал работы над архивом, а не сам архив.
    * Читателю нужно, куда пойти; когда правили запись, ему всё равно.
+   *
+   * Вместе с панелью ушла и боковая колонка: держать её ради пустоты справа
+   * незачем, и разделы встают во всю ширину кадра, как «Категории» над ними.
    */
-  const edits = el(
-    "div",
-    { class: "mini mini--edits" },
-    stats.recent.slice(0, 5).map((entry) => {
-      // Только дата и название: раздел здесь не нужен — ищут не «что в
-      // Технологиях», а «что трогали». В узкой панели он к тому же отбирал
-      // место у единственного, за чем в этот список заходят.
-      const row = link(`/wiki/${entry.slug}`, "", "mini__row");
-      row.append(el("time", {}, [when(entry.updatedAt)]), el("b", {}, [entry.title]));
-      if (entry.restricted) row.append(el("s", {}, ["гриф"]));
-      return row;
-    }),
-  );
-
-  /* Слева — то, чем архив ищут: метки поперёк дерева и конец хронологии. */
-  const explore = el("div", {}, [sectionHead("Метки", String(tags.length))]);
-  explore.append(
+  page.append(
+    sectionHead("Метки", String(tags.length)),
     tags.length > 0
       ? chipRow(tags.slice(0, 40))
       : el("div", { class: "empty" }, [
@@ -805,27 +784,17 @@ export async function renderHome(view: HTMLElement): Promise<void> {
           el("span", {}, ["Метки проставляются записи в админке."]),
         ]),
   );
+
   if (chronology.events.length > 0) {
     // Хронология отдана по возрастанию; на главной интересен её конец.
-    explore.append(
+    page.append(
       sectionHead("Последние события"),
       eventList(chronology.events.slice(-6).reverse()),
       link("/timeline", "вся летопись", "more-link"),
     );
   }
 
-  const rail = el("aside", { class: "rail-col" }, [
-    panel(
-      "Свежие правки",
-      stats.recent.length > 0
-        ? edits
-        : el("div", { class: "chrome" }, ["архив пуст"]),
-    ),
-  ]);
-
-  page.append(el("div", { class: "home-split" }, [explore, rail]));
-
-  view.replaceChildren(grid(), strip, page);
+  view.replaceChildren(strip, page);
   animatePage(page);
   setFootCount(plural(stats.records, RECORDS));
   document.title = "AETHER.WIKI";
