@@ -37,6 +37,15 @@ export interface TreeNode {
   slug?: string;
   tags?: string[];
   /**
+   * Папки: строка о том, что это за раздел.
+   *
+   * Не то же, что титульный лист. Титул — оформление, его пишут разметкой и
+   * читают, открыв категорию; описание же нужно там, где категория показана
+   * снаружи: в карточке на главной, в списке соседних разделов. Раньше такого
+   * места не было вовсе, и категория снаружи была одним названием.
+   */
+  summary?: string;
+  /**
    * Записи только: место в летописи.
    *
    * Дата события — свойство записи, а не строчка в её теле. Раньше она жила
@@ -259,6 +268,21 @@ export class TreeStore {
       .filter((tag) => tag.length > 0 && tag.length <= 48)
       .filter((tag) => (seen.has(tag) ? false : (seen.add(tag), true)))
       .slice(0, 24);
+    node.updatedAt = new Date().toISOString();
+    await this.persist();
+    return node;
+  }
+
+  /**
+   * Описание раздела. Пустая строка стирает поле: описание, которого нет, не
+   * должно занимать место в карточке пустой строкой.
+   */
+  async setSummary(id: string, summary: string): Promise<TreeNode> {
+    const node = this.nodes.get(id);
+    if (!node) throw new TreeError("not found", 404);
+    const trimmed = summary.trim().replace(/\s+/g, " ").slice(0, 400);
+    if (trimmed) node.summary = trimmed;
+    else delete node.summary;
     node.updatedAt = new Date().toISOString();
     await this.persist();
     return node;

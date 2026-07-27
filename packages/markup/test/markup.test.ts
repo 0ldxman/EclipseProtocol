@@ -276,7 +276,7 @@ test("columns move below the rule while the title stays centred", () => {
   const foot = html.indexOf('class="cover__foot"');
   assert.ok(inner > -1 && foot > inner, "нижние колонки идут после центральной части");
   assert.match(html, /class="cover__imprint"/);
-  assert.match(html, /class="cover__stamp">для служебного пользования/);
+  assert.match(html, /class="w-stamp[^"]*"[^>]*>.*для служебного пользования/s);
 });
 
 /* ── обычный текст ───────────────────────────────────────────────────────── */

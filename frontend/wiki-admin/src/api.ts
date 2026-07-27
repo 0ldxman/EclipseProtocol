@@ -17,6 +17,8 @@ export interface TreeNode {
   order: number;
   slug?: string;
   tags?: string[];
+  /** Папки: строка о разделе для карточки снаружи категории. */
+  summary?: string;
   /** Место записи в летописи: дата и, если есть, эпоха. */
   eventAt?: string;
   eventEpoch?: string;
@@ -104,6 +106,7 @@ export class Api {
         | "name"
         | "slug"
         | "tags"
+        | "summary"
         | "eventAt"
         | "eventEpoch"
         | "eventSummary"

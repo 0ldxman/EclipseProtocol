@@ -15,6 +15,16 @@ import { bindSearchShortcut, siteFoot, siteRail } from "./header.js";
 import { renderFolder, renderHome, renderRecord, renderTag } from "./pages.js";
 import { renderTimeline } from "./timeline.js";
 
+/*
+ * Метка вывода документа.
+ *
+ * Под ней в теме лежат исходные состояния виджетов — спрятанные до того, как
+ * до них дойдёт разбор. Ставит её только публичная вики: тему делят ещё
+ * админка и карта, и мигающая на каждое нажатие клавиши разметка в просмотре
+ * была бы наказанием, а не оформлением.
+ */
+document.documentElement.classList.add("ae-reveal");
+
 // Рельс сверху и строка статуса снизу стоят всегда; экраны меняются между ними.
 const view = el("main", { class: "view", id: "view" });
 document.body.append(el("div", { id: "app" }, [siteRail(), view, siteFoot()]));

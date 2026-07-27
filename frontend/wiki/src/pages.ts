@@ -27,6 +27,7 @@ import { classifiedBody } from "./classified.js";
 import { el } from "./dom.js";
 import { setFootCount } from "./header.js";
 import { hydrateWidgets } from "./hydrate.js";
+import { revealArticle } from "./reveal.js";
 import { openSearch } from "./search-palette.js";
 import { articleToc } from "./toc.js";
 
@@ -298,6 +299,11 @@ export async function renderRecord(view: HTMLElement, slug: string): Promise<voi
     if (rail) slot.replaceWith(rail);
   }
 
+  // Вывод документа идёт по всей строке, а не по одной бумаге: досье справа —
+  // тоже авторский текст. Закрытая запись выводится так же: там плашки и есть
+  // содержимое, и выезжают они в том же порядке, в каком читался бы текст.
+  revealArticle(row);
+
   setFootCount(page.restricted ? "доступ ограничен" : "");
   document.title = `${page.node.name} — AETHER.WIKI`;
 }
@@ -328,6 +334,14 @@ function sectionHead(title: string, note?: string): HTMLElement {
   ]);
 }
 
+/**
+ * Ярлыки категорий.
+ *
+ * Карточка несёт описание раздела, если оно задано. До него у категории
+ * снаружи было только название, и выбор между «Организациями» и
+ * «Технологиями» читатель делал, угадывая по слову — а угадывать в архиве
+ * как раз и не должен: он для того и открыт, чтобы не гадать.
+ */
 function folderCards(nodes: NavNode[], parentId: string | null, tight = false): HTMLElement | null {
   const folders = nodes
     .filter((node) => node.parentId === parentId && node.kind === "folder")
@@ -341,8 +355,9 @@ function folderCards(nodes: NavNode[], parentId: string | null, tight = false): 
       const inside = nodes.filter((node) => node.parentId === folder.id);
       const sealed = folder.access > 0;
       const card = link(`/folder/${folder.id}`, "", `folder${sealed ? " folder--sealed" : ""}`);
+      card.append(el("b", {}, [folder.name]));
+      if (folder.summary) card.append(el("p", {}, [folder.summary]));
       card.append(
-        el("b", {}, [folder.name]),
         el("s", {}, [
           sealed ? `требуется допуск ${folder.access}` : plural(inside.length, RECORDS),
         ]),
@@ -503,7 +518,14 @@ export async function renderFolder(view: HTMLElement, id: string): Promise<void>
   if (cover) {
     page.append(el("div", { class: "cover-slot", html: cover }));
   } else {
-    page.append(el("div", { class: "hero hero--cat" }, [el("h1", {}, [folder.name])]));
+    // Без титульного листа описание раздела — единственное, что объясняет
+    // категорию словами, поэтому стоит прямо под названием.
+    page.append(
+      el("div", { class: "hero hero--cat" }, [
+        el("h1", {}, [folder.name]),
+        folder.summary ? el("p", {}, [folder.summary]) : null,
+      ]),
+    );
   }
 
   /* ── левая половина: что лежит в категории ── */
@@ -581,6 +603,10 @@ export async function renderFolder(view: HTMLElement, id: string): Promise<void>
   page.append(el("div", { class: "split" }, [main, rail]));
 
   view.replaceChildren(grid(), strip, page);
+  // Титульный лист — тот же документ, и разбирается так же: эпиграф проступает
+  // из шума, штамп падает сверху.
+  const slot = page.querySelector<HTMLElement>(".cover-slot");
+  if (slot) revealArticle(slot);
   setFootCount(cover ? "титульный лист" : "");
   document.title = `${folder.name} — AETHER.WIKI`;
 }
@@ -716,48 +742,32 @@ export async function renderHome(view: HTMLElement): Promise<void> {
 
   const bySlug = new Map(records.map((node) => [node.slug!, node]));
   const byId = new Map(nodes.map((node) => [node.id, node]));
-  const feed = el(
+
+  /*
+   * Свежие правки.
+   *
+   * Сдвинуты в боковую колонку и сжаты до пяти строк. Раньше это была самая
+   * широкая колонка главной, и архив открывался списком того, что трогали
+   * последним, — то есть журналом работы редактора, а не входом для читателя.
+   * Читателю нужно, куда пойти; когда правили запись, ему всё равно.
+   */
+  const edits = el(
     "div",
-    { class: "feed" },
-    stats.recent.map((entry) => {
-      const node = bySlug.get(entry.slug);
-      const where = node ? byId.get(node.parentId ?? "")?.name : undefined;
-      const row = link(`/wiki/${entry.slug}`, "");
-      row.append(
-        el("time", {}, [when(entry.updatedAt)]),
-        el("b", {}, [entry.title]),
-        el("span", { class: "og" }, [where ?? "вне категорий"]),
-        el("s", { class: entry.restricted ? "chrome--red" : "" }, [
-          entry.restricted ? "под грифом" : "",
-        ]),
-      );
+    { class: "mini mini--edits" },
+    stats.recent.slice(0, 5).map((entry) => {
+      // Только дата и название: раздел здесь не нужен — ищут не «что в
+      // Технологиях», а «что трогали». В узкой панели он к тому же отбирал
+      // место у единственного, за чем в этот список заходят.
+      const row = link(`/wiki/${entry.slug}`, "", "mini__row");
+      row.append(el("time", {}, [when(entry.updatedAt)]), el("b", {}, [entry.title]));
+      if (entry.restricted) row.append(el("s", {}, ["гриф"]));
       return row;
     }),
   );
 
-  const toTimeline = link("/timeline", "");
-  toTimeline.append(
-    el("em", {}, ["↗"]),
-    el("b", {}, ["Хронология"]),
-    el("s", {}, ["Летопись протокола от первого события до сегодняшнего дня."]),
-  );
-
-  const gates = el("div", { class: "gate" }, [
-    toTimeline,
-    el("a", { href: href("/") + "map/" }, [
-      el("em", {}, ["↗"]),
-      el("b", {}, ["Карта"]),
-      el("s", {}, ["Границы на любую дату из хронологии."]),
-    ]),
-    el("a", { href: href("/") + "admin/" }, [
-      el("em", {}, ["↗"]),
-      el("b", {}, ["Админка"]),
-      el("s", {}, ["Правка записей и дерева категорий."]),
-    ]),
-  ]);
-
-  const middle = el("div", {}, [sectionHead("Метки", String(tags.length))]);
-  middle.append(
+  /* Слева — то, чем архив ищут: метки поперёк дерева и конец хронологии. */
+  const explore = el("div", {}, [sectionHead("Метки", String(tags.length))]);
+  explore.append(
     tags.length > 0
       ? chipRow(tags.slice(0, 40))
       : el("div", { class: "empty" }, [
@@ -767,27 +777,23 @@ export async function renderHome(view: HTMLElement): Promise<void> {
   );
   if (chronology.events.length > 0) {
     // Хронология отдана по возрастанию; на главной интересен её конец.
-    middle.append(
+    explore.append(
       sectionHead("Последние события"),
-      eventList(chronology.events.slice(-5).reverse()),
+      eventList(chronology.events.slice(-6).reverse()),
+      link("/timeline", "вся летопись", "more-link"),
     );
   }
 
-  page.append(
-    el("div", { class: "home-split" }, [
-      el("div", {}, [
-        sectionHead("Последние изменения"),
-        stats.recent.length > 0
-          ? feed
-          : el("div", { class: "empty" }, [
-              el("b", {}, ["архив пуст"]),
-              el("span", {}, ["Первая запись появится здесь, как только её создадут."]),
-            ]),
-      ]),
-      middle,
-      el("div", {}, [sectionHead("Другие входы"), gates]),
-    ]),
-  );
+  const rail = el("aside", { class: "rail-col" }, [
+    panel(
+      "Свежие правки",
+      stats.recent.length > 0
+        ? edits
+        : el("div", { class: "chrome" }, ["архив пуст"]),
+    ),
+  ]);
+
+  page.append(el("div", { class: "home-split" }, [explore, rail]));
 
   view.replaceChildren(grid(), strip, page);
   setFootCount(plural(stats.records, RECORDS));

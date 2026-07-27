@@ -728,8 +728,20 @@
         min-width: 0;
       }
       .prop input[type="text"]:focus,
-      .prop input[type="date"]:focus {
+      .prop input[type="date"]:focus,
+      .prop textarea:focus {
         border-color: var(--rule-2);
+      }
+      .prop textarea {
+        flex: 1;
+        min-width: 0;
+        padding: 6px 8px;
+        border: 1px solid var(--rule);
+        background: var(--ink-2);
+        color: var(--fg);
+        font: 11px/1.6 var(--mono);
+        outline: none;
+        resize: vertical;
       }
       .levels {
         display: flex;

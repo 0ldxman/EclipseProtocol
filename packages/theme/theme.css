@@ -298,6 +298,15 @@ a{color:inherit}
 .mark i{width:17px;height:17px;border:1px solid var(--rule-2);display:grid;place-items:center;font:9px/1 var(--mono);color:var(--dim)}
 .mark b{font:500 12px/1 var(--display);letter-spacing:.16em;color:var(--fg)}
 
+/* Соседние экраны архива. Строчные и волосяные: это не приказ и не марка,
+   а указатели — рядом с поиском они не должны спорить с ним за внимание. */
+.rail__nav{display:flex;align-items:center;gap:16px;flex:none}
+.rail__nav a{
+  text-decoration:none;font:10px/1 var(--mono);letter-spacing:.14em;text-transform:uppercase;
+  color:var(--dim);padding-bottom:2px;border-bottom:1px solid transparent;transition:.15s var(--ease);
+}
+.rail__nav a:hover{color:var(--fg);border-bottom-color:var(--amber)}
+
 .cmd{
   flex:1;max-width:380px;display:flex;align-items:center;gap:8px;height:27px;padding:0 9px;
   border:1px solid var(--rule);background:var(--ink-2);color:var(--dim);font:11px/1 var(--mono);cursor:pointer;transition:.15s;
@@ -322,6 +331,8 @@ a{color:inherit}
   border-top:1px solid var(--rule);background:var(--ink);
 }
 .foot .sp{margin-left:auto}
+.foot__link{text-decoration:none;color:var(--dim);border-bottom:1px solid transparent;transition:.15s var(--ease)}
+.foot__link:hover{color:var(--amber);border-bottom-color:var(--amber)}
 
 /* Кадр занимает окно целиком; мера чтения задаётся бумаге, а не кадру.
    Рельс якорей прижат к левому полю, досье — к правому, документ стоит
@@ -654,7 +665,7 @@ div.w-classified{display:block;padding:2px 0}
 /* подразделы — не главные входы: карточки держат размер, а не растягиваются */
 .cards--tight{grid-template-columns:repeat(auto-fill,minmax(248px,1fr))}
 .folder{
-  position:relative;display:block;padding:22px 15px 15px;margin-top:9px;text-decoration:none;
+  position:relative;display:flex;flex-direction:column;padding:22px 15px 15px;margin-top:9px;text-decoration:none;
   border:1px solid var(--rule-2);background:var(--ink-2);transition:.15s;
 }
 .folder::before{
@@ -666,7 +677,15 @@ div.w-classified{display:block;padding:2px 0}
 .folder:hover::before{border-color:rgba(232,161,60,.45);background:var(--ink-3)}
 .folder:hover::after{background:var(--amber)}
 .folder b{display:block;font:500 13px/1.3 var(--display);letter-spacing:.08em;text-transform:uppercase;color:var(--fg)}
-.folder s{display:block;margin-top:7px;text-decoration:none;font:10px/1.6 var(--mono);letter-spacing:.06em;color:var(--dim)}
+/* Описание раздела — единственный кусок документа в приборной карточке, и
+   набран он как документ: серифом. Три строки — предел, за которым карточка
+   перестаёт быть ярлыком и становится текстом. */
+.folder p{
+  margin:10px 0 0;font:400 12.5px/1.62 var(--serif);color:var(--dim);
+  display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:3;overflow:hidden;
+}
+.folder s{display:block;margin-top:auto;padding-top:11px;text-decoration:none;font:10px/1.6 var(--mono);letter-spacing:.06em;color:var(--dimmer)}
+.cards--tight .folder p{-webkit-line-clamp:2;font-size:12px}
 .folder .lock{position:absolute;right:12px;bottom:12px;color:var(--red);font:11px/1 var(--mono)}
 .folder--sealed{background:repeating-linear-gradient(45deg,var(--ink-2) 0 6px,var(--ink-3) 6px 12px)}
 .folder--sealed b{color:var(--dim)}
@@ -833,10 +852,47 @@ div.w-classified{display:block;padding:2px 0}
 .cover__imprint .w-fields dt{color:var(--cv-dim)}
 .cover__imprint dt{font:10px/1.7 var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--cv-dim)}
 .cover__imprint dd{margin:0;font:11px/1.7 var(--mono);color:var(--cv-ink);text-align:right}
-.cover__stamp{
-  display:inline-block;margin-top:16px;padding:5px 11px;
-  border:1.5px solid var(--cv-accent);color:var(--cv-accent);
-  font:10px/1.5 var(--mono);letter-spacing:.16em;text-transform:uppercase;rotate:-3deg;opacity:.9;
+/* ── штамп ────────────────────────────────────────────────────────────
+   Оттиск, а не рамка с наклоном. Отличают штамп от рамки три вещи, и все
+   три здесь есть: двойная линия (у резинового клише всегда есть поле между
+   внешним кантом и набором), неровная краска и то, что оттиск лежит НА
+   бумаге, а не в потоке текста, — отсюда multiply и поворот.
+
+   Неровность даёт маска из фрактального шума: одна и та же на всех штампах,
+   поэтому два оттиска рядом выглядят сделанными одним клише, а не двумя
+   случайными кляксами. Картинка встроена, внешних запросов не делает. */
+.w-stamp{
+  --stamp-ink:#a3241b;
+  --stamp-angle:-6deg;
+  display:inline-block;margin:18px 14px 0 0;padding:7px 14px 8px;vertical-align:top;
+  border:2px solid var(--stamp-ink);color:var(--stamp-ink);
+  rotate:var(--stamp-angle);opacity:.85;mix-blend-mode:multiply;
+  -webkit-mask-image:var(--stamp-wear);mask-image:var(--stamp-wear);
+  -webkit-mask-size:300px 190px;mask-size:300px 190px;
+}
+.w-stamp__in{display:block;border:1px solid var(--stamp-ink);padding:5px 10px}
+.w-stamp b{display:block;font:700 11px/1.4 var(--mono);letter-spacing:.2em;text-transform:uppercase}
+.w-stamp s{
+  display:block;margin-top:4px;padding-top:4px;border-top:1px solid color-mix(in srgb,var(--stamp-ink) 45%,transparent);
+  text-decoration:none;font:400 9px/1.4 var(--mono);letter-spacing:.12em;text-transform:uppercase;opacity:.85;
+}
+.w-stamp--ink  {--stamp-ink:#1d1f22}
+.w-stamp--blue {--stamp-ink:#22497a}
+.w-stamp--green{--stamp-ink:#2c5c33}
+
+:root{
+  /* feTurbulence с порогом по альфе: краска в основном легла, но местами
+     клише не пропечаталось. Коэффициенты подобраны так, чтобы пропусков было
+     видно примерно четверть — больше читается как грязь, меньше не читается
+     вовсе. */
+  --stamp-wear:url("data:image/svg+xml;charset=utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='190'%3E%3Cfilter id='w'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.75' numOctaves='3' seed='7'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 -1.15 1.32'/%3E%3C/filter%3E%3Crect width='300' height='190' filter='url(%23w)'/%3E%3C/svg%3E");
+}
+
+/* На титульном листе штамп остаётся частью листа: краска берётся у схемы,
+   и на тёмной обложке multiply превратил бы оттиск в дыру. */
+.cover .w-stamp{
+  --stamp-ink:var(--cv-accent);
+  mix-blend-mode:normal;opacity:.85;margin-top:16px;
 }
 
 /* принадлежность записи: полоса над документом, взятая у ближайшей обложки */
@@ -888,6 +944,17 @@ div.w-classified{display:block;padding:2px 0}
   from{opacity:0;letter-spacing:.42em;filter:blur(3px)}
   to{opacity:1;letter-spacing:inherit;filter:none}
 }
+/* оттиск: клише идёт сверху, чуть смазано, и встаёт разом */
+@keyframes ae-stamp{
+  from{opacity:0;scale:1.4;filter:blur(1.4px)}
+  55%{opacity:.95}
+  to{opacity:.85;scale:1;filter:none}
+}
+/* проявка снимка: из засветки к своему тону, сверху вниз */
+@keyframes ae-develop{
+  from{opacity:0;clip-path:inset(0 0 100% 0);filter:grayscale(1) contrast(.45) brightness(1.3)}
+  to{opacity:1;clip-path:inset(0 0 0 0);filter:none}
+}
 
 @media (prefers-reduced-motion:no-preference){
 
@@ -914,16 +981,123 @@ div.w-classified{display:block;padding:2px 0}
   .cards>*:nth-child(5){animation-delay:.22s}
   .cards>*:nth-child(n+6){animation-delay:.25s}
 
-  /* документ */
-  .paper{animation:ae-feed .52s var(--ease) .05s backwards}
-  .toc{animation:ae-fade .4s var(--ease) .3s backwards}
+  /* документ: лист протягивается медленнее прочего — на нём и держится вся
+     дальнейшая работа, и торопить его незачем */
+  .paper{animation:ae-feed 1.05s var(--ease) .05s backwards}
+  .toc{animation:ae-fade .4s var(--ease) .5s backwards}
 
   /* титульный лист: рамка, затем название, затем акцентная черта */
   .cover__frame{animation:ae-fade .5s var(--ease) .16s backwards}
   .cover h1{animation:ae-focus .55s var(--ease) .1s backwards}
   .cover__rule{transform-origin:center;animation:ae-draw-x .5s var(--ease) .42s backwards}
   .cover__epi,.cover__foot{animation:ae-rise .4s var(--ease) .48s backwards}
-  .cover__stamp{animation:ae-fade .3s steps(2) .74s backwards}
+}
+
+/* ═══ ВЫВОД ДОКУМЕНТА ═════════════════════════════════════════════════
+   Продолжение той же мысли: лист протянут, теперь прибор его разбирает.
+   Текст стоит шумом и становится собой слева направо (это делает reveal.ts,
+   подменяя знаки в текстовых узлах), а виджеты выходят каждый по-своему —
+   шкала наливается, снимок проявляется, оттиск падает сверху.
+
+   Всё исходное состояние спрятано под `.ae-reveal`: класс ставит только
+   публичная вики. Просмотр в админке и любой другой потребитель темы
+   получают виджеты сразу готовыми — мигающая при каждом нажатии клавиши
+   разметка была бы наказанием, а не оформлением. */
+
+/* Плашки выезжают слева направо ровно тогда, когда до них дошёл текст:
+   в документе они стоят на месте настоящих слов, и закрывать ими пустоту
+   раньше, чем эти слова появятся, значило бы врать о том, что закрыто. */
+.w-spoiler,.w-classified{
+  background-repeat:no-repeat;background-position:left center;
+  transition:background-size .38s var(--ease);
+}
+.ae-reveal .w-spoiler{background-size:0 100%}
+.ae-reveal .w-classified{
+  background-color:transparent;
+  background-image:linear-gradient(var(--paper-ink),var(--paper-ink));
+  background-size:0 100%;
+}
+.ae-reveal .w-spoiler.is-in,
+.ae-reveal .w-classified.is-in{background-size:100% 100%}
+
+/* ── выходы виджетов ─────────────────────────────────────────────────
+   Каждый показывает то, что он есть: шкала — наполнение, точки — счёт,
+   поля — строку за строкой, снимок — проявку. */
+
+.ae-reveal .w-bar,.ae-reveal .w-dotbar,.ae-reveal .w-fields,
+.ae-reveal .w-note,.ae-reveal .w-quote,.ae-reveal .w-table-wrap,
+.ae-reveal .w-record,.ae-reveal .w-file,.ae-reveal .w-event,
+.ae-reveal .w-map,.ae-reveal .w-country-stats,.ae-reveal .w-infobox{
+  opacity:0;transform:translateY(6px);
+  transition:opacity .42s var(--ease),transform .42s var(--ease);
+}
+.ae-reveal .is-in{opacity:1;transform:none}
+
+/* шкала наливается из нуля — и только после того, как встала сама полоса */
+.ae-reveal .w-bar-fill{transform:scaleX(0);transform-origin:left;transition:transform .85s var(--ease) .12s}
+.ae-reveal .w-bar.is-in .w-bar-fill{transform:scaleX(1)}
+
+/* точки зажигаются по одной: шкала дискретная, и наливаться ей нечем */
+.ae-reveal .w-dot{transform:scale(.15);opacity:.35;transition:transform .3s var(--ease),opacity .3s var(--ease)}
+.ae-reveal .w-dotbar.is-in .w-dot{transform:none;opacity:1}
+.ae-reveal .w-dotbar.is-in .w-dot:nth-child(1){transition-delay:.14s}
+.ae-reveal .w-dotbar.is-in .w-dot:nth-child(2){transition-delay:.2s}
+.ae-reveal .w-dotbar.is-in .w-dot:nth-child(3){transition-delay:.26s}
+.ae-reveal .w-dotbar.is-in .w-dot:nth-child(4){transition-delay:.32s}
+.ae-reveal .w-dotbar.is-in .w-dot:nth-child(5){transition-delay:.38s}
+.ae-reveal .w-dotbar.is-in .w-dot:nth-child(n+6){transition-delay:.44s}
+
+/* поля досье: строка за строкой, как их и заполняли */
+.ae-reveal .w-fields dt,.ae-reveal .w-fields dd{
+  opacity:0;transition:opacity .34s var(--ease);
+}
+.ae-reveal .w-fields.is-in dt,.ae-reveal .w-fields.is-in dd{opacity:1}
+.ae-reveal .w-fields.is-in dt:nth-child(1),.ae-reveal .w-fields.is-in dd:nth-child(2){transition-delay:.1s}
+.ae-reveal .w-fields.is-in dt:nth-child(3),.ae-reveal .w-fields.is-in dd:nth-child(4){transition-delay:.16s}
+.ae-reveal .w-fields.is-in dt:nth-child(5),.ae-reveal .w-fields.is-in dd:nth-child(6){transition-delay:.22s}
+.ae-reveal .w-fields.is-in dt:nth-child(7),.ae-reveal .w-fields.is-in dd:nth-child(8){transition-delay:.28s}
+.ae-reveal .w-fields.is-in dt:nth-child(n+9),.ae-reveal .w-fields.is-in dd:nth-child(n+10){transition-delay:.34s}
+
+/* выноска и цитата: сперва прочерчивается кант, потом приходит текст */
+.ae-reveal .w-note,.ae-reveal .w-quote{border-left-color:transparent;transition:opacity .42s var(--ease),transform .42s var(--ease),border-left-color .3s var(--ease) .2s}
+.ae-reveal .w-note.is-in,.ae-reveal .w-quote.is-in{border-left-color:var(--paper-ink)}
+.ae-reveal .w-note.is-info.is-in{border-left-color:#2d5a7d}
+.ae-reveal .w-note.is-warn.is-in{border-left-color:#8a5b0a}
+.ae-reveal .w-note.is-danger.is-in{border-left-color:#a02820}
+.ae-reveal .w-infobox .w-quote.is-in{border-left-color:var(--rule-2)}
+
+/* таблица: строка за строкой сверху вниз */
+.ae-reveal .w-table-wrap tbody tr,.ae-reveal .prose table tbody tr{
+  opacity:0;transition:opacity .3s var(--ease);
+}
+.ae-reveal .w-table-wrap.is-in tbody tr,.ae-reveal .prose table.is-in tbody tr{opacity:1}
+.ae-reveal .w-table-wrap.is-in tbody tr:nth-child(1),.ae-reveal .prose table.is-in tbody tr:nth-child(1){transition-delay:.1s}
+.ae-reveal .w-table-wrap.is-in tbody tr:nth-child(2),.ae-reveal .prose table.is-in tbody tr:nth-child(2){transition-delay:.16s}
+.ae-reveal .w-table-wrap.is-in tbody tr:nth-child(3),.ae-reveal .prose table.is-in tbody tr:nth-child(3){transition-delay:.22s}
+.ae-reveal .w-table-wrap.is-in tbody tr:nth-child(n+4),.ae-reveal .prose table.is-in tbody tr:nth-child(n+4){transition-delay:.28s}
+
+/* снимок проявляется; оттиск падает сверху */
+.ae-reveal .w-image,.ae-reveal .w-gallery,.ae-reveal .w-video{opacity:0}
+.ae-reveal .w-image.is-in,.ae-reveal .w-gallery.is-in,.ae-reveal .w-video.is-in{
+  animation:ae-develop .95s var(--ease) forwards;
+}
+.ae-reveal .w-stamp{opacity:0}
+.ae-reveal .w-stamp.is-in{animation:ae-stamp .42s var(--ease) .1s forwards}
+
+/* Стоит после виджетов намеренно: блок может быть и виджетом сразу (цитата,
+   таблица), и пока он разбирается, приглушение должно брать верх над «встал
+   на место». Специфичность у правил одна, решает порядок. */
+.ae-reveal .is-cipher{
+  opacity:.4;filter:blur(.3px);
+  transition:opacity .5s var(--ease),filter .5s var(--ease);
+}
+.ae-reveal .is-read{opacity:1;filter:none}
+
+@media (prefers-reduced-motion:reduce){
+  .ae-reveal .is-cipher{opacity:1;filter:none}
+  .ae-reveal .w-image.is-in,.ae-reveal .w-gallery.is-in,.ae-reveal .w-video.is-in,
+  .ae-reveal .w-stamp.is-in{animation:none;opacity:1}
+  .ae-reveal .w-stamp.is-in{opacity:.85}
 }
 
 /* ── отклик на действие ──────────────────────────────────────────────

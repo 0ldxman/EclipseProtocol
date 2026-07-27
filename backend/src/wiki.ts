@@ -173,6 +173,10 @@ export async function registerWiki(app: FastifyInstance, options: WikiOptions): 
     order: node.order,
     slug: node.slug,
     tags: node.tags ?? [],
+    // Описание раздела читается снаружи категории — в карточке на главной,
+    // в списке соседей, — поэтому едет вместе с деревом, а не отдельным
+    // запросом на каждую карточку.
+    summary: node.summary ?? "",
     access: tree.effectiveAccess(node.id),
     updatedAt: node.updatedAt,
   });

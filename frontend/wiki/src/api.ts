@@ -16,6 +16,8 @@ export interface NavNode {
   order: number;
   slug?: string;
   tags: string[];
+  /** Папки: строка о разделе, которую читают снаружи категории. */
+  summary: string;
   access: number;
   updatedAt: string;
 }

@@ -44,8 +44,21 @@ export function siteRail(): HTMLElement {
     el("b", {}, ["AETHER.WIKI"]),
   ]);
 
+  /*
+   * Летопись и карта — не содержимое главной, а соседние экраны того же
+   * архива, и место им в рельсе. Раньше они лежали плиткой «другие входы» в
+   * нижнем углу главной: со второй страницы туда было не попасть вовсе, и
+   * два из трёх экранов сайта существовали только для того, кто дошёл до
+   * конца первого.
+   */
+  const nav = el("nav", { class: "rail__nav" }, [
+    link("/timeline", {}, ["летопись"]),
+    el("a", { href: href("/") + "map/" }, ["карта"]),
+  ]);
+
   return el("header", { class: "rail" }, [
     brand,
+    nav,
     search,
     el("div", { class: "who" }, [
       el("div", {}, [
@@ -72,11 +85,17 @@ export function siteFoot(): HTMLElement {
   tick();
   setInterval(tick, 1000);
 
+  // Служебная строка: то, что относится к сайту, а не к тому, что на экране.
+  // Сюда же со временем встанут внешние ссылки — подвал для них и есть место,
+  // а не рельс, где каждая лишняя строка отбирает внимание у поиска.
   return el("footer", { class: "foot" }, [
     el("span", { class: "chrome" }, [el("span", { class: "dot dot--live" }), "канал устойчив"]),
     clock,
     el("span", { class: "chrome", id: "foot-count" }, []),
-    el("span", { class: "chrome sp" }, ["ЭП — 2026"]),
+    el("span", { class: "chrome sp" }, [
+      el("a", { class: "foot__link", href: href("/") + "admin/" }, ["админка"]),
+    ]),
+    el("span", { class: "chrome" }, ["ЭП — 2026"]),
   ]);
 }
 

@@ -203,11 +203,17 @@ export const DIRECTIVES: Record<string, DirectiveSpec> = {
     },
   },
 
-  /** `:::quote{author=Кремень date=2031.04.02}` with markdown inside. */
+  /**
+   * `:::quote{author=Кремень date=2031.04.02}` with markdown inside.
+   *
+   * `by=` — то же самое: заготовка в палитре админки всегда предлагала именно
+   * его, и подпись под цитатой молча пропадала. Читается и то и другое, потому
+   * что записи с `by=` уже написаны.
+   */
   quote: {
     kinds: ["containerDirective"],
     render: (c) => {
-      const author = attr(c, "author");
+      const author = attr(c, "author") || attr(c, "by");
       const date = attr(c, "date");
       const children = [...c.children];
       if (author || date) {
@@ -527,10 +533,49 @@ export const DIRECTIVES: Record<string, DirectiveSpec> = {
     render: (c) => el("div", { className: ["cover__imprint"] }, c.children),
   },
 
+  /**
+   * Штамп.
+   *
+   * Раньше жил только на титульном листе и был там обводкой с наклоном —
+   * этого хватало, потому что рядом стояли выходные сведения и лист сам
+   * объяснял, что это оттиск. В теле записи та же обводка читалась просто
+   * наклонённым текстом: ни второй линии, ни неровности краски, ничего, что
+   * отличает штамп от рамки.
+   *
+   * Поэтому здесь теперь настоящий оттиск, и он несёт то, что несёт настоящий:
+   * слово, а под ним дату и того, кто ставил. Обе строки необязательны, и без
+   * них штамп остаётся однострочным — как на титуле.
+   *
+   *   ::stamp[для служебного пользования]{tone=red date=12.04.2031 by="Архив"}
+   */
   stamp: {
     kinds: ["textDirective", "leafDirective"],
-    render: (c) => el("div", { className: ["cover__stamp"] }, [text(c.text || attr(c, "label"))]),
+    render: (c) => {
+      const tone = attr(c, "tone", "red");
+      const classes = ["w-stamp"];
+      if (STAMP_TONES.has(tone)) classes.push(`w-stamp--${tone}`);
+
+      const lines: ElementContent[] = [
+        el("b", {}, [text(c.text || attr(c, "label", "штамп"))]),
+      ];
+      const foot = [attr(c, "date"), attr(c, "by")].filter(Boolean).join(" · ");
+      if (foot) lines.push(el("s", {}, [text(foot)]));
+
+      // Угол задаётся автором, но в пределах разумного: оттиск, повёрнутый на
+      // сорок градусов, читается как ошибка вёрстки, а не как небрежность
+      // руки. Значение приходит строкой из разметки — проверяется здесь.
+      const wanted = Number(attr(c, "angle", "-6"));
+      const angle = Number.isFinite(wanted) ? Math.max(-14, Math.min(14, wanted)) : -6;
+
+      return el(
+        "div",
+        { className: classes, style: `--stamp-angle:${angle}deg` },
+        [el("span", { className: ["w-stamp__in"] }, lines)],
+      );
+    },
   },
 };
+
+const STAMP_TONES = new Set(["red", "ink", "blue", "green"]);
 
 export const KNOWN_DIRECTIVES = new Set(Object.keys(DIRECTIVES));

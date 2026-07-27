@@ -338,7 +338,7 @@ ok("the record shows the cover it belongs to", (await site.locator(".belong b").
 await site.locator(".belong").click();
 await site.waitForSelector(".cover", { timeout: 10_000 });
 ok("the category opens with its title leaf", (await site.locator(".cover h1").textContent()) === "Операции");
-ok("the leaf carries its imprint and stamp", (await site.locator(".cover__stamp").count()) === 1);
+ok("the leaf carries its imprint and stamp", (await site.locator(".cover .w-stamp").count()) === 1);
 await site.screenshot({ path: path.join(SHOTS, "public-05-cover.png") });
 
 // --- хронология ------------------------------------------------------------

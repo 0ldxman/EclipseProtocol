@@ -802,6 +802,39 @@ async function main(): Promise<void> {
     name.onblur = () => void applyName();
     propsHost.append(propBlock("Название", [name]));
 
+    /* описание раздела */
+    if (node.kind === "folder") {
+      const summary = el("textarea", {
+        rows: "3",
+        maxlength: "400",
+        placeholder: "о чём этот раздел — одна-две строки",
+      });
+      summary.value = node.summary ?? "";
+      const applySummary = async () => {
+        if (summary.value.trim() === (node.summary ?? "")) return;
+        if (await guard(() => api.update(node.id, { summary: summary.value }))) {
+          await refreshTree();
+          refreshSelected();
+        }
+      };
+      // Enter здесь переносит строку, поэтому сохраняет только уход фокуса —
+      // и Ctrl+Enter для тех, кто ждёт от Enter отправки.
+      summary.onkeydown = (event) => {
+        if (event.key === "Enter" && (event.ctrlKey || event.metaKey)) {
+          event.preventDefault();
+          summary.blur();
+        }
+      };
+      summary.onblur = () => void applySummary();
+      propsHost.append(
+        propBlock(
+          "Описание раздела",
+          [summary],
+          "Читается снаружи категории: в карточке на главной и в списке соседних разделов. Титульный лист — это другое, он пишется разметкой внутри.",
+        ),
+      );
+    }
+
     /* слаг */
     if (node.kind === "record") {
       const slug = el("input", { type: "text", value: node.slug ?? "" });

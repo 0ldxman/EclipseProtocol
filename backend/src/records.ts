@@ -110,6 +110,7 @@ export async function registerRecords(
       name?: string;
       slug?: string;
       tags?: string[];
+      summary?: string;
       eventAt?: string;
       eventEpoch?: string;
       eventSummary?: string;
@@ -127,6 +128,7 @@ export async function registerRecords(
         if (!Array.isArray(body.tags)) return reply.code(400).send({ error: "tags must be an array" });
         node = await tree.setTags(id, body.tags.map(String));
       }
+      if (body.summary !== undefined) node = await tree.setSummary(id, String(body.summary));
       // Поля события правятся по одному: подпись меняют, не пересылая дату.
       if (
         body.eventAt !== undefined ||
