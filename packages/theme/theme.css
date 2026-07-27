@@ -642,6 +642,21 @@ div.w-classified{display:block;padding:2px 0}
   margin:7px 0 0;padding:6px 15px 0;
   border-top-color:var(--rule);color:var(--dim);text-align:center;
 }
+/* Ссылка внутри досье.
+   Инфобокс уезжает из `.prose` в приборную колонку, и правила бумаги до него
+   не достают: до этого места ссылка в досье выглядела обычным словом — то
+   есть выглядела как ничто. Подчёркивание остаётся в покое, а не только под
+   курсором: связь между записями — часть содержания, а не отклик на наведение. */
+.w-infobox a{
+  color:var(--fg);text-decoration:underline;text-decoration-color:var(--rule-2);
+  text-underline-offset:3px;transition:color .15s,text-decoration-color .15s;
+}
+.w-infobox a:hover{color:var(--amber);text-decoration-color:var(--amber)}
+
+/* Ссылка в никуда помечена, но не убрана: это задача, а не поломка. Класс
+   разметка ставила с самого начала, а показать его было нечем. */
+.wikilink.is-broken{color:var(--ember);text-decoration-style:dotted}
+
 .w-infobox .w-fields dt,.w-infobox .w-fields dd{border-top-color:var(--rule)}
 .w-infobox .w-fields dt{color:var(--dim)}
 .w-infobox .w-fields dd{font:11px/1.7 var(--mono);color:var(--fg)}

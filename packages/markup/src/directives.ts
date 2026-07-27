@@ -103,6 +103,89 @@ const COVER_PATTERNS = new Set(["fiber", "grid", "hatch", "rays", "none"]);
 const styleClass = (value: string): string =>
   STYLES.has(value) ? `is-${value}` : "is-neutral";
 
+/* ── построчный разбор с сохранением разметки ──────────────────────────
+   Для `:::fields`, где перенос строки — синтаксис, а не оформление.
+
+   Разбирать здесь плоский текст было бы проще на десяток строк и неверно:
+   в значении поля стоит ссылка на другую запись, плашка состояния, дата, —
+   и всё это должно дожить до вывода. Поэтому режется дерево узлов. */
+
+/** Абзацы и переносы — в один поток; `\n` остаётся отметкой конца строки. */
+function inlineFlow(nodes: ElementContent[]): ElementContent[] {
+  const out: ElementContent[] = [];
+  for (const node of nodes) {
+    if (node.type === "element" && node.tagName === "p") {
+      if (out.length > 0) out.push(text("\n"));
+      out.push(...inlineFlow(node.children as ElementContent[]));
+      continue;
+    }
+    if (node.type === "element" && node.tagName === "br") {
+      out.push(text("\n"));
+      continue;
+    }
+    out.push(node);
+  }
+  return out;
+}
+
+/** Поток узлов — в строки. Элемент целиком принадлежит своей строке. */
+function toLines(nodes: ElementContent[]): ElementContent[][] {
+  const lines: ElementContent[][] = [[]];
+  for (const node of nodes) {
+    if (node.type === "text" && node.value.includes("\n")) {
+      const parts = node.value.split("\n");
+      parts.forEach((part, at) => {
+        if (at > 0) lines.push([]);
+        if (part.length > 0) lines.at(-1)!.push(text(part));
+      });
+      continue;
+    }
+    lines.at(-1)!.push(node);
+  }
+  return lines;
+}
+
+/** Разрез строки по первому `::` в тексте: ключ слева, значение справа. */
+function cut(line: ElementContent[], mark: string): [ElementContent[], ElementContent[]] | null {
+  for (let i = 0; i < line.length; i++) {
+    const node = line[i]!;
+    if (node.type !== "text") continue;
+    const at = node.value.indexOf(mark);
+    if (at < 0) continue;
+    const head = line.slice(0, i);
+    const before = node.value.slice(0, at);
+    if (before.length > 0) head.push(text(before));
+    const tail: ElementContent[] = [];
+    const after = node.value.slice(at + mark.length);
+    if (after.length > 0) tail.push(text(after));
+    tail.push(...line.slice(i + 1));
+    return [head, tail];
+  }
+  return null;
+}
+
+/** Пробелы по краям — разделитель, а не содержимое. Внутри строки не трогаем. */
+function trimEdges(nodes: ElementContent[]): ElementContent[] {
+  const out = [...nodes];
+  while (out.length > 0 && out[0]!.type === "text") {
+    const value = (out[0] as { value: string }).value.replace(/^\s+/, "");
+    if (value.length === 0) out.shift();
+    else {
+      out[0] = text(value);
+      break;
+    }
+  }
+  while (out.length > 0 && out.at(-1)!.type === "text") {
+    const value = (out.at(-1) as { value: string }).value.replace(/\s+$/, "");
+    if (value.length === 0) out.pop();
+    else {
+      out[out.length - 1] = text(value);
+      break;
+    }
+  }
+  return out;
+}
+
 export const DIRECTIVES: Record<string, DirectiveSpec> = {
   /** Small status pill: `:tag[Мёртв, официально]{style=danger}` */
   tag: {
@@ -383,17 +466,27 @@ export const DIRECTIVES: Record<string, DirectiveSpec> = {
    * абзаца markdown склеивает мягкими переносами, и дерево здесь ничего
    * не добавляет, кроме работы.
    */
+  /**
+   * `ключ :: значение`, по строке на поле.
+   *
+   * Разбирается дерево узлов, а не плоский текст. Разница не косметическая:
+   * значение поля — обычная строка документа, и в ней стоит `[[ссылка]]` на
+   * другую запись, метка состояния, дата. Плоский текст выдавал их подписью
+   * без ссылки — «куратор :: Вейн», где Вейн никуда не ведёт, — и в досье,
+   * то есть ровно там, где связи между записями и нужны, вики переставала
+   * быть вики.
+   */
   fields: {
     kinds: ["containerDirective"],
     render: (c) => {
       const rows: ElementContent[] = [];
-      for (const line of c.text.split(/\r?\n/)) {
-        const at = line.indexOf("::");
-        if (at < 0) continue;
-        const key = line.slice(0, at).trim();
-        const value = line.slice(at + 2).trim();
-        if (!key) continue;
-        rows.push(el("dt", {}, [text(key)]), el("dd", {}, [text(value)]));
+      for (const line of toLines(inlineFlow(c.children))) {
+        const parts = cut(line, "::");
+        if (!parts) continue;
+        const key = trimEdges(parts[0]);
+        const value = trimEdges(parts[1]);
+        if (key.length === 0) continue;
+        rows.push(el("dt", {}, key), el("dd", {}, value));
       }
       return el("dl", { className: ["w-fields"] }, rows);
     },

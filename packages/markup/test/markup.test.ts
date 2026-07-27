@@ -190,6 +190,38 @@ test("a line without the separator is skipped rather than becoming an empty row"
   assert.match(html, /<dt>Шифр<\/dt>/);
 });
 
+// Значение поля — обычная строка документа, и разметка в ней должна дожить до
+// вывода. Разбор плоского текста выдавал «куратор :: Вейн», где Вейн никуда не
+// ведёт: в досье, то есть ровно там, где связи и нужны, ссылок не было вовсе.
+test("a field value keeps its markup: links, widgets, emphasis", () => {
+  const { html, links } = renderMarkup(
+    ":::fields\nкуратор :: [[Аналитик Вейн|vein]]\nстатус :: :tag[пропал]{style=danger}\nшифр :: **AC/0041**\n:::",
+  );
+  assert.match(html, /<dd><a href="\/wiki\/vein" class="wikilink">Аналитик Вейн<\/a><\/dd>/);
+  assert.match(html, /<dd><span class="w-tag is-danger">пропал<\/span><\/dd>/);
+  assert.match(html, /<dd><strong>AC\/0041<\/strong><\/dd>/);
+  assert.deepEqual(links, ["vein"]);
+});
+
+test("a field row without a key is skipped, separator or not", () => {
+  const { html } = renderMarkup(":::fields\n:: значение без ключа\nШифр :: AC/0041\n:::");
+  assert.doesNotMatch(html, /значение без ключа/);
+  assert.match(html, /<dt>Шифр<\/dt>/);
+});
+
+// Инфобокс уезжает из тела в отдельную колонку, и ссылка обязана пережить
+// переезд: её вырезали не из текста, а из документа.
+test("a wiki link inside an extracted infobox survives extraction", () => {
+  const { infoboxes, links } = renderMarkup(
+    "::::infobox{title=Досье}\nСвязан с [[Протокол Аполлон|apollo]].\n\n:::fields\nкуратор :: [[Вейн|vein]]\n:::\n::::",
+    { extractInfoboxes: true },
+  );
+  assert.equal(infoboxes.length, 1);
+  assert.match(infoboxes[0]!, /<a href="\/wiki\/apollo" class="wikilink">Протокол Аполлон<\/a>/);
+  assert.match(infoboxes[0]!, /<dd><a href="\/wiki\/vein" class="wikilink">Вейн<\/a><\/dd>/);
+  assert.deepEqual(links, ["apollo", "vein"]);
+});
+
 test("a record card asks the renderer for the title, not the author", () => {
   const { html } = renderMarkup("::record{slug=apollo}", {
     resolveRecord: (slug) =>
