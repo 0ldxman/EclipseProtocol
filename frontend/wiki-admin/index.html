@@ -16,15 +16,79 @@
          что в админке ровно три вопроса: где это лежит, что там написано и как
          это выглядит. Каждая вертикаль отвечает на один и не смешивается с
          соседней. Свойства записи — не четвёртая вертикаль, а вторая вкладка
-         правой: смотреть на разметку и на её свойства одновременно не нужно. */
+         правой: смотреть на разметку и на её свойства одновременно не нужно.
+
+         Ширины вертикалей задаются переменными и тянутся мышью. Пропорция,
+         зашитая в стиль, всегда неверна для чьей-то работы: у длинных путей в
+         дереве не хватало трёхсот пикселей, а таблице в редакторе хотелось
+         отдать весь экран. Числа приходят из panes.ts и живут в localStorage. */
 
       body {
         display: grid;
-        grid-template-columns: 296px minmax(0, 1fr) minmax(340px, 0.92fr);
+        grid-template-columns: var(--w-tree, 296px) minmax(0, 1fr) var(--w-view, 520px);
         grid-template-rows: 44px minmax(0, 1fr);
         grid-template-areas: "head head head" "tree edit view";
         height: 100vh;
         overflow: hidden;
+      }
+      /* Каталог вложений занимает обе правые вертикали: у файла нет
+         «источника» и «результата», у него есть он сам. */
+      body.is-assets #edit-pane,
+      body.is-assets #view-pane,
+      body.is-assets #view-gutter {
+        display: none;
+      }
+      body:not(.is-assets) #assets-pane {
+        display: none;
+      }
+      #assets-pane {
+        grid-row: 2;
+        grid-column: 2 / 4;
+      }
+      /* Пока тянут разделитель, курсор не должен зависеть от того, над чем он
+         оказался, а текст — выделяться. */
+      body.is-resizing {
+        cursor: col-resize;
+        user-select: none;
+      }
+
+      /* ── разделитель вертикалей ──
+         Зона захвата поверх волосяной границы: колонки сходятся в одну линию,
+         а тянуть за линию в один пиксель нельзя. */
+      .gutter {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        width: 9px;
+        z-index: 6;
+        cursor: col-resize;
+        border: 0;
+        background: none;
+        padding: 0;
+      }
+      .gutter::after {
+        content: "";
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        left: 4px;
+        width: 1px;
+        background: transparent;
+        transition: 0.14s var(--ease);
+      }
+      .gutter:hover::after,
+      .gutter:focus-visible::after,
+      .gutter.is-live::after {
+        background: var(--amber);
+      }
+      .gutter:focus-visible {
+        outline: none;
+      }
+      #tree-gutter {
+        right: -4px;
+      }
+      #view-gutter {
+        left: -5px;
       }
 
       /* ── шапка ── */
@@ -54,8 +118,12 @@
       .logo b span {
         color: var(--dim);
       }
-      #status {
+      #head .sp {
         margin-left: auto;
+      }
+      #status {
+        min-width: 120px;
+        text-align: right;
         font: 10px/1.4 var(--mono);
         letter-spacing: 0.09em;
         text-transform: uppercase;
@@ -68,6 +136,7 @@
       /* ── дерево ── */
       #tree-pane {
         grid-area: tree;
+        position: relative;
         display: flex;
         flex-direction: column;
         min-height: 0;
@@ -92,6 +161,10 @@
         min-height: 0;
         overflow: auto;
         padding-bottom: 12px;
+        outline: none;
+      }
+      #tree:focus-visible {
+        box-shadow: inset 2px 0 0 var(--amber);
       }
       #tree-foot {
         display: flex;
@@ -100,11 +173,50 @@
         border-top: 1px solid var(--rule);
       }
 
+      /* Полка вложений. Не узел дерева: файл не лежит в категории, на одну
+         картинку могут ссылаться пять записей. Поэтому — отдельная строка над
+         деревом, а не папка внутри него. */
+      #shelf {
+        border-bottom: 1px solid var(--rule);
+      }
+      .shelf-row {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        width: 100%;
+        padding: 6px 10px 6px 6px;
+        border: 0;
+        border-left: 2px solid transparent;
+        background: none;
+        color: var(--dim);
+        font: 10px/1.6 var(--mono);
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        cursor: pointer;
+        text-align: left;
+      }
+      .shelf-row:hover {
+        background: var(--ink-2);
+        color: var(--fg);
+      }
+      .shelf-row.is-on {
+        background: color-mix(in srgb, var(--amber) 10%, transparent);
+        border-left-color: var(--amber);
+        color: var(--amber);
+      }
+      .shelf-row b {
+        margin-left: auto;
+        font-weight: 400;
+        color: var(--dimmer);
+      }
+
       .tree-row {
+        position: relative;
         display: flex;
         align-items: center;
         gap: 6px;
-        padding: 3px 10px 3px 4px;
+        padding: 3px 8px 3px 4px;
+        padding-left: calc(4px + var(--depth, 0) * 14px);
         cursor: pointer;
         user-select: none;
         border-left: 2px solid transparent;
@@ -121,9 +233,32 @@
       .tree-row.is-selected .tree-name {
         color: var(--amber);
       }
-      .tree-row.is-drop {
+      .tree-row.is-dragging {
+        opacity: 0.4;
+      }
+      /* Три цели броска различаются на вид, а не только на ощупь: «внутрь» —
+         заливка папки, «перед» и «после» — черта на том краю, куда встанет
+         строка. Одинаковая подсветка для всех трёх и была причиной, по которой
+         порядок нельзя было менять уверенно. */
+      .tree-row.is-into {
         background: color-mix(in srgb, var(--amber) 16%, transparent);
         border-left-color: var(--amber);
+      }
+      .tree-row.is-before::before,
+      .tree-row.is-after::before {
+        content: "";
+        position: absolute;
+        left: calc(6px + var(--depth, 0) * 14px);
+        right: 8px;
+        height: 2px;
+        background: var(--amber);
+        box-shadow: 0 0 8px rgba(232, 161, 60, 0.5);
+      }
+      .tree-row.is-before::before {
+        top: -1px;
+      }
+      .tree-row.is-after::before {
+        bottom: -1px;
       }
       .tree-row.is-cover .tree-name {
         font-style: italic;
@@ -131,6 +266,7 @@
       }
       .twisty {
         width: 14px;
+        flex: none;
         padding: 0;
         border: 0;
         background: none;
@@ -138,11 +274,13 @@
         color: var(--dim);
         font-size: 9px;
         line-height: 1;
+        text-align: left;
       }
       .tree-icon {
         color: var(--dim);
         display: flex;
         width: 12px;
+        flex: none;
       }
       .tree-name {
         flex: 1;
@@ -153,10 +291,47 @@
       .tree-slug {
         color: var(--dimmer);
         font-size: 10px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        max-width: 42%;
       }
       .tree-access {
         color: var(--red);
         font-size: 10px;
+      }
+      .tree-count {
+        min-width: 15px;
+        padding: 0 3px;
+        text-align: center;
+        font-size: 9px;
+        color: var(--dimmer);
+        border: 1px solid var(--rule);
+      }
+      /* Плюс на папке: создание там, куда смотрят. В покое дерево остаётся
+         списком имён, а не панелью кнопок. */
+      .tree-add {
+        width: 16px;
+        height: 16px;
+        flex: none;
+        padding: 0;
+        border: 1px solid transparent;
+        background: none;
+        color: var(--dimmer);
+        font: 12px/1 var(--mono);
+        cursor: pointer;
+        opacity: 0;
+        transition: 0.12s var(--ease);
+      }
+      .tree-row:hover .tree-add {
+        opacity: 1;
+      }
+      .tree-add:hover {
+        border-color: rgba(232, 161, 60, 0.4);
+        color: var(--amber);
+      }
+      .tree-add:focus-visible {
+        opacity: 1;
       }
       .tree-empty {
         padding: 16px;
@@ -175,12 +350,50 @@
         outline: none;
       }
 
+      /* Меню правой кнопки. Углы отмечены янтарём — та же метка, что у
+         карточек в теме: это плоскость поверх прибора, а не его часть. */
+      .tree-menu {
+        position: fixed;
+        z-index: 40;
+        min-width: 208px;
+        padding: 4px 0;
+        background: var(--ink-2);
+        border: 1px solid var(--rule-2);
+        box-shadow: 0 12px 34px rgba(0, 0, 0, 0.55);
+      }
+      .tree-menu__item {
+        display: block;
+        width: 100%;
+        padding: 6px 12px;
+        border: 0;
+        background: none;
+        color: var(--fg);
+        font: 11px/1.5 var(--mono);
+        text-align: left;
+        cursor: pointer;
+      }
+      .tree-menu__item:hover,
+      .tree-menu__item:focus-visible {
+        background: color-mix(in srgb, var(--amber) 12%, transparent);
+        color: var(--amber);
+        outline: none;
+      }
+      .tree-menu__item.is-danger:hover,
+      .tree-menu__item.is-danger:focus-visible {
+        background: color-mix(in srgb, var(--red) 16%, transparent);
+        color: var(--red);
+      }
+      .tree-menu__rule {
+        height: 1px;
+        margin: 4px 0;
+        background: var(--rule);
+      }
+
       /* ── источник ── */
       #edit-pane {
         grid-area: edit;
         display: flex;
         flex-direction: column;
-        border-right: 1px solid var(--rule);
         min-width: 0;
       }
       #record-head {
@@ -204,49 +417,139 @@
         display: flex;
         gap: 6px;
       }
+
+      /* ── палитра разметки ──
+         Ряд — это группа, а не остаток места. Раньше тридцать одинаковых
+         кнопок переносились на три ряда как придётся, группы разъезжались, и
+         найти нужное можно было только прочитав всю полосу.
+
+         Ничего не прячется и не прокручивается: половина языка разметки была
+         невидима именно потому, что кнопок «не хватало» на экране. Фильтр
+         сверху — способ найти, а не способ спрятать. */
       #insert-bar {
         display: flex;
-        align-items: center;
-        gap: 5px;
-        flex-wrap: wrap;
-        padding: 6px 14px;
+        flex-direction: column;
         border-bottom: 1px solid var(--rule);
         background: var(--ink-2);
       }
-      #insert-bar .chrome {
-        margin-right: 4px;
-      }
-      /* Подпись группы отбивает набор виджетов от соседнего: полоса длинная,
-         и без разделителя это одна каша из тридцати кнопок. */
-      .ins-group {
-        margin-left: 8px;
-        padding-left: 10px;
-        border-left: 1px solid var(--rule);
-        color: var(--dimmer);
-      }
-      .ins-group:first-child {
-        margin-left: 0;
-        padding-left: 0;
-        border-left: 0;
-      }
-      /* Полоса не прокручивается и ничего не прячет: половина языка разметки
-         была не видна именно потому, что кнопок «не хватало» на экране. */
-      #insert-bar {
-        row-gap: 4px;
-      }
-      /* [hidden] — стиль браузера, а он слабее авторского display:flex */
       #insert-bar[hidden],
       #preview-sheet[hidden] {
         display: none;
       }
+      .ins-head {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 6px 12px 6px 14px;
+      }
+      .ins-find {
+        height: 22px;
+        width: 172px;
+        margin-left: auto;
+        padding: 0 8px;
+      }
+      .ins-find input {
+        font-size: 10px;
+      }
+      .ins-row {
+        display: grid;
+        grid-template-columns: 108px minmax(0, 1fr);
+        border-top: 1px solid var(--rule);
+      }
+      .ins-row.is-hidden {
+        display: none;
+      }
+      .ins-label {
+        padding: 8px 10px 0 0;
+        border-right: 1px solid var(--rule);
+        text-align: right;
+        font: 9px/1.4 var(--mono);
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        color: var(--dimmer);
+      }
+      .ins-tools {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 2px;
+        padding: 4px 12px 5px 8px;
+      }
+      /* Кнопка палитры не носит скобки `[ … ]`, которыми в этой системе отмечен
+         приказ: здесь не действие, а материал. Тридцать приказов подряд и были
+         той стеной, из-за которой полосу не читали. */
+      .tool {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        height: 23px;
+        padding: 0 8px 0 6px;
+        border: 1px solid transparent;
+        background: none;
+        color: var(--dim);
+        font: 10px/1 var(--mono);
+        letter-spacing: 0.03em;
+        cursor: pointer;
+        transition: 0.13s var(--ease);
+      }
+      .tool svg {
+        color: var(--dimmer);
+        flex: none;
+        transition: 0.13s var(--ease);
+      }
+      .tool:hover {
+        border-color: rgba(232, 161, 60, 0.38);
+        background: rgba(232, 161, 60, 0.07);
+        color: var(--fg);
+      }
+      .tool:hover svg {
+        color: var(--amber);
+      }
+      .tool:active {
+        background: var(--amber);
+        border-color: var(--amber);
+        color: var(--ink);
+      }
+      .tool:active svg {
+        color: var(--ink);
+      }
+      .tool.is-hidden {
+        display: none;
+      }
+      .tool.is-hit {
+        border-color: rgba(232, 161, 60, 0.38);
+        color: var(--fg);
+      }
+      .tool.is-hit svg {
+        color: var(--amber);
+      }
+
       /* Пустой редактор: не дыра, а объяснение, что делать дальше. */
       #editor .empty {
         padding: 60px 20px;
       }
       #editor {
+        position: relative;
         flex: 1;
         overflow: hidden;
         min-height: 0;
+      }
+      /* Файл, брошенный в редактор, загружается и вписывается на место курсора.
+         Это второй ответ на «куда их кидать» — первый в каталоге вложений. */
+      #editor.is-drop::after {
+        content: "отпустите — файл встанет в текст";
+        position: absolute;
+        inset: 8px;
+        z-index: 9;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: 1px dashed var(--amber);
+        background: rgba(232, 161, 60, 0.08);
+        color: var(--amber);
+        font: 11px/1 var(--mono);
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        pointer-events: none;
       }
       #edit-foot {
         display: flex;
@@ -289,9 +592,11 @@
       /* ── результат: просмотр или свойства ── */
       #view-pane {
         grid-area: view;
+        position: relative;
         display: flex;
         flex-direction: column;
         min-width: 0;
+        border-left: 1px solid var(--rule);
       }
       #view-tabs {
         display: flex;
@@ -400,12 +705,15 @@
       .prop input:disabled {
         opacity: 0.4;
       }
-      .prop .note {
+      .prop .note,
+      .note {
         margin-top: 7px;
         font: 10px/1.5 var(--mono);
         color: var(--dimmer);
       }
-      .prop input[type="date"] {
+      .prop input[type="date"],
+      .prop input[type="text"],
+      .prop input[type="number"] {
         height: 26px;
         padding: 0 8px;
         border: 1px solid var(--rule);
@@ -418,15 +726,9 @@
       .prop input[type="text"] {
         flex: 1;
         min-width: 0;
-        height: 26px;
-        padding: 0 8px;
-        border: 1px solid var(--rule);
-        background: var(--ink-2);
-        color: var(--fg);
-        font: 11px/1 var(--mono);
-        outline: none;
       }
-      .prop input[type="text"]:focus {
+      .prop input[type="text"]:focus,
+      .prop input[type="date"]:focus {
         border-color: var(--rule-2);
       }
       .levels {
@@ -457,6 +759,305 @@
       #prop-empty {
         padding: 40px 20px;
         text-align: center;
+      }
+
+      /* ── каталог вложений ──
+         Отвечает на вопрос, которого в админке не было: куда класть файлы.
+         Не галерея, а рабочее место — у каждого файла есть адрес, готовая
+         строка разметки и кнопка, ставящая её в открытую запись. */
+      #assets-pane {
+        display: flex;
+        flex-direction: column;
+        min-width: 0;
+        position: relative;
+      }
+      .as-head {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 14px;
+        border-bottom: 1px solid var(--rule);
+      }
+      .as-filter {
+        height: 24px;
+        width: 200px;
+        margin-left: auto;
+      }
+      .as-filter input {
+        font-size: 10px;
+      }
+      .as-body {
+        flex: 1;
+        min-height: 0;
+        overflow: auto;
+        padding: 16px;
+      }
+      .as-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(164px, 1fr));
+        gap: 1px;
+        background: var(--rule);
+        border: 1px solid var(--rule);
+      }
+      .as-grid:empty {
+        display: none;
+      }
+      .as-tile {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+        padding: 9px 10px 10px;
+        background: var(--ink);
+        cursor: pointer;
+        transition: 0.14s var(--ease);
+      }
+      .as-tile:hover {
+        background: var(--ink-2);
+      }
+      .as-tile.is-on {
+        background: color-mix(in srgb, var(--amber) 9%, transparent);
+        box-shadow: inset 0 0 0 1px rgba(232, 161, 60, 0.45);
+      }
+      .as-shot {
+        height: 98px;
+        background: var(--ink-2);
+        box-shadow: inset 0 0 0 1px var(--rule);
+        overflow: hidden;
+      }
+      .as-shot img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+        filter: grayscale(0.4);
+        transition: 0.18s var(--ease);
+      }
+      .as-tile:hover .as-shot img {
+        filter: none;
+      }
+      .as-shot--kind {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        color: var(--dimmer);
+        font: 9px/1 var(--mono);
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+      }
+      .as-name {
+        font: 10px/1.4 var(--mono);
+        color: var(--fg);
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      .as-meta {
+        font: 9px/1.4 var(--mono);
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--dimmer);
+      }
+      /* Действия появляются на плитке по наведению: в покое каталог — сетка
+         снимков, а не сетка кнопок. */
+      .as-acts,
+      .as-confirm {
+        display: flex;
+        gap: 4px;
+        align-items: center;
+      }
+      .as-acts {
+        margin-top: 2px;
+        opacity: 0;
+        transition: 0.14s var(--ease);
+      }
+      .as-tile:hover .as-acts,
+      .as-tile:focus-within .as-acts,
+      .as-tile.is-on .as-acts {
+        opacity: 1;
+      }
+      .as-del {
+        margin-left: auto;
+        padding: 0 6px;
+      }
+      .as-none {
+        grid-column: 1 / -1;
+        padding: 22px;
+        background: var(--ink);
+        color: var(--dim);
+        font: 11px/1.6 var(--mono);
+      }
+      .as-drop {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        align-items: center;
+        justify-content: center;
+        min-height: 78px;
+        margin-bottom: 16px;
+        border: 1px dashed var(--rule-2);
+        color: var(--dim);
+        text-align: center;
+        transition: 0.14s var(--ease);
+      }
+      #assets-pane.is-empty .as-drop {
+        min-height: 280px;
+        margin-bottom: 0;
+      }
+      /* Подсветка приёма — на всю полосу, а не на пунктирный прямоугольник:
+         бросок принимается везде, и показать это должно везде. */
+      #assets-pane.is-drop::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        z-index: 8;
+        border: 1px solid var(--amber);
+        background: rgba(232, 161, 60, 0.06);
+        pointer-events: none;
+      }
+      #assets-pane.is-drop .as-drop {
+        border-color: var(--amber);
+        background: rgba(232, 161, 60, 0.09);
+      }
+      .as-drop b {
+        font: 400 13px/1 var(--display);
+        letter-spacing: 0.1em;
+        color: var(--fg);
+      }
+      .as-drop span {
+        font: 10px/1.5 var(--mono);
+        color: var(--dimmer);
+      }
+
+      /* ── настройки архива ──
+         Плоскость поверх прибора: раздел открывают, чтобы поправить одно
+         число, и он не должен отбирать вертикаль у работы. */
+      #settings {
+        position: fixed;
+        inset: 0;
+        z-index: 50;
+        display: flex;
+        align-items: flex-start;
+        justify-content: center;
+        padding: 84px 20px 20px;
+        background: rgba(6, 7, 8, 0.72);
+      }
+      #settings[hidden] {
+        display: none;
+      }
+      .dlg {
+        width: min(560px, 100%);
+        background: var(--ink-2);
+        border: 1px solid var(--rule-2);
+        box-shadow: 0 24px 60px rgba(0, 0, 0, 0.6);
+      }
+      .dlg__head {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 12px 14px;
+        border-bottom: 1px solid var(--rule);
+      }
+      /* Своя подпись, а не .panel__tab из темы: тот подвешен абсолютно к своей
+         панели и, попав в непозиционированную шапку, уезжает в угол окна. */
+      .dlg__title {
+        margin-right: auto;
+        font: 10px/1.4 var(--mono);
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        color: var(--amber);
+      }
+      .dlg__title::before {
+        content: "[\00a0";
+        color: var(--dimmer);
+      }
+      .dlg__title::after {
+        content: "\00a0]";
+        color: var(--dimmer);
+      }
+      .dlg__body {
+        padding: 4px 0 0;
+      }
+      .set-block {
+        padding: 14px 18px;
+        border-bottom: 1px solid var(--rule);
+      }
+      .set-block > .chrome {
+        display: block;
+        margin-bottom: 8px;
+      }
+      .set-row {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+      .set-row input[type="number"] {
+        width: 108px;
+      }
+      .set-row input[type="number"],
+      .set-row input[type="text"] {
+        height: 28px;
+        padding: 0 9px;
+        border: 1px solid var(--rule);
+        background: var(--ink);
+        color: var(--fg);
+        font: 12px/1 var(--mono);
+        letter-spacing: 0.08em;
+        outline: none;
+        color-scheme: dark;
+      }
+      .set-row input[type="text"] {
+        flex: 1;
+        min-width: 0;
+        font-size: 11px;
+      }
+      .set-row input:focus {
+        border-color: var(--amber);
+      }
+      .set-row input:disabled {
+        opacity: 0.35;
+      }
+      /* Год виден там, где он окажется: отметка конца летописи собрана из тех
+         же частей, что и на сайте. Число без ленты вокруг — просто число. */
+      .set-preview {
+        padding: 16px 18px 26px;
+        text-align: center;
+        background: radial-gradient(120% 90% at 50% 130%, rgba(210, 86, 63, 0.22), transparent 70%);
+      }
+      .set-preview > .chrome {
+        display: block;
+        margin-bottom: 18px;
+      }
+      .set-now {
+        position: relative;
+        padding-top: 22px;
+      }
+      .set-now::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 50%;
+        width: 11px;
+        height: 11px;
+        transform: translateX(-50%) rotate(45deg);
+        background: var(--amber);
+        box-shadow: 0 0 22px 4px rgba(232, 161, 60, 0.45);
+      }
+      .set-now b {
+        display: block;
+        font: 700 15px/1 var(--display);
+        letter-spacing: 0.2em;
+        color: var(--amber);
+      }
+      .set-now span {
+        display: block;
+        margin-top: 7px;
+        font: 10px/1 var(--mono);
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: var(--dim);
       }
 
       /* ── CodeMirror под общую тему ── */
@@ -500,7 +1101,9 @@
         <b>AETHER<span>.</span>WIKI</b>
       </div>
       <span class="chrome">админка</span>
-      <a class="btn btn--ghost" id="open-site" href="../" target="_blank" rel="noopener">открыть архив</a>
+      <span class="sp"></span>
+      <button class="btn btn--sm btn--ghost" id="open-settings" type="button">настройки</button>
+      <a class="btn btn--sm btn--ghost" id="open-site" href="../" target="_blank" rel="noopener">открыть архив</a>
       <div id="status">загрузка…</div>
     </div>
 
@@ -510,14 +1113,26 @@
         <button class="btn btn--sm" id="new-folder" type="button" title="Новая папка">+ папка</button>
         <button class="btn btn--sm" id="new-record" type="button" title="Новая запись">+ запись</button>
       </div>
+      <div id="shelf">
+        <button class="shelf-row" id="shelf-assets" type="button">
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1" aria-hidden="true">
+            <path d="M1.4 3.2h9.2v7.4H1.4z" />
+            <path d="M1.4 3.2 3 1.4h6l1.6 1.8" />
+            <path d="M4.6 5.8h2.8" />
+          </svg>
+          вложения
+          <b id="shelf-count"></b>
+        </button>
+      </div>
       <label class="field" id="tree-filter">
         <input type="search" id="tree-filter-input" placeholder="фильтр по названию или слагу" />
       </label>
       <div id="tree"></div>
       <div id="tree-foot">
         <span class="chrome" id="tree-count"></span>
-        <span class="chrome" style="margin-left: auto">dbl · F2 — имя</span>
+        <span class="chrome" style="margin-left: auto">↑↓ · F2 · ПКМ</span>
       </div>
+      <div class="gutter" id="tree-gutter"></div>
     </div>
 
     <div id="edit-pane">
@@ -528,7 +1143,7 @@
         </div>
         <div id="record-actions"></div>
       </div>
-      <div id="insert-bar"><span class="chrome">вставить</span></div>
+      <div id="insert-bar" hidden></div>
       <div id="editor"></div>
       <div id="edit-foot">
         <div id="warnings"></div>
@@ -537,6 +1152,7 @@
     </div>
 
     <div id="view-pane">
+      <div class="gutter" id="view-gutter"></div>
       <div id="view-tabs">
         <button type="button" class="on" data-tab="preview">просмотр</button>
         <button type="button" data-tab="props">свойства</button>
@@ -552,6 +1168,9 @@
       </div>
       <div class="view-body" id="props" hidden></div>
     </div>
+
+    <div id="assets-pane"></div>
+    <div id="settings" hidden></div>
 
     <script type="module" src="/src/main.ts"></script>
   </body>

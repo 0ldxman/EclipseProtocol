@@ -21,12 +21,14 @@ import type { FastifyInstance, FastifyRequest } from "fastify";
 import type * as Y from "yjs";
 import type { RoomRegistry } from "./collab.js";
 import { recordRoom } from "./records.js";
+import { resolveYear, type SettingsStore } from "./settings.js";
 import type { TreeNode, TreeStore } from "./tree.js";
 
 export interface WikiOptions {
   tree: TreeStore;
   rooms: RoomRegistry;
   markdownDir: string;
+  settings: SettingsStore;
 }
 
 /**
@@ -158,7 +160,7 @@ function snippet(text: string, needle: string, width = 120): string {
 }
 
 export async function registerWiki(app: FastifyInstance, options: WikiOptions): Promise<void> {
-  const { tree, rooms, markdownDir } = options;
+  const { tree, rooms, markdownDir, settings } = options;
   const index = new RecordIndex(tree, markdownDir);
 
   const textOf = (doc: Y.Doc): string => doc.getText("content").toString();
@@ -326,7 +328,15 @@ export async function registerWiki(app: FastifyInstance, options: WikiOptions): 
       }
     }
 
-    return { epochs, events };
+    // Год конца ленты приходит с сервера, а не с часов читателя: «сейчас» в
+    // архиве — это год мира, и открытый в 2026-м архив событий 2031 года
+    // подписывал свой хвост чужой датой.
+    const world = settings.get();
+    return {
+      epochs,
+      events,
+      now: { year: resolveYear(world), label: world.nowLabel },
+    };
   });
 
   app.get("/api/wiki/records/:slug", async (req, reply) => {

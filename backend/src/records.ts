@@ -143,6 +143,10 @@ export async function registerRecords(
       }
       if (body.accessLevel !== undefined) node = await tree.setAccess(id, body.accessLevel);
       if (body.parentId !== undefined) node = await tree.move(id, body.parentId, body.order);
+      // Порядок без папки — перестановка среди своих же соседей. Раньше такой
+      // запрос принимался и не делал ничего, поэтому переложить запись выше
+      // соседней было нельзя: перенос умел только менять папку.
+      else if (body.order !== undefined) node = await tree.move(id, node.parentId, body.order);
       return node;
     } catch (error) {
       if (error instanceof TreeError) return reply.code(error.status).send({ error: error.message });

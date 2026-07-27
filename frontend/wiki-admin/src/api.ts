@@ -29,6 +29,25 @@ export interface TreeNode {
   updatedAt: string;
 }
 
+/** Вложение в каталоге: файл на диске, на который ссылается разметка. */
+export type AssetKind = "image" | "video" | "audio" | "file";
+
+export interface Asset {
+  name: string;
+  url: string;
+  kind: AssetKind;
+  bytes: number;
+  at: string;
+}
+
+/** Настройки архива: то, что относится ко всей вики и ни к одной записи. */
+export interface Settings {
+  /** Год мира. `null` — идти по настоящим часам. */
+  currentYear: number | null;
+  /** Подпись у отметки конца летописи. Пустая — берётся название эпохи. */
+  nowLabel: string;
+}
+
 export interface RenderResult {
   html: string;
   links: string[];
@@ -110,15 +129,34 @@ export class Api {
   }
 
   /**
-   * Картинка уходит сырым телом со своим типом — так её принимает сервер:
-   * файл кладётся рядом с остальными вложениями и возвращает адрес вида
-   * `uploads/…`, который и хранится в свойстве.
+   * Файл уходит сырым телом со своим типом — так его принимает сервер: он
+   * кладётся рядом с остальными вложениями и возвращает адрес вида
+   * `uploads/…`, который и подставляется в разметку.
    */
-  upload(file: File): Promise<{ url: string; bytes: number }> {
+  upload(file: File): Promise<Asset> {
     return request(this.base, "/api/uploads", {
       method: "POST",
       headers: { "Content-Type": file.type },
       body: file,
+    });
+  }
+
+  assets(): Promise<{ assets: Asset[] }> {
+    return request(this.base, "/api/uploads");
+  }
+
+  removeAsset(name: string): Promise<{ removed: string }> {
+    return request(this.base, `/api/uploads/${encodeURIComponent(name)}`, { method: "DELETE" });
+  }
+
+  settings(): Promise<Settings> {
+    return request(this.base, "/api/settings");
+  }
+
+  saveSettings(patch: Partial<Settings>): Promise<Settings> {
+    return request(this.base, "/api/settings", {
+      method: "PATCH",
+      body: JSON.stringify(patch),
     });
   }
 

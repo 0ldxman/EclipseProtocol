@@ -13,6 +13,11 @@
  * Всё, что меняет запись, живёт в одном месте — вкладке «Свойства». Слаг,
  * метки и допуск раньше не редактировались вовсе: дерево умело только имя,
  * и метка, по которой ищет читатель, ни разу не могла быть проставлена.
+ *
+ * Четвёртая вертикаль здесь так и не появилась. Каталог вложений занимает обе
+ * правые (у файла нет «источника» и «результата»), а настройки архива —
+ * плоскость поверх: раздел открывают, чтобы поправить одно число, и отдавать
+ * ему колонку было бы неправдой о том, как часто туда смотрят.
  */
 
 import "@aether/theme/theme.css";
@@ -23,8 +28,12 @@ import { EditorView, keymap, lineNumbers, highlightActiveLine } from "@codemirro
 import { defaultKeymap, history, historyKeymap } from "@codemirror/commands";
 import { yCollab } from "y-codemirror.next";
 import { Api, ApiError, type NodeKind, type RenderResult, type TreeNode } from "./api";
+import { AssetsView, markupFor } from "./assets-view";
 import { baseDir } from "./base-path";
 import { CollabClient, collabUrl, type ConnectionState } from "./collab";
+import { Panes } from "./panes";
+import { SettingsView } from "./settings-view";
+import { glyph, SNIPPETS, type Snippet } from "./toolbar";
 import { TreeView } from "./tree-view";
 
 // Админка отдаётся из `<root>/admin/`, а API и сокеты живут в `<root>`.
@@ -40,84 +49,6 @@ function pickColour(): string {
 
 /** Имя записи-обложки. Договорённость общая с сервером и публичной вики. */
 const COVER = "_cover";
-
-/**
- * Заготовки разметки.
- *
- * Язык виджетов иначе невидим: человек, открывший пустую запись, не может
- * догадаться ни про `:::infobox`, ни про число двоеточий у вложенных заборов.
- * Заготовка отвечает на оба вопроса сразу — её правят, а не сочиняют.
- */
-interface Snippet {
-  label: string;
-  title: string;
-  text: string;
-  /** Строчный виджет ставится в текущую строку, блочный — с новой. */
-  inline?: boolean;
-}
-
-const SNIPPETS: { group: string; items: Snippet[] }[] = [
-  {
-    group: "в строке",
-    items: [
-      { label: "метка", title: "Плашка состояния", text: ":tag[Пропал без вести]{style=warn}", inline: true },
-      { label: "спойлер", title: "Скрыто до щелчка", text: ":spoiler[скрытый текст]", inline: true },
-      { label: "гриф", title: "Вымарано ниже допуска", text: ":classified[отчёт 12-Б]{level=3}", inline: true },
-      { label: "дата", title: "Метка времени в поясе читателя", text: ":timestamp[12.04.2031]{at=2031-04-12T09:00:00Z}", inline: true },
-      { label: "отсчёт", title: "Обратный отсчёт до срока", text: ":countdown[до срока]{until=2033-01-01T00:00:00Z}", inline: true },
-      { label: "ссылка", title: "Ссылка на другую запись", text: "[[Название|slug]]", inline: true },
-      { label: "__подчёрк__", title: "Подчёркивание", text: "__подчёркнуто__", inline: true },
-    ],
-  },
-  {
-    group: "блоки",
-    items: [
-      {
-        label: "инфобокс",
-        title: "Карточка в колонке справа от документа",
-        text: [
-          "::::infobox{title=Досье}",
-          ":::fields",
-          "ключ :: значение",
-          ":::",
-          "",
-          "::dotbar{name=Допуск max=5 current=3}",
-          "",
-          ":tag[Метка]{style=warn}",
-          "::::",
-        ].join("\n"),
-      },
-      { label: "поля", title: "Таблица «ключ — значение»", text: ":::fields\nключ :: значение\n:::" },
-      { label: "заметка", title: "Выноска: справка, внимание, оспорено", text: ":::note{style=info}\nТекст заметки.\n:::" },
-      { label: "цитата", title: "Цитата с указанием источника", text: ':::quote{by="источник"}\nТекст цитаты.\n:::' },
-      { label: "таблица", title: "Таблица markdown", text: "| столбец | столбец |\n| --- | --- |\n| значение | значение |" },
-      { label: "по центру", title: "Блок по центру полосы", text: ":::center\nТекст по центру.\n:::" },
-      { label: "шкала", title: "Полоса с числом", text: "::bar{name=Готовность max=100 current=60}" },
-      { label: "точки", title: "Дискретная шкала", text: "::dotbar{name=Допуск max=5 current=3}" },
-    ],
-  },
-  {
-    group: "медиа и связи",
-    items: [
-      { label: "картинка", title: "Изображение с подписью", text: '::image{src="uploads/файл.png" caption="Подпись"}' },
-      { label: "галерея", title: "Несколько изображений в ряд", text: ':::gallery\n::image{src="uploads/1.png"}\n::image{src="uploads/2.png"}\n:::' },
-      { label: "видео", title: "Проигрыватель с подписью", text: '::video{src="uploads/файл.mp4" poster="uploads/кадр.png" caption="Подпись"}' },
-      { label: "файл", title: "Вложение для скачивания", text: '::file{src="uploads/документ.pdf" name="Документ" size="1,2 МБ"}' },
-      { label: "запись", title: "Карточка другой записи", text: "::record{slug=apollo}" },
-      { label: "карта", title: "Врезка карты с точкой", text: "::map{lng=37.6 lat=55.7 zoom=6 label=«Мыс Тишина»}" },
-      { label: "событие", title: "Отметка о времени со ссылкой в летопись", text: '::event{at=2031-04-12 epoch="Разлом"}' },
-    ],
-  },
-  {
-    group: "титульный лист",
-    items: [
-      { label: "обложка", title: "Титульный лист категории целиком", text: "" },
-      { label: "эпиграф", title: "Эпиграф титульного листа", text: ':::::epigraph{cite="источник"}\nСтрока эпиграфа.\n:::::' },
-      { label: "колонки", title: "Низ титульного листа: текст и выходные сведения", text: ":::::columns\nО чём раздел.\n\n::::right\n:::fields\nзаписей :: 0\n:::\n::::\n:::::" },
-      { label: "штамп", title: "Штамп на титульном листе", text: "::stamp[для служебного пользования]" },
-    ],
-  },
-];
 
 /** Заготовка титульного листа категории. */
 const COVER_TEMPLATE = (name: string): string =>
@@ -169,6 +100,8 @@ async function main(): Promise<void> {
   const presenceEl = document.getElementById("presence")!;
   const insertBar = document.getElementById("insert-bar")!;
   const countEl = document.getElementById("tree-count")!;
+  const shelfButton = document.getElementById("shelf-assets") as HTMLButtonElement;
+  const shelfCount = document.getElementById("shelf-count")!;
 
   const previewBody = document.getElementById("preview-body")!;
   const sheet = document.getElementById("preview-sheet")!;
@@ -178,6 +111,11 @@ async function main(): Promise<void> {
   let collab: CollabClient | null = null;
   let view: EditorView | null = null;
   let renderTimer: number | null = null;
+
+  /* ── ширины вертикалей ────────────────────────────────────────────────── */
+  const panes = new Panes(document.body);
+  panes.attach(document.getElementById("tree-gutter")!, "tree", 1);
+  panes.attach(document.getElementById("view-gutter")!, "view", -1);
 
   /* ── вкладки правой колонки ───────────────────────────────────────────── */
   function selectTab(name: "preview" | "props"): void {
@@ -206,13 +144,51 @@ async function main(): Promise<void> {
     }
   }
 
+  /* ── каталог вложений ─────────────────────────────────────────────────── */
+
+  const assets = new AssetsView(document.getElementById("assets-pane")!, api, API_BASE, {
+    // Вставка возвращает к записи: файл кладут в текст, а не в каталог, и
+    // остаться после этого в каталоге значило бы не показать результат.
+    insert: (markup) => {
+      showRecordPanes();
+      insertText(markup, false);
+    },
+    canInsert: () => view !== null,
+    note,
+  });
+
+  function showAssets(): void {
+    document.body.classList.add("is-assets");
+    shelfButton.classList.add("is-on");
+    void assets.show();
+  }
+
+  function showRecordPanes(): void {
+    document.body.classList.remove("is-assets");
+    shelfButton.classList.remove("is-on");
+  }
+
+  shelfButton.onclick = () => {
+    if (document.body.classList.contains("is-assets")) showRecordPanes();
+    else showAssets();
+  };
+
+  /* ── настройки архива ─────────────────────────────────────────────────── */
+
+  const settings = new SettingsView(document.getElementById("settings")!, api, note);
+  document.getElementById("open-settings")!.onclick = () => void settings.show();
+
+  /* ── дерево ───────────────────────────────────────────────────────────── */
+
   const tree = new TreeView(treeHost, {
     onSelect: (node) => {
+      showRecordPanes();
       if (node.kind === "record") void openRecord(node);
       else showFolder(node);
     },
-    onMove: async (id, parentId) => {
-      if (await guard(() => api.update(id, { parentId }))) await refreshTree();
+    onMove: async (id, parentId, order) => {
+      const patch = order === undefined ? { parentId } : { parentId, order };
+      if (await guard(() => api.update(id, patch))) await refreshTree();
     },
     onRename: async (node, name) => {
       if (await guard(() => api.rename(node.id, name))) {
@@ -220,13 +196,30 @@ async function main(): Promise<void> {
         if (current?.id === node.id) refreshSelected();
       }
     },
-    onCreate: async (kind, name, parentId) => {
+    onCreate: async (kind, name, parentId, order) => {
       const node = await guard(() => api.create(kind, name, parentId));
       if (!node) return;
+      // Порядок ставится вторым запросом: создание кладёт в конец, а строка
+      // могла быть набрана посреди списка.
+      if (order !== undefined) await guard(() => api.update(node.id, { order }));
       await refreshTree();
       tree.select(node.id);
+      showRecordPanes();
       if (node.kind === "record") await openRecord(node);
       else showFolder(node);
+    },
+    onDelete: (node) => {
+      tree.select(node.id);
+      if (node.kind === "record") void openRecord(node);
+      else showFolder(node);
+      // Спрашиваем там же, где обычно: одна и та же форма подтверждения,
+      // сколько бы путей к удалению ни вело.
+      const remove = actionsEl.querySelector<HTMLElement>(".btn--danger");
+      if (remove) confirmDelete(node, remove);
+    },
+    onCover: (folder) => {
+      const cover = nodes.find((n) => n.parentId === folder.id && n.name === COVER);
+      void openOrCreateCover(folder, cover);
     },
   });
 
@@ -323,41 +316,79 @@ async function main(): Promise<void> {
   }
 
   /**
-   * Вставка заготовки на место курсора.
+   * Вставка текста на место курсора.
    *
    * Блочная заготовка всегда начинается с новой строки и заканчивается пустой.
    * Иначе `:::quote` приклеивался к концу предыдущего абзаца, забор переставал
    * быть забором, и в тексте оставалась строка двоеточий — ровно та поломка,
    * из-за которой цитата «вставлялась неправильно».
    */
-  function insert(snippet: Snippet): void {
+  function insertText(text: string, inline: boolean, select?: [number, number]): void {
     if (!view) return;
     const { from, to } = view.state.selection.main;
     const doc = view.state.doc;
-    let text = snippet.text;
+    let body = text;
+    let shift = 0;
 
-    if (!snippet.inline) {
+    if (!inline) {
       const before = doc.sliceString(Math.max(0, from - 2), from);
       const after = doc.sliceString(to, Math.min(doc.length, to + 2));
       const lead = from === 0 ? "" : before.endsWith("\n\n") ? "" : before.endsWith("\n") ? "\n" : "\n\n";
       const tail = after.startsWith("\n\n") ? "" : after.startsWith("\n") ? "\n" : "\n\n";
-      text = `${lead}${text}${tail}`;
+      body = `${lead}${body}${tail}`;
+      shift = lead.length;
     }
 
     view.dispatch({
-      changes: { from, to, insert: text },
-      selection: { anchor: from + text.length },
+      changes: { from, to, insert: body },
+      selection: select
+        ? { anchor: from + shift + select[0], head: from + shift + select[1] }
+        : { anchor: from + body.length },
       scrollIntoView: true,
     });
     view.focus();
   }
 
-  for (const { group, items } of SNIPPETS) {
-    insertBar.append(el("span", { class: "chrome ins-group" }, [group]));
-    for (const snippet of items) {
-      const button = el("button", { class: "btn btn--sm", type: "button", title: snippet.title }, [
-        snippet.label,
+  /**
+   * Вставка заготовки.
+   *
+   * Выделенное оборачивается, а не затирается: выделив слово и нажав
+   * «спойлер», хочешь спрятать это слово. Раньше оно исчезало, и на его месте
+   * появлялся образец из палитры.
+   */
+  function insert(snippet: Snippet): void {
+    if (!view) return;
+    const { from, to } = view.state.selection.main;
+    const picked = view.state.doc.sliceString(from, to);
+
+    if (snippet.wrap && picked) {
+      const [open, close] = snippet.wrap;
+      insertText(`${open}${picked}${close}`, Boolean(snippet.inline), [
+        open.length,
+        open.length + picked.length,
       ]);
+      return;
+    }
+    insertText(snippet.text, Boolean(snippet.inline));
+  }
+
+  /* ── палитра разметки ─────────────────────────────────────────────────── */
+
+  const filterTools = el("input", { type: "search", placeholder: "найти виджет" });
+  insertBar.append(
+    el("div", { class: "ins-head" }, [
+      el("span", { class: "chrome" }, ["вставить"]),
+      el("label", { class: "field ins-find" }, [filterTools]),
+    ]),
+  );
+
+  for (const { group, items } of SNIPPETS) {
+    const tools = el("div", { class: "ins-tools" });
+    for (const snippet of items) {
+      const button = el("button", { class: "tool", type: "button", title: snippet.title }, []);
+      button.innerHTML = glyph(snippet.icon);
+      button.append(el("span", {}, [snippet.label]));
+      button.dataset.find = `${snippet.label} ${snippet.title}`.toLocaleLowerCase("ru");
       // Обложка — не заготовка на строку, а весь титульный лист: у неё уже
       // есть заполнитель, и незачем держать его в двух местах.
       button.onclick = () =>
@@ -366,10 +397,59 @@ async function main(): Promise<void> {
             ? { ...snippet, text: COVER_TEMPLATE(current?.name ?? "Раздел").trimEnd() }
             : snippet,
         );
-      insertBar.append(button);
+      tools.append(button);
     }
+    insertBar.append(el("div", { class: "ins-row" }, [el("span", { class: "ins-label" }, [group]), tools]));
   }
   insertBar.hidden = true;
+
+  // Фильтр не прячет язык разметки, а находит в нём: строки, где после отбора
+  // не осталось ни одного виджета, уходят целиком, чтобы подпись группы не
+  // висела над пустотой.
+  filterTools.oninput = () => {
+    const needle = filterTools.value.trim().toLocaleLowerCase("ru");
+    for (const row of insertBar.querySelectorAll<HTMLElement>(".ins-row")) {
+      let shown = 0;
+      for (const tool of row.querySelectorAll<HTMLElement>(".tool")) {
+        const hit = !needle || (tool.dataset.find ?? "").includes(needle);
+        tool.classList.toggle("is-hidden", !hit);
+        tool.classList.toggle("is-hit", Boolean(needle) && hit);
+        if (hit) shown += 1;
+      }
+      row.classList.toggle("is-hidden", shown === 0);
+    }
+  };
+
+  /* ── файл, брошенный в редактор ───────────────────────────────────────── */
+
+  editorHost.addEventListener("dragover", (event) => {
+    if (!event.dataTransfer?.types.includes("Files") || !view) return;
+    event.preventDefault();
+    editorHost.classList.add("is-drop");
+  });
+  editorHost.addEventListener("dragleave", (event) => {
+    if (!editorHost.contains(event.relatedTarget as Node)) editorHost.classList.remove("is-drop");
+  });
+  editorHost.addEventListener("drop", async (event) => {
+    const files = [...(event.dataTransfer?.files ?? [])];
+    if (files.length === 0 || !view) return;
+    event.preventDefault();
+    editorHost.classList.remove("is-drop");
+    for (const file of files) {
+      note(`загрузка: ${file.name}`);
+      const asset = await guard(() => api.upload(file));
+      if (!asset) continue;
+      insertText(markupFor(asset), false);
+      note(`вставлено: ${asset.name}`);
+    }
+    void refreshShelf();
+  });
+
+  async function refreshShelf(): Promise<void> {
+    const result = await api.assets().catch(() => null);
+    if (result) shelfCount.textContent = String(result.assets.length);
+    await assets.reload().catch(() => {});
+  }
 
   async function openRecord(node: TreeNode): Promise<void> {
     if (current?.id === node.id) return;
@@ -576,6 +656,7 @@ async function main(): Promise<void> {
    * неё половина оформления категорий недоступна.
    */
   async function openOrCreateCover(folder: TreeNode, existing?: TreeNode): Promise<void> {
+    showRecordPanes();
     if (existing) {
       tree.select(existing.id);
       await openRecord(existing);
@@ -676,6 +757,7 @@ async function main(): Promise<void> {
       image.value = result.url;
       note(`снимок загружен: ${result.url}`);
       await apply({ eventImage: result.url });
+      void refreshShelf();
     };
 
     block.append(
@@ -825,7 +907,10 @@ async function main(): Promise<void> {
 
   /* ── создание и фильтр ────────────────────────────────────────────────── */
 
-  const create = (kind: NodeKind) => () => tree.beginCreate(kind, targetParent());
+  const create = (kind: NodeKind) => () => {
+    showRecordPanes();
+    tree.beginCreate(kind, targetParent());
+  };
   document.getElementById("new-folder")!.onclick = create("folder");
   document.getElementById("new-record")!.onclick = create("record");
 
@@ -833,7 +918,9 @@ async function main(): Promise<void> {
   filter.oninput = () => tree.setFilter(filter.value);
 
   window.addEventListener("keydown", (event) => {
-    if (event.key === "F2" && tree.selected) {
+    // F2 работает откуда угодно; стрелки по дереву — только когда оно в фокусе,
+    // иначе они бы уводили выделение из-под курсора в редакторе.
+    if (event.key === "F2" && tree.selected && !settings.isOpen) {
       event.preventDefault();
       tree.beginRename(tree.selected.id);
     }
@@ -863,6 +950,8 @@ async function main(): Promise<void> {
   });
 
   await refreshTree();
+  const stored = await api.assets().catch(() => null);
+  if (stored) shelfCount.textContent = String(stored.assets.length);
 }
 
 void main();

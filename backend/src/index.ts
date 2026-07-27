@@ -12,17 +12,18 @@
  * websocket trouble.
  */
 
-import { randomUUID } from "node:crypto";
-import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { mkdir, readFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import compress from "@fastify/compress";
 import fastifyStatic from "@fastify/static";
 import websocket from "@fastify/websocket";
 import Fastify from "fastify";
+import { registerAssets } from "./assets.js";
 import { RoomRegistry } from "./collab.js";
 import { registerGeoDetail } from "./geo-detail.js";
 import { registerRecords } from "./records.js";
+import { SettingsStore } from "./settings.js";
 import { TreeStore } from "./tree.js";
 import { registerWiki } from "./wiki.js";
 
@@ -53,24 +54,18 @@ const MAP_DIR = path.join(appRoot, "frontend/map-proto/dist");
 const ADMIN_DIR = path.join(appRoot, "frontend/wiki-admin/dist");
 const ROOM_DIR = path.join(DATA_DIR, "rooms");
 const TREE_FILE = path.join(DATA_DIR, "tree.json");
+const SETTINGS_FILE = path.join(DATA_DIR, "settings.json");
 const MARKDOWN_DIR = path.join(DATA_DIR, "records");
 const UPLOAD_DIR = path.join(DATA_DIR, "uploads");
 
 const PORT = Number(process.env.PORT ?? 3010);
-const MAX_UPLOAD_BYTES = 64 * 1024 * 1024;
-
-const EXTENSION_BY_TYPE: Record<string, string> = {
-  "image/png": ".png",
-  "image/jpeg": ".jpg",
-  "image/webp": ".webp",
-  "image/gif": ".gif",
-  "image/svg+xml": ".svg",
-};
 
 const app = Fastify({ logger: { level: process.env.LOG_LEVEL ?? "info" } });
 const rooms = new RoomRegistry(ROOM_DIR);
 const tree = new TreeStore(TREE_FILE);
 await tree.load();
+const settings = new SettingsStore(SETTINGS_FILE);
+await settings.load();
 
 // Global so the static topology payload gets compressed too; 6.4 MB of
 // delta-encoded int32 comes down to about 4 MB on the wire.
@@ -148,37 +143,42 @@ app.setNotFoundHandler(async (req, reply) => {
 
 await registerGeoDetail(app, { detailDir: GEO_DETAIL_DIR });
 await registerRecords(app, { tree, rooms, markdownDir: MARKDOWN_DIR });
-await registerWiki(app, { tree, rooms, markdownDir: MARKDOWN_DIR });
-
-app.get("/api/health", async () => ({
-  ok: true,
-  rooms: rooms.stats(),
-}));
+await registerWiki(app, { tree, rooms, markdownDir: MARKDOWN_DIR, settings });
 
 // Reference underlays: scans, concept art, exports from other tools. Stored as
 // plain files and referenced by URL from the collaborative document, because a
 // CRDT is the wrong place to put megabytes of image - only the placement
 // (corners, opacity) belongs there, and that is what everyone needs synced.
-app.addContentTypeParser(
-  /^image\/(png|jpeg|webp|gif|svg\+xml)$/,
-  { parseAs: "buffer", bodyLimit: MAX_UPLOAD_BYTES },
-  (_req, body, done) => done(null, body),
-);
+await registerAssets(app, { uploadDir: UPLOAD_DIR });
 
-app.post("/api/uploads", async (req, reply) => {
-  const body = req.body;
-  if (!Buffer.isBuffer(body) || body.length === 0) {
-    return reply.code(400).send({ error: "expected a raw image body" });
+/**
+ * Настройки архива.
+ *
+ * Читать может кто угодно — год мира стоит в подвале летописи, — а править
+ * только через админку. Отдельной проверки здесь нет ровно потому же, почему
+ * её нет у дерева: служба входа в эту сборку ещё не подключена, и когда она
+ * появится, оба места закрываются одним и тем же способом.
+ */
+app.get("/api/settings", async () => settings.get());
+
+app.patch("/api/settings", async (req, reply) => {
+  const body = req.body as { currentYear?: number | null; nowLabel?: string };
+  const patch: Parameters<typeof settings.patch>[0] = {};
+  if ("currentYear" in body) {
+    const year = body.currentYear;
+    if (year !== null && (typeof year !== "number" || !Number.isFinite(year))) {
+      return reply.code(400).send({ error: "год — число или null" });
+    }
+    patch.currentYear = year;
   }
-  const extension = EXTENSION_BY_TYPE[req.headers["content-type"]?.split(";")[0] ?? ""];
-  if (!extension) return reply.code(415).send({ error: "unsupported image type" });
-
-  const name = `${Date.now().toString(36)}-${randomUUID().slice(0, 8)}${extension}`;
-  await mkdir(UPLOAD_DIR, { recursive: true });
-  await writeFile(path.join(UPLOAD_DIR, name), body);
-  app.log.info({ name, bytes: body.length }, "upload stored");
-  return { url: `uploads/${name}`, bytes: body.length };
+  if (body.nowLabel !== undefined) patch.nowLabel = String(body.nowLabel);
+  return settings.patch(patch);
 });
+
+app.get("/api/health", async () => ({
+  ok: true,
+  rooms: rooms.stats(),
+}));
 
 app.get("/collab/:room", { websocket: true }, async (socket, req) => {
   const name = (req.params as { room: string }).room;

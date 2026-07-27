@@ -96,11 +96,15 @@ function spine(data: Timeline): HTMLElement {
     side = side === "l" ? "r" : "l";
   }
 
+  // Год конца ленты задан в настройках архива: «сейчас» здесь — это год мира,
+  // а не тот, который показывают часы читателя.
   const last = data.epochs.at(-1);
   rail.append(
     el("div", { class: "now" }, [
-      el("b", {}, [`сейчас · ${new Date().getFullYear()}`]),
-      el("span", {}, [last ? `эпоха «${last.name}» продолжается` : "летопись пуста"]),
+      el("b", {}, [`сейчас · ${data.now.year}`]),
+      el("span", {}, [
+        data.now.label || (last ? `эпоха «${last.name}» продолжается` : "летопись пуста"),
+      ]),
     ]),
   );
   return rail;

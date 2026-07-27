@@ -64,6 +64,8 @@ export interface TimelineEvent {
 export interface Timeline {
   epochs: { name: string; from: string; to: string; count: number }[];
   events: TimelineEvent[];
+  /** Год мира и подпись под ним: настройка архива, а не часы читателя. */
+  now: { year: number; label: string };
 }
 
 export interface RecordPage {
