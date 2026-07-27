@@ -802,6 +802,36 @@ async function main(): Promise<void> {
     name.onblur = () => void applyName();
     propsHost.append(propBlock("Название", [name]));
 
+    /* код раздела */
+    if (node.kind === "folder") {
+      const code = el("input", {
+        type: "text",
+        maxlength: "10",
+        placeholder: "PERS",
+        value: node.code ?? "",
+        style: "text-transform:uppercase;letter-spacing:.08em",
+      });
+      const applyCode = async () => {
+        const value = code.value.trim();
+        if (value === (node.code ?? "")) return;
+        if (await guard(() => api.update(node.id, { code: value }))) {
+          await refreshTree();
+          refreshSelected();
+        }
+      };
+      code.onkeydown = (event) => {
+        if (event.key === "Enter") void applyCode();
+      };
+      code.onblur = () => void applyCode();
+      propsHost.append(
+        propBlock(
+          "Код раздела",
+          [code],
+          "Штамп картотеки на карточке — [ PERS ], [ TECH ]. Пусто — штампа нет вовсе.",
+        ),
+      );
+    }
+
     /* описание раздела */
     if (node.kind === "folder") {
       const summary = el("textarea", {

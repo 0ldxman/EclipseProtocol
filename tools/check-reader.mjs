@@ -46,10 +46,23 @@ ok("админка ушла в подвал", (await page.locator(".foot__link")
 const described = await page.locator(".folder p").count();
 ok("категория объясняет себя строкой", described >= 1, `${described} с описанием`);
 // Список последних правок с главной убран целиком: он показывал работу над
-// архивом, а не сам архив. Ни ленты, ни панели, ни боковой колонки под неё.
+// архивом, а не сам архив. Ни ленты, ни панели под него.
 ok("свежих правок на главной нет", (await page.locator(".mini--edits").count()) === 0);
 ok("широкой ленты изменений на главной нет", (await page.locator(".feed").count()) === 0);
-ok("боковой колонки на главной нет", (await page.locator(".rail-col").count()) === 0);
+// Шкала архива больше не полоса во всю ширину — она свёрнута в рельс справа,
+// рядом с концом хронологии: тот же приборный виджет, что и «Сводка» на
+// странице категории, просто для архива целиком.
+ok("боковая колонка на главной есть", (await page.locator(".rail-col").count()) === 1);
+const railTabs = await page.locator(".rail-col .panel__tab").allTextContents();
+ok("в рельсе есть «Обзор архива»", railTabs.some((t) => t.includes("Обзор архива")), railTabs.join(", "));
+ok("в рельсе есть «Последние события»", railTabs.some((t) => t.includes("Последние события")), railTabs.join(", "));
+// Категории — асимметричная сетка: то, где записей много, крупнее того, где
+// их мало, а не одинаковые квадраты.
+ok("категории лежат в бенто-сетке", (await page.locator(".cards--bento").count()) === 1);
+const tiered = await page.locator(".folder--lg, .folder--wide").count();
+ok("хотя бы одна категория крупнее квадрата", tiered >= 1, `${tiered} крупных`);
+const codeStamps = await page.locator(".folder__code").count();
+ok("хотя бы одна категория со штампом кода", codeStamps >= 1, `${codeStamps} штампов`);
 // Волосяные вертикали по полям кадра убраны: во весь рост они читались обрезом.
 ok("рамки по краям кадра нет", (await page.locator(".view__grid").count()) === 0);
 // Ни одна строка не должна вылезать за поле кадра.
@@ -334,8 +347,8 @@ ok("ярлык вышел целиком", drawerLate.clip !== drawerEarly.clip 
 ok("название встало", drawerLate.name === "1", String(drawerLate.name));
 await page.screenshot({ path: path.join(SHOTS, "reader-06-catalogue.png"), fullPage: true });
 
-// Точечный поводок тянется вместе с ключом — это видно только в сводке
-// категории: боковой колонки на главной больше нет вовсе.
+// Точечный поводок тянется вместе с ключом — тот же приём, что и в рельсе
+// на главной, здесь проверяется на сводке категории.
 if (stamped) {
   await page.goto(`${ROOT}/#/folder/${stamped}`, { waitUntil: "domcontentloaded" });
   await page.waitForSelector(".rail-col .kv dt");
@@ -376,11 +389,11 @@ await still.waitForTimeout(300);
 const quietHome = await still.evaluate(() => ({
   staged: document.querySelectorAll(".is-staged").length,
   folder: getComputedStyle(document.querySelector(".folder")).clipPath,
-  gauge: document.querySelector(".gauge__cell b").textContent,
+  dial: document.querySelector(".rail-col .is-dial")?.textContent ?? "",
 }));
 ok("без анимации ничего не прячется", quietHome.staged === 0, `${quietHome.staged} спрятанных`);
 ok("без анимации ярлык не срезан", quietHome.folder === "none", String(quietHome.folder));
-ok("без анимации число стоит сразу", /^\d+$/.test(quietHome.gauge.trim()), quietHome.gauge);
+ok("без анимации число стоит сразу", /^\d+$/.test(quietHome.dial.trim()), quietHome.dial);
 await still.close();
 
 if (errors.length) failures.push(`ошибки в консоли: ${errors.join(" | ")}`);

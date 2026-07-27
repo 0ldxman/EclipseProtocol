@@ -46,6 +46,12 @@ export interface TreeNode {
    */
   summary?: string;
   /**
+   * Папки: короткий архивный код — [PERS], [TECH] — печатается на карточке
+   * как штамп картотеки. Не то же, что название: оно остаётся полным словом,
+   * код — ярлык ящика, по которому раздел ищут глазами в ряду карточек.
+   */
+  code?: string;
+  /**
    * Записи только: место в летописи.
    *
    * Дата события — свойство записи, а не строчка в её теле. Раньше она жила
@@ -283,6 +289,20 @@ export class TreeStore {
     const trimmed = summary.trim().replace(/\s+/g, " ").slice(0, 400);
     if (trimmed) node.summary = trimmed;
     else delete node.summary;
+    node.updatedAt = new Date().toISOString();
+    await this.persist();
+    return node;
+  }
+
+  /**
+   * Код категории. Пустая строка стирает поле, как и в описании раздела.
+   */
+  async setCode(id: string, code: string): Promise<TreeNode> {
+    const node = this.nodes.get(id);
+    if (!node) throw new TreeError("not found", 404);
+    const trimmed = code.trim().toUpperCase().slice(0, 10);
+    if (trimmed) node.code = trimmed;
+    else delete node.code;
     node.updatedAt = new Date().toISOString();
     await this.persist();
     return node;

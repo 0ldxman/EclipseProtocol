@@ -692,6 +692,20 @@ div.w-classified{display:block;padding:2px 0}
 .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(232px,1fr));gap:14px}
 /* подразделы — не главные входы: карточки держат размер, а не растягиваются */
 .cards--tight{grid-template-columns:repeat(auto-fill,minmax(248px,1fr))}
+/* Ящики картотеки: тому, в чём больше записей, — больше места на столе, а не
+   тот же квадрат, что и у раздела на два листа. Тесная сетка подразделов
+   (`cards--tight`) размера не меняет: там уже всё рядом, крупный блок внутри
+   категории только бы отвлёк от того, что читатель туда и пришёл искать. */
+.cards.cards--bento{grid-template-columns:repeat(4,minmax(0,1fr));grid-auto-flow:dense;grid-auto-rows:minmax(148px,auto)}
+.cards--bento .folder--lg{grid-column:span 2;grid-row:span 2}
+.cards--bento .folder--wide{grid-column:span 2}
+@media (max-width:980px){
+  .cards.cards--bento{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media (max-width:560px){
+  .cards.cards--bento{grid-template-columns:1fr}
+  .cards--bento .folder--lg,.cards--bento .folder--wide{grid-column:span 1;grid-row:span 1}
+}
 .folder{
   position:relative;display:flex;flex-direction:column;padding:22px 15px 15px;margin-top:9px;text-decoration:none;
   border:1px solid var(--rule-2);background:var(--ink-2);transition:.15s;
@@ -704,6 +718,12 @@ div.w-classified{display:block;padding:2px 0}
 .folder:hover{border-color:rgba(232,161,60,.45);background:var(--ink-3)}
 .folder:hover::before{border-color:rgba(232,161,60,.45);background:var(--ink-3)}
 .folder:hover::after{background:var(--amber)}
+/* Код раздела — штамп картотеки, тем же приёмом скобок, что и ярлык панели:
+   система печатает признак, а не автор пишет слово. */
+.folder__code{display:block;margin-bottom:9px;font:10px/1 var(--mono);letter-spacing:.14em;color:var(--dim)}
+.folder__code::before{content:"[ ";color:var(--dimmer)}
+.folder__code::after{content:" ]";color:var(--dimmer)}
+.folder:hover .folder__code{color:var(--amber)}
 .folder b{display:block;font:500 13px/1.3 var(--display);letter-spacing:.08em;text-transform:uppercase;color:var(--fg)}
 /* Описание раздела — единственный кусок документа в приборной карточке, и
    набран он как документ: серифом. Три строки — предел, за которым карточка
@@ -713,10 +733,40 @@ div.w-classified{display:block;padding:2px 0}
   display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:3;overflow:hidden;
 }
 .folder s{display:block;margin-top:auto;padding-top:11px;text-decoration:none;font:10px/1.6 var(--mono);letter-spacing:.06em;color:var(--dimmer)}
+/* Пустая категория — не «0 записей», а закрытый ящик: цифра тут ничего не
+   рассказывает, а прочерк выглядел бы недоделкой. Штамп со сниженной
+   прозрачностью читается как гриф, а не как пустое место в интерфейсе. */
+.folder__redacted{display:inline-block;opacity:.4;letter-spacing:.1em}
 .cards--tight .folder p{-webkit-line-clamp:2;font-size:12px}
 .folder .lock{position:absolute;right:12px;bottom:12px;color:var(--red);font:11px/1 var(--mono)}
 .folder--sealed{background:repeating-linear-gradient(45deg,var(--ink-2) 0 6px,var(--ink-3) 6px 12px)}
 .folder--sealed b{color:var(--dim)}
+
+/* Крупный блок: категория, в которой большая часть архива. Место есть —
+   описание читается полностью, а не обрывком в три строки. */
+.folder--lg{padding:28px 22px 22px}
+.folder--lg .folder__code{font-size:11px;margin-bottom:14px}
+.folder--lg b{font-size:20px;letter-spacing:.06em}
+.folder--lg p{-webkit-line-clamp:8;font-size:13.5px;line-height:1.75;margin-top:16px}
+.folder--lg s{font-size:11px;margin-top:18px}
+
+/* Широкий блок: категория среднего веса встаёт в строку, а не в столбец —
+   код и название слева, отрывок описания справа за вертикальным правилом. */
+.folder--wide{flex-direction:row;flex-wrap:wrap;align-items:center;padding:18px 20px}
+.folder--wide::after{top:11px}
+.folder--wide .folder__code{margin:0 16px 0 0}
+.folder--wide b{flex:0 0 auto}
+.folder--wide p{
+  flex:1 1 220px;margin:0;padding-left:18px;border-left:1px solid var(--rule-2);
+  -webkit-line-clamp:2;
+}
+.folder--wide s{margin:0 0 0 auto;padding-top:0;padding-left:16px}
+@media (max-width:560px){
+  .folder--wide{flex-direction:column;align-items:stretch}
+  .folder--wide .folder__code{margin:0 0 9px}
+  .folder--wide p{margin:10px 0 0;padding-left:0;border-left:0}
+  .folder--wide s{margin-top:auto;padding:11px 0 0}
+}
 
 /* ═══ КОМАНДНАЯ СТРОКА ════════════════════════════════════════════════
    Две панели: список слева, разворот справа. Разворот — не украшение:

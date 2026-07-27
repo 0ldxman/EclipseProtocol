@@ -241,38 +241,6 @@ body {
   color: var(--dimmer);
 }
 
-/* приборная шкала архива: пять ячеек во всю ширину кадра */
-.gauge {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-  gap: 1px;
-  margin: 6px 0 34px;
-  background: var(--rule);
-  border-block: 1px solid var(--rule);
-}
-.gauge__cell {
-  background: var(--ink);
-  padding: 15px 16px 14px;
-}
-.gauge__cell b {
-  display: block;
-  margin-top: 8px;
-  font: 700 26px/1 var(--display);
-  letter-spacing: 0.03em;
-  color: var(--fg);
-}
-.gauge__cell b.is-amber {
-  color: var(--amber);
-}
-.gauge__cell s {
-  display: block;
-  margin-top: 6px;
-  text-decoration: none;
-  font: 10px/1.5 var(--mono);
-  color: var(--dimmer);
-}
-
-
 /* «вся летопись» — переход, а не кнопка: строка со стрелкой под списком */
 .more-link {
   display: inline-block;
@@ -892,15 +860,6 @@ a.mini__row:hover b {
   .chips .chip.is-staged.is-in {
     opacity: 1;
     scale: 1;
-  }
-
-  /* шкала архива: ячейка встаёт, число снимается прибором */
-  .gauge__cell.is-staged {
-    opacity: 0;
-    transition: opacity 0.5s var(--ease) var(--in-delay, 0ms);
-  }
-  .gauge__cell.is-staged.is-in {
-    opacity: 1;
   }
 }
 

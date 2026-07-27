@@ -342,9 +342,8 @@ function animatePage(page: HTMLElement): void {
   revealOnEnter(page.querySelectorAll<HTMLElement>(".rail-col .panel"), { stagger: 140, cap: 4 });
   revealOnEnter(page.querySelectorAll<HTMLElement>(".mini__row"), { stagger: 80, cap: 8 });
   revealOnEnter(page.querySelectorAll<HTMLElement>(".chips .chip"), { stagger: 26, cap: 26 });
-  revealOnEnter(page.querySelectorAll<HTMLElement>(".gauge__cell"), { stagger: 110, cap: 5 });
 
-  const dials = [...page.querySelectorAll<HTMLElement>(".gauge__cell b")];
+  const dials = [...page.querySelectorAll<HTMLElement>(".is-dial")];
   for (const [i, dial] of dials.entries()) decode(dial, 320 + i * 130);
 }
 
@@ -355,13 +354,30 @@ function sectionHead(title: string, note?: string): HTMLElement {
   ]);
 }
 
+/** Число записей во всей ветке раздела, не только среди прямых детей. */
+function folderWeight(nodes: NavNode[], folderId: string): number {
+  const ids = subtree(nodes, folderId);
+  return nodes.filter((node) => ids.has(node.id) && node.kind === "record" && node.slug).length;
+}
+
 /**
  * Ярлыки категорий.
  *
- * Карточка несёт описание раздела, если оно задано. До него у категории
- * снаружи было только название, и выбор между «Организациями» и
- * «Технологиями» читатель делал, угадывая по слову — а угадывать в архиве
- * как раз и не должен: он для того и открыт, чтобы не гадать.
+ * Карточка несёт описание раздела, если оно задано, и код — штамп картотеки
+ * вроде [PERS], если его завели в админке. До описания у категории снаружи
+ * было только название, и выбор между «Организациями» и «Технологиями»
+ * читатель делал, угадывая по слову — а угадывать в архиве как раз и не
+ * должен: он для того и открыт, чтобы не гадать.
+ *
+ * Размер карточки — вес раздела в записях, не украшение: там, где архива
+ * много, блок крупный (`--lg`), где среднее — широкий (`--wide`), а тесная
+ * сетка подразделов (`tight`) размеры не разносит вовсе — это не витрина
+ * входа в архив, а список внутри уже открытой категории.
+ *
+ * Порог считается от среднего веса, а не от максимума: доля максимума даёт
+ * крупный блок каждой категории, если все разделы примерно одного размера, —
+ * а смысл в укрупнении есть только там, где раздел заметно больше соседей.
+ * Если архив растёт ровно, ряд карточек и должен остаться рядом равных.
  */
 function folderCards(nodes: NavNode[], parentId: string | null, tight = false): HTMLElement | null {
   const folders = nodes
@@ -369,18 +385,38 @@ function folderCards(nodes: NavNode[], parentId: string | null, tight = false): 
     .sort((a, b) => a.order - b.order || a.name.localeCompare(b.name, "ru"));
   if (folders.length === 0) return null;
 
+  const weights = new Map(folders.map((folder) => [folder.id, folderWeight(nodes, folder.id)] as const));
+  const nonZero = [...weights.values()].filter((weight) => weight > 0);
+  const mean = nonZero.length > 0 ? nonZero.reduce((sum, weight) => sum + weight, 0) / nonZero.length : 0;
+  const tierOf = (weight: number): "lg" | "wide" | "" => {
+    if (tight || weight === 0 || mean === 0) return "";
+    if (weight >= mean * 1.5) return "lg";
+    if (weight >= mean * 1.1) return "wide";
+    return "";
+  };
+
   return el(
     "div",
-    { class: `cards${tight ? " cards--tight" : ""}` },
+    { class: `cards${tight ? " cards--tight" : " cards--bento"}` },
     folders.map((folder) => {
-      const inside = nodes.filter((node) => node.parentId === folder.id);
+      const weight = weights.get(folder.id) ?? 0;
+      const tier = tierOf(weight);
       const sealed = folder.access > 0;
-      const card = link(`/folder/${folder.id}`, "", `folder${sealed ? " folder--sealed" : ""}`);
+      const card = link(
+        `/folder/${folder.id}`,
+        "",
+        `folder${sealed ? " folder--sealed" : ""}${tier ? ` folder--${tier}` : ""}`,
+      );
+      if (folder.code) card.append(el("span", { class: "folder__code" }, [folder.code]));
       card.append(el("b", {}, [folder.name]));
       if (folder.summary) card.append(el("p", {}, [folder.summary]));
       card.append(
         el("s", {}, [
-          sealed ? `требуется допуск ${folder.access}` : plural(inside.length, RECORDS),
+          sealed
+            ? `требуется допуск ${folder.access}`
+            : weight === 0
+              ? el("span", { class: "folder__redacted" }, ["[ ЗАСЕКРЕЧЕНО ]"])
+              : plural(weight, RECORDS),
         ]),
       );
       if (sealed) card.append(el("span", { class: "lock" }, ["▲"]));
@@ -728,24 +764,6 @@ export async function renderHome(view: HTMLElement): Promise<void> {
   ]);
   search.addEventListener("click", () => openSearch());
 
-  // Счётчики стоят полосой во всю ширину кадра: это приборная шкала архива,
-  // а не украшение под заголовком.
-  const gauge = (label: string, value: string, note: string, amber = false): HTMLElement =>
-    el("div", { class: "gauge__cell" }, [
-      el("span", { class: "chrome" }, [label]),
-      el("b", { class: amber ? "is-amber" : "" }, [value]),
-      el("s", {}, [note]),
-    ]);
-
-  const epochs = chronology.epochs.length;
-  const gauges = el("div", { class: "gauge" }, [
-    gauge("записей", String(stats.records), "в открытой части"),
-    gauge("категорий", String(stats.folders), "включая вложенные"),
-    gauge("под грифом", String(stats.restricted), "требуют допуска", stats.restricted > 0),
-    gauge("событий", String(chronology.events.length), epochs > 0 ? plural(epochs, ["эпоха", "эпохи", "эпох"]) : "хронология пуста"),
-    gauge("меток", String(tags.length), "поперёк дерева"),
-  ]);
-
   const page = el("div", { class: "page" }, [
     el("div", { class: "hero" }, [
       el("h1", {}, ["ECLIPSE ", el("em", {}, ["PROTOCOL"])]),
@@ -754,28 +772,18 @@ export async function renderHome(view: HTMLElement): Promise<void> {
       ]),
       search,
     ]),
-    gauges,
   ]);
 
+  /* ── левая половина: чем архив открывается ── */
+  const main = el("div", { class: "col" });
+
   const cards = folderCards(nodes, null);
-  if (cards) page.append(sectionHead("Категории", `${stats.folders}`), cards);
+  if (cards) main.append(sectionHead("Категории", `${stats.folders}`), cards);
 
   const loose = childRecords(nodes, null);
-  if (loose.length > 0) page.append(sectionHead("Вне категорий"), recordIndex(loose));
+  if (loose.length > 0) main.append(sectionHead("Вне категорий"), recordIndex(loose));
 
-  /*
-   * Ниже — то, чем архив ищут: метки поперёк дерева и конец хронологии.
-   *
-   * «Свежих правок» здесь нет вовсе. Сначала это была самая широкая колонка
-   * главной, потом — панель на пять строк сбоку; ни в том, ни в другом виде
-   * список не отвечал на вопрос, с которым приходят на главную. Он показывает,
-   * что трогал редактор, — то есть журнал работы над архивом, а не сам архив.
-   * Читателю нужно, куда пойти; когда правили запись, ему всё равно.
-   *
-   * Вместе с панелью ушла и боковая колонка: держать её ради пустоты справа
-   * незачем, и разделы встают во всю ширину кадра, как «Категории» над ними.
-   */
-  page.append(
+  main.append(
     sectionHead("Метки", String(tags.length)),
     tags.length > 0
       ? chipRow(tags.slice(0, 40))
@@ -785,14 +793,53 @@ export async function renderHome(view: HTMLElement): Promise<void> {
         ]),
   );
 
+  /*
+   * ── правая колонка: то, что раньше было полосой шкалы во всю ширину ──
+   *
+   * Пять цифр архива не заслуживали отдельной полосы во весь кадр — это
+   * ровно то же, что «Сводка» на странице категории, просто для архива
+   * целиком, и ей место там же: в плотном приборном виджете сбоку, а не в
+   * витрине под заголовком.
+   *
+   * «Свежих правок» в этой колонке нет вовсе — она была здесь раньше в
+   * других видах (самой широкой колонкой, потом узкой панелью) и ни разу не
+   * отвечала на вопрос, с которым приходят на главную: список показывает,
+   * что трогал редактор, а не сам архив. Последние события — другое: это
+   * конец хронологии, то есть содержание, а не журнал работы над ним.
+   */
+  const epochs = chronology.epochs.length;
+  const overviewPanel = panel(
+    "Обзор архива",
+    kv([
+      ["записей", String(stats.records)],
+      ["категорий", String(stats.folders)],
+      ...(stats.restricted > 0
+        ? ([["под грифом", el("span", { style: "color:var(--red)" }, [String(stats.restricted)])]] as const)
+        : []),
+      ["событий", String(chronology.events.length)],
+      ...(epochs > 0 ? ([["эпох", String(epochs)]] as const) : []),
+      ["меток", String(tags.length)],
+      ["обновлено", stats.recent[0] ? when(stats.recent[0].updatedAt) : "—"],
+    ]),
+  );
+  // Цифры сводки печатаются тем же прибором, что и текст записи: дата и слово
+  // «сегодня» — обычная строка документа, а не показание счётчика.
+  for (const dd of overviewPanel.querySelectorAll<HTMLElement>("dd")) {
+    if (/^\d+$/.test(dd.textContent ?? "")) dd.classList.add("is-dial");
+  }
+  const rail = el("aside", { class: "rail-col" }, [overviewPanel]);
+
   if (chronology.events.length > 0) {
     // Хронология отдана по возрастанию; на главной интересен её конец.
-    page.append(
-      sectionHead("Последние события"),
-      eventList(chronology.events.slice(-6).reverse()),
-      link("/timeline", "вся летопись", "more-link"),
+    rail.append(
+      panel(
+        "Последние события",
+        el("div", {}, [eventList(chronology.events.slice(-6).reverse()), link("/timeline", "вся летопись", "more-link")]),
+      ),
     );
   }
+
+  page.append(el("div", { class: "split" }, [main, rail]));
 
   view.replaceChildren(strip, page);
   animatePage(page);

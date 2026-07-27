@@ -111,6 +111,7 @@ export async function registerRecords(
       slug?: string;
       tags?: string[];
       summary?: string;
+      code?: string;
       eventAt?: string;
       eventEpoch?: string;
       eventSummary?: string;
@@ -129,6 +130,7 @@ export async function registerRecords(
         node = await tree.setTags(id, body.tags.map(String));
       }
       if (body.summary !== undefined) node = await tree.setSummary(id, String(body.summary));
+      if (body.code !== undefined) node = await tree.setCode(id, String(body.code));
       // Поля события правятся по одному: подпись меняют, не пересылая дату.
       if (
         body.eventAt !== undefined ||

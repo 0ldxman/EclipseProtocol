@@ -177,6 +177,7 @@ export async function registerWiki(app: FastifyInstance, options: WikiOptions): 
     // в списке соседей, — поэтому едет вместе с деревом, а не отдельным
     // запросом на каждую карточку.
     summary: node.summary ?? "",
+    code: node.code ?? "",
     access: tree.effectiveAccess(node.id),
     updatedAt: node.updatedAt,
   });

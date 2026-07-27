@@ -18,6 +18,8 @@ export interface NavNode {
   tags: string[];
   /** Папки: строка о разделе, которую читают снаружи категории. */
   summary: string;
+  /** Папки: короткий архивный код — штамп на карточке, вроде [PERS]. */
+  code: string;
   access: number;
   updatedAt: string;
 }
