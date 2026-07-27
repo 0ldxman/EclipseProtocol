@@ -289,33 +289,37 @@ a{color:inherit}
 .screen__grid{position:absolute;inset:0;pointer-events:none;z-index:0}
 .screen__grid i{position:absolute;top:0;bottom:0;width:1px;background:var(--rule)}
 
+/* Три ячейки, а не флекс с margin-left:auto: марка системы должна стоять
+   ровно по центру кадра независимо от того, что весит больше — поиск слева
+   или кнопка входа справа, — а это гарантирует только сетка с равными
+   крайними колонками. */
 .rail{
-  position:relative;z-index:4;height:46px;display:flex;align-items:center;gap:20px;
+  position:relative;z-index:4;height:46px;
+  display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:20px;
   padding-inline:var(--pad);
   border-bottom:1px solid var(--rule);background:var(--ink);
 }
-.mark{display:flex;align-items:center;gap:9px;flex:none;text-decoration:none}
-.mark i{width:17px;height:17px;border:1px solid var(--rule-2);display:grid;place-items:center;font:9px/1 var(--mono);color:var(--dim)}
-.mark b{font:500 12px/1 var(--display);letter-spacing:.16em;color:var(--fg)}
+.rail .cmd{justify-self:start}
+.rail .btn{justify-self:end}
 
-/* Соседние экраны архива. Строчные и волосяные: это не приказ и не марка,
-   а указатели — рядом с поиском они не должны спорить с ним за внимание. */
-.rail__nav{display:flex;align-items:center;gap:16px;flex:none}
-.rail__nav a{
-  text-decoration:none;font:10px/1 var(--mono);letter-spacing:.14em;text-transform:uppercase;
-  color:var(--dim);padding-bottom:2px;border-bottom:1px solid transparent;transition:.15s var(--ease);
+/* Марка системы: AETHER.OS — это всегда одно и то же, на любом экране любой
+   системы; строка под ней — единственное, что называет именно этот архив. */
+.mark{
+  justify-self:center;display:flex;flex-direction:column;align-items:center;gap:3px;
+  text-decoration:none;text-align:center;
 }
-.rail__nav a:hover{color:var(--fg);border-bottom-color:var(--amber)}
+.mark b{font:500 13px/1 var(--display);letter-spacing:.22em;color:var(--fg)}
+.mark b i{color:var(--amber);font-style:normal}
+.mark s{text-decoration:none;font:10px/1 var(--mono);letter-spacing:.08em;color:var(--dim)}
+.mark:hover b{color:var(--amber)}
 
 .cmd{
-  flex:1;max-width:380px;display:flex;align-items:center;gap:8px;height:27px;padding:0 9px;
+  max-width:380px;display:flex;align-items:center;gap:8px;height:27px;padding:0 9px;
   border:1px solid var(--rule);background:var(--ink-2);color:var(--dim);font:11px/1 var(--mono);cursor:pointer;transition:.15s;
 }
 .cmd::before{content:">_";color:var(--amber)}
 .cmd:hover{border-color:var(--rule-2);color:var(--fg)}
 .cmd kbd{margin-left:auto;border:1px solid var(--rule-2);padding:1px 5px;font:9px/1.4 var(--mono);color:var(--dimmer)}
-
-.who{margin-left:auto;display:flex;align-items:center;gap:10px;text-align:right}
 
 .strip{
   position:relative;z-index:4;min-height:26px;display:flex;align-items:center;gap:14px;flex-wrap:wrap;
@@ -325,14 +329,37 @@ a{color:inherit}
 .strip s{text-decoration:none;color:var(--dimmer)}
 .strip .sp{margin-left:auto}
 
+/* Тот же приём, что и в рельсе: подпись держится по центру своей полосой,
+   а не подтягивается margin-left:auto к тому, что стоит слева. */
 .foot{
-  position:relative;z-index:4;height:26px;display:flex;align-items:center;gap:16px;
+  position:relative;z-index:4;height:26px;
+  display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:16px;
   padding-inline:var(--pad);
   border-top:1px solid var(--rule);background:var(--ink);
 }
-.foot .sp{margin-left:auto}
-.foot__link{text-decoration:none;color:var(--dim);border-bottom:1px solid transparent;transition:.15s var(--ease)}
-.foot__link:hover{color:var(--amber);border-bottom-color:var(--amber)}
+.foot__status{justify-self:start;display:flex;align-items:center;gap:16px}
+.foot__brand{justify-self:center;color:var(--dimmer)}
+
+/* Тесный кадр: три равные колонки давят терминал и подпись в перенос строк,
+   а высота в 46/26px рассчитана на одну строку — перенос вылезал бы за
+   рамку. Ниже отметки марка и подпись встают под своей строкой, а не втискиваются в неё. */
+@media (max-width:640px){
+  .rail{
+    height:auto;min-height:46px;padding-block:9px;
+    grid-template-columns:1fr auto;grid-template-rows:auto auto;row-gap:10px;
+  }
+  .rail .cmd{grid-column:1;grid-row:1;justify-self:start;max-width:none}
+  .rail .btn{grid-column:2;grid-row:1;justify-self:end}
+  .rail .mark{grid-column:1 / -1;grid-row:2}
+  .cmd kbd{display:none}
+
+  .foot{
+    height:auto;min-height:26px;padding-block:8px;
+    grid-template-columns:1fr;grid-template-rows:auto auto;row-gap:6px;
+  }
+  .foot__status{justify-self:start;flex-wrap:wrap;row-gap:4px}
+  .foot__brand{justify-self:start}
+}
 
 /* Кадр занимает окно целиком; мера чтения задаётся бумаге, а не кадру.
    Рельс якорей прижат к левому полю, досье — к правому, документ стоит

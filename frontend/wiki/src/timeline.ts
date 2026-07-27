@@ -15,7 +15,6 @@
 import { href, navigate } from "./app-root.js";
 import { timeline, type Timeline, type TimelineEvent } from "./api.js";
 import { el } from "./dom.js";
-import { setFootCount } from "./header.js";
 import { decode, revealOnEnter } from "./reveal.js";
 
 const YEAR = (at: string): string => at.slice(0, 4);
@@ -150,7 +149,6 @@ export async function renderTimeline(view: HTMLElement): Promise<void> {
   }
 
   view.replaceChildren(strip, page);
-  setFootCount(`${plural(data.epochs.length, ["эпоха", "эпохи", "эпох"])} · ${plural(data.events.length, EVENTS)}`);
   document.title = "Хронология — AETHER.WIKI";
 
   if (data.events.length > 0) {

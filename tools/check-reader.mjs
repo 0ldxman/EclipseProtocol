@@ -41,8 +41,26 @@ await page.waitForSelector(".folder");
 await page.waitForTimeout(900);
 
 ok("плитки «другие входы» больше нет", (await page.locator(".gate").count()) === 0);
-ok("летопись и карта стоят в рельсе", (await page.locator(".rail__nav a").count()) === 2);
-ok("админка ушла в подвал", (await page.locator(".foot__link").count()) === 1);
+// Рельс и подвал — один и тот же вид на любом экране системы: поиск слева,
+// марка AETHER.OS / Eclipse Protocol по центру, вход справа; в подвале канал
+// и часы слева, подпись по центру. Летопись и карта туда ссылками не
+// дублируются — их находит командная строка, та же, что открывает запись.
+ok("отдельных ссылок «летопись»/«карта» в рельсе больше нет", (await page.locator(".rail__nav").count()) === 0);
+const markText = await page.locator(".mark").innerText();
+ok("марка называет AETHER.OS", markText.includes("AETHER") && markText.includes("OS"), markText);
+ok("марка называет Eclipse Protocol", markText.includes("Eclipse Protocol"), markText);
+ok("кнопка подключения стоит в рельсе", (await page.locator(".rail .btn", { hasText: "ПОДКЛЮЧИТЬСЯ" }).count()) === 1);
+await page.locator(".rail .btn", { hasText: "ПОДКЛЮЧИТЬСЯ" }).click();
+const afterConnect = await page.locator(".rail .btn").innerText();
+ok(
+  "кнопка подключения честно говорит, что входа нет",
+  afterConnect.toLowerCase().includes("вход не подключён"),
+  afterConnect,
+);
+ok("админки в подвале больше нет", (await page.locator(".foot__link").count()) === 0);
+const footText = await page.locator(".foot").innerText();
+ok("в подвале дата и время", /\d{2}\.\d{2}\.\d{4}.+\d{2}:\d{2}:\d{2}/.test(footText), footText);
+ok("в подвале подпись OLDMAN CREATIONS", footText.includes("OLDMAN CREATIONS, 2019"), footText);
 const described = await page.locator(".folder p").count();
 ok("категория объясняет себя строкой", described >= 1, `${described} с описанием`);
 // Список последних правок с главной убран целиком: он показывал работу над

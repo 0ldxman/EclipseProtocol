@@ -25,7 +25,6 @@ import {
 } from "./api.js";
 import { classifiedBody } from "./classified.js";
 import { el } from "./dom.js";
-import { setFootCount } from "./header.js";
 import { hydrateWidgets } from "./hydrate.js";
 import { decode, revealArticle, revealOnEnter } from "./reveal.js";
 import { openSearch } from "./search-palette.js";
@@ -298,7 +297,6 @@ export async function renderRecord(view: HTMLElement, slug: string): Promise<voi
   // содержимое, и выезжают они в том же порядке, в каком читался бы текст.
   revealArticle(row);
 
-  setFootCount(page.restricted ? "доступ ограничен" : "");
   document.title = `${page.node.name} — AETHER.WIKI`;
 }
 
@@ -665,7 +663,6 @@ export async function renderFolder(view: HTMLElement, id: string): Promise<void>
   const slot = page.querySelector<HTMLElement>(".cover-slot");
   if (slot) revealArticle(slot);
   animatePage(page);
-  setFootCount(cover ? "титульный лист" : "");
   document.title = `${folder.name} — AETHER.WIKI`;
 }
 
@@ -730,7 +727,6 @@ export async function renderTag(view: HTMLElement, tag: string): Promise<void> {
 
   view.replaceChildren(strip, page);
   animatePage(page);
-  setFootCount(plural(found.length, RECORDS));
   document.title = `#${tag} — AETHER.WIKI`;
 }
 
@@ -843,6 +839,5 @@ export async function renderHome(view: HTMLElement): Promise<void> {
 
   view.replaceChildren(strip, page);
   animatePage(page);
-  setFootCount(plural(stats.records, RECORDS));
   document.title = "AETHER.WIKI";
 }

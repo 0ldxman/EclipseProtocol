@@ -1,25 +1,21 @@
 /**
  * Верхний рельс и нижняя строка статуса — рамка, в которой стоит любой экран.
  *
+ * Единый вид для всей системы, не только для этой вики: рельс — терминал
+ * слева, марка системы посередине, вход справа; подвал — состояние канала и
+ * часы слева, подпись посередине. Кроме адресной марки (у каждого экрана
+ * системы своя) и того, что подставляет сама страница, содержимое рельса и
+ * подвала не меняется от экрана к экрану и от системы к системе.
+ *
  * Поиск в рельсе сделан кнопкой, а не полем ввода: набирают в командной строке,
  * и два фокусируемых поля на один поиск — верный способ получить в шапке
- * поле, которое молча ничего не делает.
+ * поле, которое молча ничего не делает. Она же и есть «строка терминала» —
+ * приглашение командной строки, не отдельная декорация рядом с ним.
  */
 
 import { href, navigate } from "./app-root.js";
 import { el } from "./dom.js";
 import { openSearch } from "./search-palette.js";
-
-/** Уровень читателя. Сессии пока нет — сервис входа живёт отдельно. */
-const CLEARANCE = 0;
-
-function clearanceMeter(level: number, of = 5): HTMLElement {
-  return el(
-    "span",
-    { class: "clr", title: `допуск · уровень ${level}` },
-    Array.from({ length: of }, (_, i) => el("i", { class: i < Math.max(level, 1) ? "on" : "" })),
-  );
-}
 
 function link(route: string, attrs: Record<string, string>, children: (Node | string)[]): HTMLElement {
   const anchor = el("a", { ...attrs, href: href(route) }, children);
@@ -37,72 +33,50 @@ export function siteRail(): HTMLElement {
   ]);
   search.addEventListener("click", () => openSearch());
 
-  // Знак марки намеренно не янтарный: янтарный обозначает состояние,
-  // а марка — не состояние.
-  const brand = link("/", { class: "mark" }, [
-    el("i", {}, ["◆"]),
-    el("b", {}, ["AETHER.WIKI"]),
-  ]);
-
   /*
-   * Летопись и карта — не содержимое главной, а соседние экраны того же
-   * архива, и место им в рельсе. Раньше они лежали плиткой «другие входы» в
-   * нижнем углу главной: со второй страницы туда было не попасть вовсе, и
-   * два из трёх экранов сайта существовали только для того, кто дошёл до
-   * конца первого.
+   * Летопись и карта командной строке уже известны — их находят там же, где
+   * и запись, и категорию, — поэтому ссылками в рельсе они не дублируются.
+   * Марка системы стоит по центру и ведёт домой: AETHER.OS — общая система,
+   * Eclipse Protocol — то, чем она сейчас открыта именно здесь.
    */
-  const nav = el("nav", { class: "rail__nav" }, [
-    link("/timeline", {}, ["летопись"]),
-    el("a", { href: href("/") + "map/" }, ["карта"]),
+  const brand = link("/", { class: "mark" }, [
+    el("b", {}, ["AETHER", el("i", {}, ["."]), "OS"]),
+    el("s", {}, ["Eclipse Protocol"]),
   ]);
 
-  return el("header", { class: "rail" }, [
-    brand,
-    nav,
-    search,
-    el("div", { class: "who" }, [
-      el("div", {}, [
-        el("div", { class: "chrome chrome--on" }, ["@гость"]),
-        el("div", { class: "chrome" }, [
-          "допуск ",
-          el("span", { class: "chrome--amber" }, [String(CLEARANCE)]),
-        ]),
-      ]),
-      clearanceMeter(CLEARANCE),
-    ]),
-  ]);
+  // Входа пока нет — служба подключена отдельно, — поэтому кнопка честно
+  // говорит об этом при нажатии, а не изображает форму, которая никуда не
+  // ведёт.
+  const connect = el("button", { class: "btn btn--go btn--sm", type: "button" }, ["ПОДКЛЮЧИТЬСЯ"]);
+  connect.addEventListener("click", () => {
+    connect.textContent = "вход не подключён";
+    connect.disabled = true;
+  });
+
+  return el("header", { class: "rail" }, [search, brand, connect]);
 }
 
 /**
- * Нижняя строка. Показывает только то, что действительно известно: время,
- * счётчик записей подставляется страницей, когда она его знает.
+ * Нижняя строка. Показывает только то, что действительно известно: состояние
+ * канала, дату и часы. Всё остальное — счётчик страницы, служебные ссылки —
+ * было бы содержимым экрана, а подвал у системы один и тот же везде.
  */
 export function siteFoot(): HTMLElement {
-  const clock = el("span", { class: "chrome" }, ["--:--:-- UTC"]);
+  const clock = el("span", { class: "chrome" }, ["--.--.---- --:--:-- UTC"]);
   const tick = () => {
-    clock.textContent = `${new Date().toISOString().slice(11, 19)} UTC`;
+    const now = new Date();
+    const date = now.toLocaleDateString("ru-RU", { day: "2-digit", month: "2-digit", year: "numeric" });
+    clock.textContent = `${date} ${now.toISOString().slice(11, 19)} UTC`;
   };
   tick();
   setInterval(tick, 1000);
 
-  // Служебная строка: то, что относится к сайту, а не к тому, что на экране.
-  // Сюда же со временем встанут внешние ссылки — подвал для них и есть место,
-  // а не рельс, где каждая лишняя строка отбирает внимание у поиска.
-  return el("footer", { class: "foot" }, [
+  const status = el("div", { class: "foot__status" }, [
     el("span", { class: "chrome" }, [el("span", { class: "dot dot--live" }), "канал устойчив"]),
     clock,
-    el("span", { class: "chrome", id: "foot-count" }, []),
-    el("span", { class: "chrome sp" }, [
-      el("a", { class: "foot__link", href: href("/") + "admin/" }, ["админка"]),
-    ]),
-    el("span", { class: "chrome" }, ["ЭП — 2026"]),
   ]);
-}
 
-/** Счётчик в подвале ставит та страница, которая его знает. */
-export function setFootCount(text: string): void {
-  const slot = document.getElementById("foot-count");
-  if (slot) slot.textContent = text;
+  return el("footer", { class: "foot" }, [status, el("span", { class: "chrome foot__brand" }, ["© OLDMAN CREATIONS, 2019"])]);
 }
 
 /** Ctrl/⌘+K где угодно открывает командную строку. */
